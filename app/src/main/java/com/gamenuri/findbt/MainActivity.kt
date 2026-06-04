@@ -41,6 +41,8 @@ class MainActivity : ComponentActivity() {
 fun ScanScreen(viewModel: BleViewModel) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val devices by viewModel.devices.collectAsState()
+    val sortType by viewModel.sortType.collectAsState()
+    val showNamedOnly by viewModel.showNamedOnly.collectAsState()
 
     val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         listOf(
@@ -48,9 +50,7 @@ fun ScanScreen(viewModel: BleViewModel) {
             Manifest.permission.BLUETOOTH_CONNECT
         )
     } else {
-        listOf(
-            Manifest.permission.ACCESS_FINE_LOCATION
-        )
+        listOf(Manifest.permission.ACCESS_FINE_LOCATION)
     }
 
     val permissionState = rememberMultiplePermissionsState(permissions)
@@ -67,16 +67,13 @@ fun ScanScreen(viewModel: BleViewModel) {
                 .padding(innerPadding)
                 .padding(16.dp)
         ) {
+            // 스캔 버튼
             Button(
                 onClick = {
                     if (!permissionState.allPermissionsGranted) {
                         permissionState.launchMultiplePermissionRequest()
                     } else {
-                        if (isScanning) {
-                            viewModel.stopScan()
-                        } else {
-                            viewModel.startScan(context)
-                        }
+                        if (isScanning) viewModel.stopScan() else viewModel.startScan(context)
                         isScanning = !isScanning
                     }
                 },
@@ -86,9 +83,33 @@ fun ScanScreen(viewModel: BleViewModel) {
             }
 
             Spacer(modifier = Modifier.height(8.dp))
+
+            // 정렬 버튼
+            Row {
+                FilterChip(
+                    selected = sortType == SortType.FIRST_SEEN,
+                    onClick = { viewModel.setSortType(SortType.FIRST_SEEN) },
+                    label = { Text("발견 순") },
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+                FilterChip(
+                    selected = sortType == SortType.RSSI,
+                    onClick = { viewModel.setSortType(SortType.RSSI) },
+                    label = { Text("신호 세기 순") },
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+                FilterChip(
+                    selected = showNamedOnly,
+                    onClick = { viewModel.toggleShowNamedOnly() },
+                    label = { Text("이름 있는 기기만") }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
             Text("${devices.size}개 기기 발견")
             Spacer(modifier = Modifier.height(8.dp))
 
+            // 기기 목록
             LazyColumn {
                 items(devices) { device ->
                     Card(
@@ -98,8 +119,19 @@ fun ScanScreen(viewModel: BleViewModel) {
                     ) {
                         Column(modifier = Modifier.padding(12.dp)) {
                             Text(device.name, style = MaterialTheme.typography.titleMedium)
+                            Spacer(modifier = Modifier.height(4.dp))
                             Text(device.address, style = MaterialTheme.typography.bodySmall)
+                            Text("${device.deviceType}")
+                            Text("제조사: ${device.manufacturer}")
                             Text("신호: ${device.rssi} dBm")
+                            Text("발견: ${device.firstSeenFormatted}")
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                "RAW: ${device.rawBytes}",
+                                style = MaterialTheme.typography.bodySmall,
+                                maxLines = 3,
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                            )
                         }
                     }
                 }
