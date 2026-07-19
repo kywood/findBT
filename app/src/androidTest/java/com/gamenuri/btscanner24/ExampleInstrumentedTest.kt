@@ -1,4 +1,4 @@
-package com.gamenuri.findbt
+package com.gamenuri.btscanner24
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4

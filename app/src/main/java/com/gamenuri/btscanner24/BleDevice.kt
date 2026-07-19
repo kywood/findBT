@@ -1,4 +1,4 @@
-package com.gamenuri.findbt
+package com.gamenuri.btscanner24
 
 
 import java.text.SimpleDateFormat
@@ -16,7 +16,15 @@ data class BleDevice(
     val txPower: Int? = null,
     val flags: String = Constants.UNKNOWN,
     val rawBytes: String = Constants.UNKNOWN
+
 ) {
     val firstSeenFormatted: String
         get() = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(firstSeen))
+
+    val rssiLevel: String
+        get() = when {
+            rssi >= -60 -> "Strong"
+            rssi >= -75 -> "Medium"
+            else -> "Weak"
+        }
 }

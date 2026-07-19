@@ -1,4 +1,4 @@
-package com.gamenuri.findbt
+package com.gamenuri.btscanner24
 
 import org.junit.Test
 

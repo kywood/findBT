@@ -1,6 +1,5 @@
-package com.gamenuri.findbt.ui.theme
+package com.gamenuri.btscanner24.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme

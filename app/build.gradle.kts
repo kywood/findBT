@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.gamenuri.findbt"
+    namespace = "com.gamenuri.btscanner24"
     compileSdk {
         version = release(36) {
             minorApiLevel = 1
@@ -12,7 +12,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.gamenuri.findbt"
+        applicationId = "com.gamenuri.btscanner24"
         minSdk = 26
         targetSdk = 36
         versionCode = 1
@@ -55,6 +55,7 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
+    implementation(libs.androidx.compose.material.icons)
 
     // ViewModel
     implementation(libs.androidx.lifecycle.viewmodel.compose)

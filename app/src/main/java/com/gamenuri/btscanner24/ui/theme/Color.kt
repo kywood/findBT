@@ -1,4 +1,4 @@
-package com.gamenuri.findbt.ui.theme
+package com.gamenuri.btscanner24.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

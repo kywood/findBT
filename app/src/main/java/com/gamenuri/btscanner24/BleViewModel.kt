@@ -1,4 +1,4 @@
-package com.gamenuri.findbt
+package com.gamenuri.btscanner24
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothManager
@@ -6,7 +6,6 @@ import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
 import android.content.Context
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -29,6 +28,12 @@ class BleViewModel : ViewModel() {
 
     private val deviceMap = mutableMapOf<String, BleDevice>()
     private var scanner: android.bluetooth.le.BluetoothLeScanner? = null
+
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery
+
+    private val _isSortLocked = MutableStateFlow(false)
+    val isSortLocked: StateFlow<Boolean> = _isSortLocked
 
     private val scanCallback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult) {
@@ -62,6 +67,9 @@ class BleViewModel : ViewModel() {
         }
     }
 
+    fun toggleSortLock() {
+        _isSortLocked.value = !_isSortLocked.value
+    }
 
 //    fun ByteArray.toHex(): String = joinToString(":") { "%02X".format(it) }
 
@@ -73,13 +81,39 @@ class BleViewModel : ViewModel() {
             list = list.filter { it.name != Constants.UNKNOWN }
         }
 
-        // 정렬
-        _devices.value = when (_sortType.value) {
-            SortType.FIRST_SEEN -> list.sortedBy { it.firstSeen }
-            SortType.RSSI -> list.sortedByDescending { it.rssi }
+        // 검색어 필터
+        if (_searchQuery.value.isNotBlank()) {
+            list = list.filter {
+                it.name.contains(_searchQuery.value, ignoreCase = true)
+            }
+        }
+
+        // 고정 중이면 정렬 안함
+        if (!_isSortLocked.value) {
+            _devices.value = when (_sortType.value) {
+                SortType.FIRST_SEEN -> list.sortedBy { it.firstSeen }
+                SortType.RSSI -> list.sortedByDescending { it.rssi }
+            }
+        } else {
+            // 고정 중이면 현재 순서 유지하면서 값만 업데이트
+            val currentOrder = _devices.value.map { it.address }
+            val updatedMap = list.associateBy { it.address }
+            _devices.value = currentOrder.mapNotNull { updatedMap[it] } +
+                    list.filter { it.address !in currentOrder }
         }
     }
 
+    fun setSearchQuery(query: String) {
+        _searchQuery.value = query
+        updateList()
+    }
+
+
+
+    fun reset() {
+        deviceMap.clear()
+        _devices.value = emptyList()
+    }
     fun toggleShowNamedOnly() {
         _showNamedOnly.value = !_showNamedOnly.value
         updateList()
@@ -108,17 +142,16 @@ class BleViewModel : ViewModel() {
     private fun getDeviceType(result: ScanResult): String {
         val uuids = result.scanRecord?.serviceUuids?.map { it.toString().uppercase() } ?: emptyList()
         return when {
-            uuids.any { it.startsWith("0000111E") || it.startsWith("0000110B") || it.startsWith("0000110A") } -> "🎧 헤드셋/이어폰"
-            uuids.any { it.startsWith("00001812") } -> "⌨️ 키보드/마우스"
-            uuids.any { it.startsWith("00001800") || it.startsWith("0000180A") } -> "📱 스마트폰/기기"
-            uuids.any { it.startsWith("00001810") } -> "💓 헬스케어"
-            uuids.any { it.startsWith("00001802") || it.startsWith("00001803") } -> "📡 BLE 센서"
-            uuids.any { it.startsWith("00001101") } -> "💻 컴퓨터"
-            uuids.isNotEmpty() -> "📡 기타 (${uuids.first().take(8)})"
+            uuids.any { it.startsWith("0000111E") || it.startsWith("0000110B") || it.startsWith("0000110A") } -> "🎧 Headset/Earphone"
+            uuids.any { it.startsWith("00001812") } -> "⌨️ Keyboard/Mouse"
+            uuids.any { it.startsWith("00001800") || it.startsWith("0000180A") } -> "📱 Smartphone/Device"
+            uuids.any { it.startsWith("00001810") } -> "💓 Healthcare"
+            uuids.any { it.startsWith("00001802") || it.startsWith("00001803") } -> "📡 BLE Sensor"
+            uuids.any { it.startsWith("00001101") } -> "💻 Computer"
+            uuids.isNotEmpty() -> "📡 Other (${uuids.first().take(8)})"
             else -> Constants.UNKNOWN
         }
     }
-
     @SuppressLint("MissingPermission")
     fun startScan(context: Context) {
         val manager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager

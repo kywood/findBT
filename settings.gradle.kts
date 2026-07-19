@@ -22,6 +22,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "findBT"
+rootProject.name = "btScanner24"
 include(":app")
  
