@@ -13,7 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.gamenuri.btscanner24.core.designsystem.theme.FindBTTheme
+import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
 
 /** Inline message with one action, used for permission, Bluetooth-off and scan errors. */
 @Composable
@@ -43,7 +43,7 @@ fun StatusBanner(message: String, actionLabel: String, onAction: () -> Unit, mod
 @Preview(name = "Dark", uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
 @Composable
 private fun StatusBannerPreview() {
-    FindBTTheme(dynamicColor = false) {
+    NearoTheme {
         StatusBanner(message = "Bluetooth is off.", actionLabel = "Turn on", onAction = {})
     }
 }

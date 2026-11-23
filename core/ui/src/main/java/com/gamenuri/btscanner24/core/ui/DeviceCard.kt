@@ -1,40 +1,47 @@
 package com.gamenuri.btscanner24.core.ui
 
-import android.text.format.DateFormat
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Badge
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.gamenuri.btscanner24.core.designsystem.theme.FindBTTheme
+import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
 import com.gamenuri.btscanner24.core.model.BleDevice
+import com.gamenuri.btscanner24.core.model.DeviceCategory
 import com.gamenuri.btscanner24.core.model.SignalLevel
-import java.util.Date
+import java.util.Locale
+import kotlin.math.roundToInt
 
+/**
+ * One row of the device list (design home-v3): type icon, name with NEW badge, "Maker · Type",
+ * and on the right signal bars with the approximate distance. Gone devices stay in place, dimmed.
+ * The MAC address and raw RSSI live on the detail and Advanced screens, not here.
+ */
 @Composable
 fun DeviceCard(
     device: BleDevice,
     modifier: Modifier = Modifier,
     isNew: Boolean = false,
     isGone: Boolean = false,
+    distanceMeters: Double? = null,
     onClick: (() -> Unit)? = null,
 ) {
-    val context = LocalContext.current
-    // Locale-aware time format (12h/24h follows the user's system setting).
-    val timeFormat = remember(context) { DateFormat.getTimeFormat(context) }
     val signal = stringResource(
         when (device.signalLevel) {
             SignalLevel.STRONG -> R.string.signal_strong
@@ -42,57 +49,68 @@ fun DeviceCard(
             SignalLevel.WEAK -> R.string.signal_weak
         },
     )
-
-    // Devices not heard from recently stay in place but dimmed, so they don't look "nearby".
+    val maker = device.manufacturer ?: stringResource(R.string.manufacturer_unknown)
     val cardModifier = modifier.fillMaxWidth().alpha(if (isGone) 0.45f else 1f)
+    val colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
     val content: @Composable ColumnScope.() -> Unit = {
-        Column(modifier = Modifier.padding(10.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = device.name?.takeIf { device.hasName } ?: stringResource(R.string.device_unnamed),
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.weight(1f, fill = false),
-                )
-                if (isNew) {
-                    Badge(modifier = Modifier.padding(start = 6.dp)) { Text(stringResource(R.string.badge_new)) }
-                }
-                if (isGone) {
+        Row(
+            modifier = Modifier.heightIn(min = 64.dp).padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            DeviceIcon(device.category)
+            Spacer(Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = stringResource(R.string.device_gone),
-                        style = MaterialTheme.typography.labelSmall,
-                        modifier = Modifier.padding(start = 6.dp),
+                        text = device.name?.takeIf { device.hasName } ?: stringResource(R.string.device_unnamed),
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false),
                     )
+                    if (isNew) {
+                        Badge(modifier = Modifier.padding(start = 6.dp)) { Text(stringResource(R.string.badge_new)) }
+                    }
                 }
+                Text(
+                    text = stringResource(R.string.device_maker_type, maker, device.category.label()),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
             }
-            Text(device.address, style = MaterialTheme.typography.labelSmall)
-            val maker = device.manufacturer ?: stringResource(R.string.manufacturer_unknown)
-            Text(
-                "${device.category.label()}  |  $maker",
-                style = MaterialTheme.typography.labelSmall,
-            )
-            Text(
-                stringResource(
-                    R.string.device_signal_line,
-                    device.rssi,
-                    signal,
-                    timeFormat.format(Date(device.firstSeen)),
-                ),
-                style = MaterialTheme.typography.labelSmall,
-            )
+            Spacer(Modifier.width(8.dp))
+            Column(horizontalAlignment = Alignment.End) {
+                SignalBars(level = device.signalLevel, label = signal, inactive = isGone)
+                Text(
+                    text = when {
+                        isGone -> stringResource(R.string.device_gone)
+                        distanceMeters != null -> stringResource(R.string.device_distance, formatMeters(distanceMeters))
+                        else -> signal
+                    },
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
     if (onClick != null) {
-        Card(onClick = onClick, modifier = cardModifier, content = content)
+        Card(onClick = onClick, modifier = cardModifier, colors = colors, content = content)
     } else {
-        Card(modifier = cardModifier, content = content)
+        Card(modifier = cardModifier, colors = colors, content = content)
     }
 }
+
+/** "~0.8" under 2 m, whole metres above: anything more precise would be false precision. */
+fun formatMeters(meters: Double): String =
+    if (meters < 2.0) String.format(Locale.getDefault(), "%.1f", meters) else meters.roundToInt().toString()
 
 @Preview(name = "Light")
 @Preview(name = "Dark", uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
 @Composable
 private fun DeviceCardPreview() {
-    FindBTTheme(dynamicColor = false) {
+    NearoTheme {
         DeviceCard(
             device = BleDevice(
                 address = "AA:BB:CC:DD:EE:FF",
@@ -101,7 +119,10 @@ private fun DeviceCardPreview() {
                 firstSeen = 0,
                 lastSeen = 0,
                 manufacturer = "Samsung",
+                category = DeviceCategory.EARBUDS,
             ),
+            isNew = true,
+            distanceMeters = 1.2,
         )
     }
 }
