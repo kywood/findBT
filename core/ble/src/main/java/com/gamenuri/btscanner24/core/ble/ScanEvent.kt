@@ -15,6 +15,9 @@ enum class ScanFailure {
     /** Bluetooth is turned off. */
     BLUETOOTH_OFF,
 
+    /** Android 11 and below: the system Location setting is off, so scans return nothing. */
+    LOCATION_OFF,
+
     /** Required runtime permission is missing. */
     PERMISSION_MISSING,
 

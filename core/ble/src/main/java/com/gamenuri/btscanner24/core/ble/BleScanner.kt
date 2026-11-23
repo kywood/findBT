@@ -9,9 +9,11 @@ import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
 import android.content.Context
 import android.content.pm.PackageManager
+import android.location.LocationManager
 import android.os.Build
 import android.os.SystemClock
 import androidx.core.content.ContextCompat
+import androidx.core.location.LocationManagerCompat
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -36,6 +38,15 @@ class BleScanner(context: Context) {
     val isEnabled: Boolean
         get() = adapter?.isEnabled == true
 
+    /**
+     * Android 11 and below deliver no scan results while the system Location setting is off, even
+     * with every permission granted (Android 12+ uses BLUETOOTH_SCAN with neverForLocation instead).
+     */
+    val isLocationOffBlockingScan: Boolean
+        get() = Build.VERSION.SDK_INT < Build.VERSION_CODES.S &&
+            appContext.getSystemService(LocationManager::class.java)
+                ?.let { !LocationManagerCompat.isLocationEnabled(it) } == true
+
     fun hasScanPermission(): Boolean = requiredPermissions().all {
         ContextCompat.checkSelfPermission(appContext, it) == PackageManager.PERMISSION_GRANTED
     }
@@ -55,6 +66,7 @@ class BleScanner(context: Context) {
             !isSupported -> ScanFailure.NOT_SUPPORTED
             !hasScanPermission() -> ScanFailure.PERMISSION_MISSING
             !isEnabled -> ScanFailure.BLUETOOTH_OFF
+            isLocationOffBlockingScan -> ScanFailure.LOCATION_OFF
             else -> null
         }
         val scanner = adapter?.bluetoothLeScanner

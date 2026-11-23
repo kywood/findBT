@@ -19,6 +19,7 @@
     <string name="error_bluetooth_off">Bluetooth is off.</string>
     <string name="error_not_supported">This device does not support Bluetooth Low Energy.</string>
     <string name="error_too_frequent">Scanning was restarted too often. Wait a few seconds and try again.</string>
+    <string name="error_location_off">Location is off. On this Android version Bluetooth scanning needs Location turned on.</string>
     <string name="error_scan_failed">The scan could not start.</string>
     <string name="action_search">Search</string>
     <string name="action_close_search">Close search</string>
