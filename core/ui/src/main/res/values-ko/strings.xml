@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_unnamed">이름 없는 기기</string>
+    <string name="device_signal_line">RSSI %1$d dBm (%2$s) · 발견 %3$s</string>
+    <string name="signal_strong">강함</string>
+    <string name="signal_medium">보통</string>
+    <string name="signal_weak">약함</string>
+</resources>
