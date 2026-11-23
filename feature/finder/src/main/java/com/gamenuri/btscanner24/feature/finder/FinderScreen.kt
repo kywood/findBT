@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -138,7 +139,7 @@ fun FinderContent(state: FinderUiState, actions: FinderActions, modifier: Modifi
         contentColor = content,
         topBar = {
             CenterAlignedTopAppBar(
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color.Transparent,
                     titleContentColor = content,
                     navigationIconContentColor = content,
@@ -346,7 +347,10 @@ private fun findColorsFor(state: FinderUiState): FindStateColors {
 @Composable
 private fun AdvancedSection(info: AdvancedInfo) {
     var expanded by rememberSaveable { mutableStateOf(false) }
-    TextButton(onClick = { expanded = !expanded }) { Text(stringResource(R.string.finder_advanced)) }
+    // Content colour, not the theme's purple: it must read on every state background.
+    TextButton(onClick = { expanded = !expanded }, modifier = Modifier.navigationBarsPadding()) {
+        Text(stringResource(R.string.finder_advanced), color = LocalContentColor.current)
+    }
     if (expanded) {
         Text(
             text = stringResource(

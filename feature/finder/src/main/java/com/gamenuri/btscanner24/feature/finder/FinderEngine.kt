@@ -39,6 +39,7 @@ internal class FinderEngine(
     private var hadDirection = false
     private var rightHereSinceMs: Long? = null
     private var shownDistance: Double? = null
+    private var listDistance: Double? = null
     private var shownAtMs: Long = Long.MIN_VALUE
 
     /** @return true when the sighting belonged to the target. */
@@ -49,6 +50,8 @@ internal class FinderEngine(
         if (next is DeviceLabel.Named || label is DeviceLabel.Generic) label = next
         val newReading = proximity.add(device.rssi, nowMs, device.txPower)
         reading = newReading
+        // Show the repository's per-device estimate when it has one, so the number matches the list (#21).
+        listDistance = device.distanceMeters
         lastSightingMs = nowMs
         rightHereSinceMs = if (newReading.band == ProximityBand.RIGHT_HERE) rightHereSinceMs ?: nowMs else null
         return true
@@ -95,7 +98,7 @@ internal class FinderEngine(
             arrowDegrees = relative?.takeIf { showArrow }?.toFloat(),
             confidence = if (showArrow) confidenceFor(est, current) else ArrowConfidence.NONE,
             sweepProgress = est?.sweepProgress ?: 0f,
-            distanceMeters = shownDistance(nowMs, current?.distanceMeters),
+            distanceMeters = shownDistance(nowMs, listDistance ?: current?.distanceMeters),
             band = current?.band,
             heat = current?.heat ?: 0f,
             trend = current?.trend ?: ProximityTrend.STEADY,
