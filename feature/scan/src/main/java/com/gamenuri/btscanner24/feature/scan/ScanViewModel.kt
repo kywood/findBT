@@ -10,13 +10,13 @@ import com.gamenuri.btscanner24.core.ble.BleScanner
 import com.gamenuri.btscanner24.core.ble.DeviceRepository
 import com.gamenuri.btscanner24.core.ble.ScanEvent
 import com.gamenuri.btscanner24.core.ble.ScanFailure
-import com.gamenuri.btscanner24.core.ble.proximity.ProximityEstimator
 import com.gamenuri.btscanner24.core.data.DataDependenciesProvider
 import com.gamenuri.btscanner24.core.data.ListPreferencesRepository
 import com.gamenuri.btscanner24.core.model.BleDevice
 import com.gamenuri.btscanner24.core.model.CategoryGroup
 import com.gamenuri.btscanner24.core.model.DeviceSort
 import com.gamenuri.btscanner24.core.model.ListPreferences
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -91,7 +91,8 @@ class ScanViewModel(
             return
         }
         status.value = ScanStatus.Scanning
-        scanJob = viewModelScope.launch {
+        // Parsing and the company-table lookup are too heavy for the main thread (cold-start jank, #34).
+        scanJob = viewModelScope.launch(Dispatchers.Default) {
             scanner.scan().collect { event ->
                 when (event) {
                     is ScanEvent.Result -> repository.onScanResult(event.result)
@@ -179,8 +180,6 @@ class ScanViewModel(
  * advertisements arrives, so a fresh scan does not show every device as "new".
  */
 internal class OrderingState {
-    // Only the path-loss formula is used here; find mode keeps its own filtered estimator.
-    private val distanceModel = ProximityEstimator()
     private var displayedOrder: List<String> = emptyList()
     private var settleUntil: Long = 0
     private var sortedAddresses: Set<String> = emptySet()
@@ -213,7 +212,7 @@ internal class OrderingState {
                 device = device,
                 isNew = device.address !in sortedAddresses,
                 isGone = DeviceListOrdering.isGone(device, now),
-                distanceMeters = distanceModel.distanceFor(device.smoothedRssi, device.txPower),
+                distanceMeters = device.distanceMeters,
             )
         }
         val reorderAvailable = !fullSort && sorted.map { it.address } != displayedOrder

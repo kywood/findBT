@@ -48,6 +48,8 @@ dependencies {
     implementation(projects.core.ble)
     implementation(projects.core.data)
     implementation(projects.core.designsystem)
+    implementation(projects.core.ui)
+    implementation(projects.feature.devices)
     implementation(projects.feature.finder)
     implementation(projects.feature.scan)
 

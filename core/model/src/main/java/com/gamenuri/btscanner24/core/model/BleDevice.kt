@@ -7,8 +7,13 @@ data class BleDevice(
     val address: String,
     val name: String?,
     val rssi: Int,
-    /** RSSI after exponential smoothing; used for "nearest" sorting so the order does not jitter. */
+    /**
+     * Kalman-smoothed RSSI, the same filter find mode uses; drives "nearest" sorting, signal bars and
+     * [distanceMeters] so the list and the find screen agree.
+     */
     val smoothedRssi: Double = rssi.toDouble(),
+    /** Approximate distance from [smoothedRssi]; null until the repository has estimated it. */
+    val distanceMeters: Double? = null,
     val firstSeen: Long,
     val lastSeen: Long,
     /** Company name from Bluetooth SIG data, null while unknown. */
@@ -27,8 +32,8 @@ data class BleDevice(
 
     val signalLevel: SignalLevel
         get() = when {
-            rssi >= -60 -> SignalLevel.STRONG
-            rssi >= -75 -> SignalLevel.MEDIUM
+            smoothedRssi >= -60 -> SignalLevel.STRONG
+            smoothedRssi >= -75 -> SignalLevel.MEDIUM
             else -> SignalLevel.WEAK
         }
 }

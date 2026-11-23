@@ -9,9 +9,6 @@ import com.gamenuri.btscanner24.core.model.DeviceCategory
 /** Converts a platform [ScanResult] into a [BleDevice], keeping what earlier packets already told us. */
 object ScanResultMapper {
 
-    /** Weight of the newest sample in the list RSSI average (find mode has its own estimator). */
-    private const val RSSI_ALPHA = 0.3
-
     @SuppressLint("MissingPermission")
     fun map(result: ScanResult, previous: BleDevice?, now: Long, companies: CompanyDirectory): BleDevice {
         val rawBytes = result.scanRecord?.bytes
@@ -31,8 +28,9 @@ object ScanResultMapper {
             address = result.device.address,
             name = name,
             rssi = result.rssi,
-            smoothedRssi = previous?.let { it.smoothedRssi + RSSI_ALPHA * (result.rssi - it.smoothedRssi) }
-                ?: result.rssi.toDouble(),
+            // Replaced by the repository's per-device Kalman filter; keep the last estimate meanwhile.
+            smoothedRssi = previous?.smoothedRssi ?: result.rssi.toDouble(),
+            distanceMeters = previous?.distanceMeters,
             firstSeen = previous?.firstSeen ?: now,
             lastSeen = now,
             manufacturer = parsed.manufacturer,

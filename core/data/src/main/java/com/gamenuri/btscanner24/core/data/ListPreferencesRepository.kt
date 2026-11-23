@@ -56,4 +56,5 @@ class ListPreferencesRepository(private val store: DataStore<Preferences>) {
 /** Implemented by the Application; ViewModel factories read data dependencies through it. */
 interface DataDependenciesProvider {
     val listPreferences: ListPreferencesRepository
+    val hiddenDevices: HiddenDevicesRepository
 }

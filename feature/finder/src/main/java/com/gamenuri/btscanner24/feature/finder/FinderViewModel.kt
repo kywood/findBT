@@ -11,6 +11,7 @@ import com.gamenuri.btscanner24.core.ble.DeviceRepository
 import com.gamenuri.btscanner24.core.ble.ScanEvent
 import com.gamenuri.btscanner24.core.model.BleDevice
 import com.gamenuri.btscanner24.core.sensors.MotionSensor
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -58,7 +59,8 @@ class FinderViewModel(
         job = viewModelScope.launch {
             // Subscribe to sightings before the scan starts so no early advertisement is missed.
             launch { repository.sightings.collect { engine.onSighting(it, clock()) } }
-            launch {
+            // Parsing runs off the main thread; the engine itself stays on Main with the sensor collector.
+            launch(Dispatchers.Default) {
                 scanner.scan().collect { event ->
                     if (event is ScanEvent.Result) repository.onScanResult(event.result)
                 }

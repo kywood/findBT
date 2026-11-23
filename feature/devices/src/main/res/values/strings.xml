@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="devices_title">My devices</string>
+    <string name="devices_section_nearby">Nearby now</string>
+    <string name="devices_section_not_nearby">Not nearby</string>
+    <string name="devices_others">Other paired devices (%1$d)</string>
+    <string name="devices_last_seen_now">Seen just now</string>
+    <string name="devices_last_seen_minutes">Last seen: %1$d min</string>
+    <string name="devices_not_seen">Paired · not seen yet</string>
+    <string name="devices_more">More</string>
+    <string name="devices_hide">Hide from list</string>
+    <string name="devices_empty_title">No paired devices</string>
+    <string name="devices_empty_body">Devices paired with this phone appear here automatically.</string>
+    <string name="devices_open_bluetooth_settings">Pair in Bluetooth settings</string>
+    <string name="devices_permission_body">Allow Nearby devices to see the devices paired with this phone.</string>
+    <string name="devices_permission_action">Allow</string>
+</resources>
