@@ -45,7 +45,6 @@ import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Badge
-import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
@@ -76,6 +75,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
@@ -355,6 +355,8 @@ private fun StatusText(state: ScanUiState) {
         val filtered = state.activeFilterCount > 0 || state.query.isNotBlank()
         Text(
             text = when {
+                filtered && state.isPaused ->
+                    stringResource(R.string.scan_status_paused_filtered, shown, state.totalCount)
                 filtered -> stringResource(R.string.scan_status_filtered, shown, state.totalCount)
                 state.isPaused -> stringResource(R.string.scan_status_paused, state.totalCount)
                 else -> stringResource(R.string.scan_status_nearby, state.totalCount)
@@ -435,9 +437,17 @@ private fun FilterButton(count: Int, onClick: () -> Unit) {
         stringResource(R.string.filter_title)
     }
     if (count > 0) {
-        BadgedBox(badge = { Badge { Text(count.toString()) } }) {
-            FilledTonalIconButton(onClick = onClick, modifier = Modifier.size(40.dp)) {
+        // The count sits inside the button in primary colours; red would read as an error (#89).
+        Box(Modifier.size(FILTER_BUTTON)) {
+            FilledTonalIconButton(onClick = onClick, modifier = Modifier.fillMaxSize()) {
                 Icon(Icons.Default.Tune, contentDescription = description)
+            }
+            Badge(
+                modifier = Modifier.align(Alignment.TopEnd).padding(top = 2.dp, end = 2.dp).size(15.dp),
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+            ) {
+                Text(count.toString(), style = MaterialTheme.typography.labelSmall)
             }
         }
     } else {
@@ -447,77 +457,11 @@ private fun FilterButton(count: Int, onClick: () -> Unit) {
     }
 }
 
-@Composable
-private fun DeviceList(
-    state: ScanUiState,
-    permissionBanner: PermissionBanner?,
-    error: ScanFailure?,
-    actions: ScanActions,
-    listState: LazyListState,
-    modifier: Modifier = Modifier,
-) {
-    LazyColumn(
-        modifier = modifier,
-        state = listState,
-        contentPadding = PaddingValues(bottom = 16.dp),
-    ) {
-        // Permission and error banners stay the first list item (design home-header-v4 §6).
-        permissionBanner?.let { banner ->
-            item(key = "permission") {
-                StatusBanner(
-                    message = stringResource(
-                        when (banner) {
-                            PermissionBanner.OPEN_SETTINGS -> R.string.permission_denied_settings
-                            PermissionBanner.ASK_AGAIN -> R.string.permission_rationale
-                        },
-                    ),
-                    actionLabel = stringResource(
-                        when (banner) {
-                            PermissionBanner.OPEN_SETTINGS -> R.string.action_open_settings
-                            PermissionBanner.ASK_AGAIN -> R.string.action_allow
-                        },
-                    ),
-                    onAction = actions.onPermissionAction,
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                )
-            }
-        }
-        error?.let { reason ->
-            item(key = "error") { ScanErrorBanner(reason, actions, Modifier.padding(horizontal = 16.dp)) }
-        }
-        if (state.items.isEmpty() && state.isScanning) {
-            item(key = "searching") {
-                Text(
-                    text = stringResource(R.string.scan_searching),
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 48.dp),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                )
-            }
-        }
-        // Stable keys keep each row attached to its device; rows only move on a full sort.
-        items(state.items, key = { it.device.address }) { item ->
-            DeviceCard(
-                device = item.device,
-                label = item.label,
-                showSuffix = item.showSuffix,
-                isPaired = item.isPaired,
-                isNew = item.isNew,
-                isGone = item.isGone,
-                distanceMeters = item.distanceMeters,
-                onClick = { actions.onDeviceClick(item.device) },
-                modifier = Modifier.animateItem(),
-            )
-        }
-    }
-}
-
 /** Type chips (multi-select, "All" clears them) and two switches; changes apply at once. */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 private fun FilterSheet(prefs: ListPreferences, actions: ScanActions, onDismiss: () -> Unit) {
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    ModalBottomSheet(onDismissRequest = onDismiss, scrimColor = Color.Black.copy(alpha = SCRIM_ALPHA)) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
             Text(stringResource(R.string.filter_title), style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(16.dp))
@@ -609,6 +553,8 @@ private fun DeviceSort.labelRes(): Int = when (this) {
 
 private const val PULSE_MS = 1_000
 private const val CHIP_FADE_MS = 150
+private const val SCRIM_ALPHA = 0.32f
+private val FILTER_BUTTON = 34.dp
 private const val REORDER_AUTO_MS = 8_000L
 
 @Composable

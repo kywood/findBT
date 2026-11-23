@@ -28,7 +28,8 @@
     <!-- Home header v4 (#62) -->
     <string name="scan_status_nearby">%1$d nearby</string>
     <string name="scan_status_paused">Paused · %1$d</string>
-    <string name="scan_status_filtered">%1$d / %2$d</string>
+    <string name="scan_status_filtered">%1$d of %2$d</string>
+    <string name="scan_status_paused_filtered">Paused · %1$d of %2$d</string>
     <string name="scan_searching">Looking for devices nearby…</string>
     <string name="action_pause_scan">Pause scan</string>
     <string name="action_resume_scan">Resume scan</string>

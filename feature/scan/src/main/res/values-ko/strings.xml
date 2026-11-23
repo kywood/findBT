@@ -29,6 +29,7 @@
     <string name="scan_status_nearby">주변 %1$d개</string>
     <string name="scan_status_paused">일시정지 · %1$d개</string>
     <string name="scan_status_filtered">%1$d / %2$d개</string>
+    <string name="scan_status_paused_filtered">일시정지 · %1$d / %2$d개</string>
     <string name="scan_searching">주변에서 찾는 중…</string>
     <string name="action_pause_scan">스캔 일시정지</string>
     <string name="action_resume_scan">스캔 다시 시작</string>

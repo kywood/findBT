@@ -124,6 +124,10 @@ private fun WithLocale(languageTag: String?, content: @Composable () -> Unit) {
     }
     // A wrapper (not createConfigurationContext alone) keeps the Activity reachable for permission launchers.
     val context = remember(languageTag) {
+        // Bottom sheets and dialogs are separate windows that read the Activity's own resources, so
+        // the language is set there too; otherwise the filter sheet stays in the phone's language (#89).
+        @Suppress("DEPRECATION")
+        base.resources.updateConfiguration(configuration, base.resources.displayMetrics)
         val localized = base.createConfigurationContext(configuration)
         object : ContextWrapper(base) {
             override fun getResources(): Resources = localized.resources

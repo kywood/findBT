@@ -26,7 +26,8 @@
     <string name="empty_location_off_title">La ubicación está desactivada</string>
     <string name="scan_status_nearby">%1$d cerca</string>
     <string name="scan_status_paused">En pausa · %1$d</string>
-    <string name="scan_status_filtered">%1$d / %2$d</string>
+    <string name="scan_status_filtered">%1$d de %2$d</string>
+    <string name="scan_status_paused_filtered">En pausa · %1$d de %2$d</string>
     <string name="scan_searching">Buscando dispositivos cercanos…</string>
     <string name="action_pause_scan">Pausar búsqueda</string>
     <string name="action_resume_scan">Reanudar búsqueda</string>
