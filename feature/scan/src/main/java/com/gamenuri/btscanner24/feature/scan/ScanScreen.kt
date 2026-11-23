@@ -54,7 +54,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.gamenuri.btscanner24.core.ble.BleScanner
 import com.gamenuri.btscanner24.core.ble.ScanFailure
 import com.gamenuri.btscanner24.core.designsystem.component.StatusBanner
-import com.gamenuri.btscanner24.core.designsystem.theme.FindBTTheme
+import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
 import com.gamenuri.btscanner24.core.model.BleDevice
 import com.gamenuri.btscanner24.core.model.CategoryGroup
 import com.gamenuri.btscanner24.core.model.DeviceSort
@@ -346,7 +346,7 @@ private fun ScanContentPreview() {
         lastSeen = lastSeen,
         manufacturer = "Samsung",
     )
-    FindBTTheme(dynamicColor = false) {
+    NearoTheme {
         ScanContent(
             title = "Nearo",
             state = ScanUiState(
