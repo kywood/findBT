@@ -27,7 +27,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -35,6 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.gamenuri.btscanner24.core.designsystem.theme.FoundColors
 import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
 import com.gamenuri.btscanner24.core.model.DeviceLabel
 import com.gamenuri.btscanner24.core.model.NameSource
@@ -47,7 +47,7 @@ import com.gamenuri.btscanner24.core.ui.text
  */
 @Composable
 fun FoundContent(label: DeviceLabel, elapsedSeconds: Int, onDone: () -> Unit, modifier: Modifier = Modifier) {
-    val colors = NearoTheme.colors.findHere
+    val colors = NearoTheme.colors.found
     CompositionLocalProvider(LocalContentColor provides colors.content) {
         Column(
             modifier = modifier
@@ -62,7 +62,7 @@ fun FoundContent(label: DeviceLabel, elapsedSeconds: Int, onDone: () -> Unit, mo
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {
-                CheckHero(colors.content)
+                CheckHero(colors)
                 Spacer(Modifier.height(28.dp))
                 Text(
                     text = stringResource(R.string.found_title),
@@ -80,7 +80,10 @@ fun FoundContent(label: DeviceLabel, elapsedSeconds: Int, onDone: () -> Unit, mo
             Button(
                 onClick = onDone,
                 modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = colors.content, contentColor = colors.background),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = colors.buttonContainer,
+                    contentColor = colors.buttonContent,
+                ),
             ) {
                 Text(stringResource(R.string.found_done), fontWeight = FontWeight.SemiBold)
             }
@@ -88,9 +91,10 @@ fun FoundContent(label: DeviceLabel, elapsedSeconds: Int, onDone: () -> Unit, mo
     }
 }
 
-/** White 84 dp circle with a check, inside two rings (110 and 150 dp) at 25 % of the content colour. */
+/** 84 dp circle with a check, inside two rings (110 and 150 dp) at 25 % of the content colour. */
 @Composable
-private fun CheckHero(content: Color) {
+private fun CheckHero(colors: FoundColors) {
+    val content = colors.content
     Box(modifier = Modifier.size(150.dp), contentAlignment = Alignment.Center) {
         Canvas(Modifier.fillMaxSize()) {
             val ring = content.copy(alpha = 0.25f)
@@ -100,9 +104,19 @@ private fun CheckHero(content: Color) {
             drawCircle(content.copy(alpha = 0.06f), radius = 55.dp.toPx())
             drawCircle(ring, radius = 55.dp.toPx(), style = stroke)
         }
-        Surface(shape = CircleShape, color = Color.White, shadowElevation = 3.dp, modifier = Modifier.size(84.dp)) {
+        Surface(
+            shape = CircleShape,
+            color = colors.heroCircle,
+            shadowElevation = 3.dp,
+            modifier = Modifier.size(84.dp),
+        ) {
             Box(contentAlignment = Alignment.Center) {
-                Icon(Icons.Filled.Check, contentDescription = null, tint = content, modifier = Modifier.size(44.dp))
+                Icon(
+                    Icons.Filled.Check,
+                    contentDescription = null,
+                    tint = colors.check,
+                    modifier = Modifier.size(44.dp),
+                )
             }
         }
     }

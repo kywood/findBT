@@ -8,6 +8,18 @@ import androidx.compose.ui.graphics.Color
 @Immutable
 data class FindStateColors(val background: Color, val content: Color)
 
+/** "Found it!" screen (#70). Its own token so the palette can change (#77) without touching layout. */
+@Immutable
+data class FoundColors(
+    val background: Color,
+    /** Title, summary and the rings around the check. */
+    val content: Color,
+    val heroCircle: Color,
+    val check: Color,
+    val buttonContainer: Color,
+    val buttonContent: Color,
+)
+
 /** Colours Material's scheme has no slot for: find-screen states and signal strength. */
 @Immutable
 data class NearoColors(
@@ -17,6 +29,7 @@ data class NearoColors(
     val findVeryClose: FindStateColors,
     val findHere: FindStateColors,
     val findLost: FindStateColors,
+    val found: FoundColors,
     val signalStrong: Color,
     val signalMedium: Color,
     val signalWeak: Color,
@@ -31,6 +44,14 @@ private val findColors = NearoColors(
     findVeryClose = FindStateColors(Color(0xFF00A88A), Color(0xFFFFFFFF)),
     findHere = FindStateColors(Color(0xFF2EE6A0), Color(0xFF00391F)),
     findLost = FindStateColors(Color(0xFF2A2D34), Color(0xFFC5C6D0)),
+    found = FoundColors(
+        background = Color(0xFF2EE6A0),
+        content = Color(0xFF00391F),
+        heroCircle = Color(0xFFFFFFFF),
+        check = Color(0xFF00391F),
+        buttonContainer = Color(0xFF00391F),
+        buttonContent = Color(0xFF2EE6A0),
+    ),
     signalStrong = Color.Unspecified,
     signalMedium = Color.Unspecified,
     signalWeak = Color.Unspecified,
