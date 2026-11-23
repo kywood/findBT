@@ -253,6 +253,7 @@ fun ScanContent(
                         device = item.device,
                         isNew = item.isNew,
                         isGone = item.isGone,
+                        distanceMeters = item.distanceMeters,
                         onClick = { actions.onDeviceClick(item.device) },
                         modifier = Modifier.animateItem(),
                     )

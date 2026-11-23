@@ -17,6 +17,8 @@ data class DeviceListItem(
     val isNew: Boolean,
     /** Not heard from for [DeviceListOrdering.GONE_AFTER_MS]; shown dimmed. */
     val isGone: Boolean,
+    /** Rough distance from the smoothed signal, shown as "~3 m". */
+    val distanceMeters: Double? = null,
 )
 
 data class ScanUiState(
