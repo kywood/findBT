@@ -1,10 +1,10 @@
 package com.gamenuri.btscanner24.core.sensors
 
+import kotlin.math.PI
+import kotlin.math.sin
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import kotlin.math.PI
-import kotlin.math.sin
 
 class WalkingDetectorTest {
 

@@ -2,12 +2,12 @@ package com.gamenuri.btscanner24.core.sensors
 
 import com.gamenuri.btscanner24.core.sensors.BearingEstimator.Confidence
 import com.gamenuri.btscanner24.core.sensors.BearingEstimator.Phase
+import kotlin.math.abs
+import kotlin.math.cos
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import kotlin.math.abs
-import kotlin.math.cos
 
 class BearingEstimatorTest {
 

@@ -35,8 +35,10 @@ class BearingEstimator(private val config: Config = Config()) {
     enum class Phase {
         /** Spin in place: collecting RSSI per heading. */
         SWEEP,
+
         /** Sweep done: ask the user to walk in the arrow direction. */
         WALK,
+
         /** RSSI rose while walking along the estimate. */
         LOCKED,
     }
@@ -44,8 +46,10 @@ class BearingEstimator(private val config: Config = Config()) {
     enum class Confidence {
         /** Arrow drawn with a narrow sector (about ±25°). */
         HIGH,
+
         /** Arrow drawn with a wide sector (about ±45°). */
         MEDIUM,
+
         /** Arrow hidden; distance and trend only. */
         NONE,
     }

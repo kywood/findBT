@@ -2,12 +2,12 @@ package com.gamenuri.btscanner24.feature.finder
 
 import com.gamenuri.btscanner24.core.model.BleDevice
 import com.gamenuri.btscanner24.core.sensors.MotionSample
+import kotlin.math.cos
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import kotlin.math.cos
 
 class FinderEngineTest {
 

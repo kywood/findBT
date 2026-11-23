@@ -59,10 +59,7 @@ data class DeviceFingerprint(
  * Follows one target device through MAC rotations. Feed every scanned device; [isTarget] says
  * whether a sighting belongs to the target and adopts a new address when the current one is silent.
  */
-class TargetTracker(
-    initial: BleDevice,
-    private val silenceBeforeSwitchMs: Long = 3_000,
-) {
+class TargetTracker(initial: BleDevice, private val silenceBeforeSwitchMs: Long = 3_000) {
     var address: String = initial.address
         private set
     private val fingerprint = DeviceFingerprint.of(initial)

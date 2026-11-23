@@ -7,20 +7,28 @@ import com.gamenuri.btscanner24.core.ble.proximity.ProximityTrend
 enum class FinderStage {
     /** No advertisement from the target yet. */
     WAITING,
+
     /** Turn a full circle; the needle spins and the ring shows progress. */
     SPIN,
+
     /** Direction found during the spin, then lost: spin again. */
     SPIN_AGAIN,
+
     /** Direction estimated: walk toward the arrow. */
     WALK,
+
     /** Signal rose while walking along the arrow. */
     LOCKED,
+
     /** The device is behind the user (arrow more than 135° off). */
     TURN_AROUND,
+
     /** Under 0.5 m for 2 s: dot and rings instead of an arrow. */
     RIGHT_HERE,
+
     /** No advertisement for a while. */
     SIGNAL_LOST,
+
     /** Phone has no rotation sensor: distance and trend only. */
     NO_COMPASS,
 }
@@ -58,8 +66,10 @@ data class AdvancedInfo(
 enum class FinderEvent {
     /** Spin finished and an arrow appeared: one short vibration. */
     DIRECTION_FOUND,
+
     /** Direction locked: two short vibrations. */
     LOCKED,
+
     /** Arrow flipped behind the user, or direction lost. */
     DIRECTION_CHANGED,
 }
