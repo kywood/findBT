@@ -22,6 +22,11 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Installs next to the Play Store build on test phones; release applicationId is unchanged.
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
