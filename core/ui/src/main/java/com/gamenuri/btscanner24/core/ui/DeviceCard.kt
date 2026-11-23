@@ -2,6 +2,7 @@ package com.gamenuri.btscanner24.core.ui
 
 import android.text.format.DateFormat
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -24,7 +25,13 @@ import com.gamenuri.btscanner24.core.model.SignalLevel
 import java.util.Date
 
 @Composable
-fun DeviceCard(device: BleDevice, modifier: Modifier = Modifier, isNew: Boolean = false, isGone: Boolean = false) {
+fun DeviceCard(
+    device: BleDevice,
+    modifier: Modifier = Modifier,
+    isNew: Boolean = false,
+    isGone: Boolean = false,
+    onClick: (() -> Unit)? = null,
+) {
     val context = LocalContext.current
     // Locale-aware time format (12h/24h follows the user's system setting).
     val timeFormat = remember(context) { DateFormat.getTimeFormat(context) }
@@ -37,7 +44,8 @@ fun DeviceCard(device: BleDevice, modifier: Modifier = Modifier, isNew: Boolean 
     )
 
     // Devices not heard from recently stay in place but dimmed, so they don't look "nearby".
-    Card(modifier = modifier.fillMaxWidth().alpha(if (isGone) 0.45f else 1f)) {
+    val cardModifier = modifier.fillMaxWidth().alpha(if (isGone) 0.45f else 1f)
+    val content: @Composable ColumnScope.() -> Unit = {
         Column(modifier = Modifier.padding(10.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
@@ -72,6 +80,11 @@ fun DeviceCard(device: BleDevice, modifier: Modifier = Modifier, isNew: Boolean 
                 style = MaterialTheme.typography.labelSmall,
             )
         }
+    }
+    if (onClick != null) {
+        Card(onClick = onClick, modifier = cardModifier, content = content)
+    } else {
+        Card(modifier = cardModifier, content = content)
     }
 }
 
