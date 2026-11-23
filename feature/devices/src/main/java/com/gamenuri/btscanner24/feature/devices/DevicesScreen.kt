@@ -2,6 +2,7 @@ package com.gamenuri.btscanner24.feature.devices
 
 import android.content.Intent
 import android.provider.Settings
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,8 +22,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -137,8 +136,8 @@ private fun DeviceSections(
     var othersOpen by rememberSaveable { mutableStateOf(false) }
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
+        // Plain full-width rows like the Nearby tab (design home-header-v4); headers keep the 16 dp inset.
+        contentPadding = PaddingValues(bottom = 16.dp),
     ) {
         if (state.nearby.isNotEmpty()) {
             item(key = "h-nearby") { SectionHeader(stringResource(R.string.devices_section_nearby)) }
@@ -150,7 +149,7 @@ private fun DeviceSections(
         }
         if (state.others.isNotEmpty()) {
             item(key = "h-others") {
-                TextButton(onClick = { othersOpen = !othersOpen }) {
+                TextButton(onClick = { othersOpen = !othersOpen }, modifier = Modifier.padding(horizontal = 4.dp)) {
                     Text(stringResource(R.string.devices_others, state.others.size))
                     Icon(
                         Icons.Filled.ArrowDropDown,
@@ -165,7 +164,7 @@ private fun DeviceSections(
         }
         // Trackers are not paired, so they never show up above on their own (design home-v3).
         item(key = "add-tracker") {
-            TextButton(onClick = onAddTracker, modifier = Modifier.padding(top = 8.dp)) {
+            TextButton(onClick = onAddTracker, modifier = Modifier.padding(start = 4.dp, top = 8.dp)) {
                 Icon(Icons.Filled.Add, contentDescription = null)
                 Text(stringResource(R.string.devices_add_tracker), modifier = Modifier.padding(start = 8.dp))
             }
@@ -179,67 +178,66 @@ private fun SectionHeader(text: String) {
         text = text,
         style = MaterialTheme.typography.labelLarge,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(top = 16.dp, bottom = 4.dp),
+        modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp),
     )
 }
 
 @Composable
 private fun PairedRow(item: MyDeviceItem, now: Long, onClick: (MyDeviceItem) -> Unit, onHide: (MyDeviceItem) -> Unit) {
     var menuOpen by remember { mutableStateOf(false) }
-    Card(
-        onClick = { onClick(item) },
-        modifier = Modifier.fillMaxWidth().alpha(if (item.isNearby) 1f else 0.7f),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick(item) }
+            .alpha(if (item.isNearby) 1f else 0.7f)
+            .heightIn(min = 64.dp)
+            .padding(start = 16.dp, top = 8.dp, bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(
-            modifier = Modifier.heightIn(min = 64.dp).padding(start = 12.dp, top = 10.dp, bottom = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            DeviceIcon(item.paired.category)
-            Spacer(Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    // A paired device with no name is rare; its type is enough here (no address suffix in My devices).
-                    text = item.paired.name?.takeIf { it.isNotBlank() } ?: item.paired.category.label(),
-                    style = MaterialTheme.typography.titleMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    text = subtitle(item, now),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-            val sighting = item.sighting
-            val meters = item.distanceMeters
-            if (item.isNearby && sighting != null) {
-                Column(horizontalAlignment = Alignment.End) {
-                    SignalBars(level = sighting.signalLevel, label = signalLabel(sighting.signalLevel))
-                    if (meters != null) {
-                        Text(
-                            text = distanceText(meters),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-            }
-            Box {
-                IconButton(onClick = { menuOpen = true }) {
-                    Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.devices_more))
-                }
-                DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.devices_hide)) },
-                        onClick = {
-                            menuOpen = false
-                            onHide(item)
-                        },
+        DeviceIcon(item.paired.category)
+        Spacer(Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                // A paired device with no name is rare; its type is enough here (no address suffix in My devices).
+                text = item.paired.name?.takeIf { it.isNotBlank() } ?: item.paired.category.label(),
+                style = MaterialTheme.typography.titleMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text = subtitle(item, now),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        val sighting = item.sighting
+        val meters = item.distanceMeters
+        if (item.isNearby && sighting != null) {
+            Column(horizontalAlignment = Alignment.End) {
+                SignalBars(level = sighting.signalLevel, label = signalLabel(sighting.signalLevel))
+                if (meters != null) {
+                    Text(
+                        text = distanceText(meters),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
+            }
+        }
+        Box {
+            IconButton(onClick = { menuOpen = true }) {
+                Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.devices_more))
+            }
+            DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.devices_hide)) },
+                    onClick = {
+                        menuOpen = false
+                        onHide(item)
+                    },
+                )
             }
         }
     }

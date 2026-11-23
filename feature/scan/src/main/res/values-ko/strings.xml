@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="action_start_scan">스캔 시작</string>
-    <string name="action_stop_scan">스캔 중지</string>
-    <string name="action_reset">초기화</string>
     <string name="action_retry">다시 시도</string>
     <string name="action_ok">확인</string>
     <string name="action_allow">허용</string>
@@ -10,9 +7,6 @@
     <string name="action_open_settings">설정</string>
     <string name="search_hint">이름 또는 제조사로 검색</string>
     <string name="filter_named_only">이름 있는 기기만</string>
-    <plurals name="devices_found">
-        <item quantity="other">기기 %d개 발견</item>
-    </plurals>
     <string name="permission_rationale">주변 기기를 찾으려면 블루투스 권한이 필요합니다.</string>
     <string name="permission_denied_settings">블루투스 권한이 꺼져 있습니다. 설정에서 켜 주세요.</string>
     <string name="error_bluetooth_off">블루투스가 꺼져 있습니다.</string>
@@ -22,7 +16,6 @@
     <string name="error_scan_failed">스캔을 시작하지 못했습니다.</string>
     <string name="action_search">검색</string>
     <string name="action_close_search">검색 닫기</string>
-    <string name="action_refresh_order">순서 새로고침</string>
     <string name="sort_menu">정렬</string>
     <string name="sort_nearest">가까운 순</string>
     <string name="sort_name">이름순</string>
@@ -32,4 +25,20 @@
     <string name="empty_bluetooth_off_title">블루투스가 꺼져 있어요</string>
     <string name="empty_bluetooth_off_body">블루투스를 켜면 주변 기기를 찾을 수 있어요.</string>
     <string name="empty_location_off_title">위치가 꺼져 있어요</string>
+    <!-- Home header v4 (#62) -->
+    <string name="scan_status_nearby">주변 %1$d개</string>
+    <string name="scan_status_paused">일시정지 · %1$d개</string>
+    <string name="scan_status_filtered">%1$d / %2$d개</string>
+    <string name="scan_searching">주변에서 찾는 중…</string>
+    <string name="action_pause_scan">스캔 일시정지</string>
+    <string name="action_resume_scan">스캔 다시 시작</string>
+    <string name="action_more">더보기</string>
+    <string name="action_clear_list">목록 지우기</string>
+    <string name="filter_title">필터</string>
+    <string name="filter_types">기기 종류</string>
+    <string name="filter_all">전체</string>
+    <string name="filter_reset">초기화</string>
+    <string name="filter_done">완료</string>
+    <string name="filter_active_description">필터, %1$d개 적용됨</string>
+    <string name="reorder_pill">↑ 순서 바뀜 · 눌러서 정렬</string>
 </resources>
