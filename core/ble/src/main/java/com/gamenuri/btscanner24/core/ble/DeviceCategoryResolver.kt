@@ -103,6 +103,7 @@ object DeviceCategoryResolver {
 
     /** "MiKetv11", "LG_TV", "tv-box": "tv" at a word end or followed by digits. */
     private val TV_TOKEN = Regex("tv(\\d|$|[^a-z])")
+
     /** Head units and car kits; paired cars usually report the car-audio class anyway. */
     private val CAR_NAMES = listOf("carplay", "carkit", "car kit", "car multimedia", "uconnect", "mbux", "my bmw")
 
