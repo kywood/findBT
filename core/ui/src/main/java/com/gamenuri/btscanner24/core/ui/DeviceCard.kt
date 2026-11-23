@@ -2,18 +2,18 @@ package com.gamenuri.btscanner24.core.ui
 
 import android.text.format.DateFormat
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Card
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.Alignment
 import androidx.compose.material3.Badge
-import androidx.compose.foundation.layout.Row
+import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -24,12 +24,7 @@ import com.gamenuri.btscanner24.core.model.SignalLevel
 import java.util.Date
 
 @Composable
-fun DeviceCard(
-    device: BleDevice,
-    modifier: Modifier = Modifier,
-    isNew: Boolean = false,
-    isGone: Boolean = false,
-) {
+fun DeviceCard(device: BleDevice, modifier: Modifier = Modifier, isNew: Boolean = false, isGone: Boolean = false) {
     val context = LocalContext.current
     // Locale-aware time format (12h/24h follows the user's system setting).
     val timeFormat = remember(context) { DateFormat.getTimeFormat(context) }
