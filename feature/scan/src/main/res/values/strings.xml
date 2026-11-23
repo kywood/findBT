@@ -29,4 +29,8 @@
     <string name="sort_name">Name</string>
     <string name="sort_recent">Recently found</string>
     <string name="filter_hide_gone">Hide gone</string>
+    <!-- Empty states (#30, design screens-rest-v3 §5) -->
+    <string name="empty_bluetooth_off_title">Bluetooth is off</string>
+    <string name="empty_bluetooth_off_body">Turn on Bluetooth to find devices around you.</string>
+    <string name="empty_location_off_title">Location is off</string>
 </resources>

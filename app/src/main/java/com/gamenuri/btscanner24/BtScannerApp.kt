@@ -6,6 +6,7 @@ import com.gamenuri.btscanner24.core.ble.BleScanner
 import com.gamenuri.btscanner24.core.ble.BondedDevices
 import com.gamenuri.btscanner24.core.ble.CompanyDirectory
 import com.gamenuri.btscanner24.core.ble.DeviceRepository
+import com.gamenuri.btscanner24.core.data.AppStateRepository
 import com.gamenuri.btscanner24.core.data.DataDependenciesProvider
 import com.gamenuri.btscanner24.core.data.HiddenDevicesRepository
 import com.gamenuri.btscanner24.core.data.ListPreferencesRepository
@@ -41,4 +42,6 @@ class BtScannerApp :
     override val listPreferences: ListPreferencesRepository by lazy { ListPreferencesRepository(this) }
 
     override val hiddenDevices: HiddenDevicesRepository by lazy { HiddenDevicesRepository(this) }
+
+    val appState: AppStateRepository by lazy { AppStateRepository(this) }
 }

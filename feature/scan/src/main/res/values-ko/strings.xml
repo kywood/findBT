@@ -28,4 +28,8 @@
     <string name="sort_name">이름순</string>
     <string name="sort_recent">최근 발견순</string>
     <string name="filter_hide_gone">사라진 기기 숨기기</string>
+    <!-- Empty states (#30, design screens-rest-v3 §5) -->
+    <string name="empty_bluetooth_off_title">블루투스가 꺼져 있어요</string>
+    <string name="empty_bluetooth_off_body">블루투스를 켜면 주변 기기를 찾을 수 있어요.</string>
+    <string name="empty_location_off_title">위치가 꺼져 있어요</string>
 </resources>

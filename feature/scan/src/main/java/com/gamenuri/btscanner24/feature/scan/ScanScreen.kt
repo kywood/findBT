@@ -54,7 +54,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.gamenuri.btscanner24.core.ble.BleScanner
 import com.gamenuri.btscanner24.core.ble.ScanFailure
+import com.gamenuri.btscanner24.core.designsystem.component.IllustratedMessage
 import com.gamenuri.btscanner24.core.designsystem.component.StatusBanner
+import com.gamenuri.btscanner24.core.designsystem.icon.NearoIcons
 import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
 import com.gamenuri.btscanner24.core.model.BleDevice
 import com.gamenuri.btscanner24.core.model.CategoryGroup
@@ -229,49 +231,57 @@ fun ScanContent(
                 )
             }
 
-            (state.status as? ScanStatus.Error)?.let { error ->
-                ScanErrorBanner(reason = error.reason, actions = actions)
-            }
+            val error = (state.status as? ScanStatus.Error)?.reason
+            // Nothing to show and the radio (or Location on Android 11) is off: a full empty state (#30).
+            val radioOff = error == ScanFailure.BLUETOOTH_OFF || error == ScanFailure.LOCATION_OFF
+            if (error != null && radioOff && state.items.isEmpty()) {
+                RadioOffState(error, actions, Modifier.fillMaxWidth().weight(1f))
+            } else {
+                error?.let { ScanErrorBanner(reason = it, actions = actions) }
 
-            Spacer(modifier = Modifier.height(6.dp))
-            ListControls(state = state, actions = actions)
+                Spacer(modifier = Modifier.height(6.dp))
+                ListControls(state = state, actions = actions)
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(
-                    text = pluralStringResource(R.plurals.devices_found, state.items.size, state.items.size),
-                    style = MaterialTheme.typography.labelMedium,
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(vertical = 4.dp),
-                )
-                if (state.reorderAvailable) {
-                    FilledTonalButton(onClick = actions.onRefreshOrder) {
-                        Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = null)
-                        Text(stringResource(R.string.action_refresh_order), modifier = Modifier.padding(start = 6.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(
+                        text = pluralStringResource(R.plurals.devices_found, state.items.size, state.items.size),
+                        style = MaterialTheme.typography.labelMedium,
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(vertical = 4.dp),
+                    )
+                    if (state.reorderAvailable) {
+                        FilledTonalButton(onClick = actions.onRefreshOrder) {
+                            Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = null)
+                            Text(
+                                stringResource(R.string.action_refresh_order),
+                                modifier = Modifier.padding(start = 6.dp),
+                            )
+                        }
                     }
                 }
-            }
 
-            LazyColumn(
-                contentPadding = PaddingValues(bottom = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                // Stable keys keep each card attached to its device; rows only move on a full sort.
-                items(state.items, key = { it.device.address }) { item ->
-                    DeviceCard(
-                        device = item.device,
-                        label = item.label,
-                        showSuffix = item.showSuffix,
-                        isPaired = item.isPaired,
-                        isNew = item.isNew,
-                        isGone = item.isGone,
-                        distanceMeters = item.distanceMeters,
-                        onClick = { actions.onDeviceClick(item.device) },
-                        modifier = Modifier.animateItem(),
-                    )
+                LazyColumn(
+                    contentPadding = PaddingValues(bottom = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    // Stable keys keep each card attached to its device; rows only move on a full sort.
+                    items(state.items, key = { it.device.address }) { item ->
+                        DeviceCard(
+                            device = item.device,
+                            label = item.label,
+                            showSuffix = item.showSuffix,
+                            isPaired = item.isPaired,
+                            isNew = item.isNew,
+                            isGone = item.isGone,
+                            distanceMeters = item.distanceMeters,
+                            onClick = { actions.onDeviceClick(item.device) },
+                            modifier = Modifier.animateItem(),
+                        )
+                    }
                 }
             }
         }
@@ -333,6 +343,25 @@ private fun DeviceSort.labelRes(): Int = when (this) {
     DeviceSort.NEAREST -> R.string.sort_nearest
     DeviceSort.NAME -> R.string.sort_name
     DeviceSort.RECENT -> R.string.sort_recent
+}
+
+@Composable
+private fun RadioOffState(reason: ScanFailure, actions: ScanActions, modifier: Modifier = Modifier) {
+    val bluetooth = reason == ScanFailure.BLUETOOTH_OFF
+    Box(modifier = modifier, contentAlignment = Alignment.Center) {
+        IllustratedMessage(
+            icon = if (bluetooth) NearoIcons.BluetoothOff else NearoIcons.PinSignal,
+            title = stringResource(
+                if (bluetooth) R.string.empty_bluetooth_off_title else R.string.empty_location_off_title,
+            ),
+            body = stringResource(if (bluetooth) R.string.empty_bluetooth_off_body else R.string.error_location_off),
+        ) {
+            Spacer(Modifier.height(8.dp))
+            Button(onClick = if (bluetooth) actions.onEnableBluetooth else actions.onEnableLocation) {
+                Text(stringResource(R.string.action_turn_on))
+            }
+        }
+    }
 }
 
 @Composable

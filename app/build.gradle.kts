@@ -51,6 +51,7 @@ dependencies {
     implementation(projects.core.ui)
     implementation(projects.feature.devices)
     implementation(projects.feature.finder)
+    implementation(projects.feature.onboarding)
     implementation(projects.feature.scan)
 
     implementation(platform(libs.androidx.compose.bom))
