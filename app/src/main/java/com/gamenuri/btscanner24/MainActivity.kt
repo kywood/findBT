@@ -9,7 +9,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.gamenuri.btscanner24.core.designsystem.theme.FindBTTheme
+import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
 import com.gamenuri.btscanner24.feature.finder.FinderScreen
 import com.gamenuri.btscanner24.feature.scan.ScanScreen
 
@@ -18,7 +18,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            FindBTTheme {
+            NearoTheme {
                 val navController = rememberNavController()
                 NavHost(navController = navController, startDestination = Routes.SCAN) {
                     composable(Routes.SCAN) {

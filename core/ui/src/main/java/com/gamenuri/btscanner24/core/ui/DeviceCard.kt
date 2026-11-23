@@ -19,7 +19,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.gamenuri.btscanner24.core.designsystem.theme.FindBTTheme
+import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
 import com.gamenuri.btscanner24.core.model.BleDevice
 import com.gamenuri.btscanner24.core.model.SignalLevel
 import java.util.Date
@@ -92,7 +92,7 @@ fun DeviceCard(
 @Preview(name = "Dark", uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
 @Composable
 private fun DeviceCardPreview() {
-    FindBTTheme(dynamicColor = false) {
+    NearoTheme {
         DeviceCard(
             device = BleDevice(
                 address = "AA:BB:CC:DD:EE:FF",

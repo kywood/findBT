@@ -50,7 +50,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.gamenuri.btscanner24.core.ble.proximity.ProximityBand
 import com.gamenuri.btscanner24.core.ble.proximity.ProximityTrend
-import com.gamenuri.btscanner24.core.designsystem.theme.FindBTTheme
+import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
 import java.util.Locale
 import kotlin.math.roundToInt
 
@@ -279,7 +279,7 @@ private const val NO_VALUE = "–"
 @Preview(name = "Walk")
 @Composable
 private fun FinderWalkPreview() {
-    FindBTTheme(dynamicColor = false) {
+    NearoTheme {
         FinderContent(
             state = FinderUiState(
                 deviceName = "Galaxy Buds2 Pro",
@@ -299,7 +299,7 @@ private fun FinderWalkPreview() {
 @Preview(name = "Spin")
 @Composable
 private fun FinderSpinPreview() {
-    FindBTTheme(dynamicColor = false) {
+    NearoTheme {
         FinderContent(
             state = FinderUiState(deviceName = "Galaxy Buds2 Pro", stage = FinderStage.SPIN, sweepProgress = 0.35f),
             actions = FinderActions(),
