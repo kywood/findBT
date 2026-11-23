@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Nearo pin (design/brand/final/ic_launcher_foreground.svg) for the system splash screen (#34). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="512"
+    android:viewportHeight="512">
+    <group
+        android:pivotX="256"
+        android:pivotY="258"
+        android:scaleX="0.72"
+        android:scaleY="0.72"
+        android:translateY="-2">
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M256,96c-72,0 -128,56 -128,126 0,92 128,198 128,198s128,-106 128,-198c0,-70 -56,-126 -128,-126z" />
+        <path
+            android:pathData="M218,196a54,54 0,0 1,76 0"
+            android:strokeWidth="18"
+            android:strokeColor="#1B5FD9"
+            android:strokeLineCap="round" />
+        <path
+            android:pathData="M192,166a92,92 0,0 1,128 0"
+            android:strokeAlpha="0.55"
+            android:strokeWidth="18"
+            android:strokeColor="#1B5FD9"
+            android:strokeLineCap="round" />
+        <path
+            android:fillColor="#1B5FD9"
+            android:pathData="M236,232a20,20 0,1 0,40 0a20,20 0,1 0,-40 0" />
+    </group>
+</vector>
