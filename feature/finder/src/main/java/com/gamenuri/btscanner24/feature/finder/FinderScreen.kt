@@ -17,10 +17,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,9 +28,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -143,6 +145,7 @@ fun FinderContent(state: FinderUiState, actions: FinderActions, modifier: Modifi
                     containerColor = Color.Transparent,
                     titleContentColor = content,
                     navigationIconContentColor = content,
+                    actionIconContentColor = content,
                 ),
                 title = { Text(state.deviceLabel.text(), maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 navigationIcon = {
@@ -150,6 +153,9 @@ fun FinderContent(state: FinderUiState, actions: FinderActions, modifier: Modifi
                         Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.finder_close))
                     }
                 },
+                // "⋯" opens the raw numbers (design v3: top-right is details/advanced), so nothing sits
+                // under the navigation bar at the bottom of a long screen.
+                actions = { AdvancedMenu(state.advanced, tint = content) },
             )
         },
     ) { padding ->
@@ -219,7 +225,6 @@ fun FinderContent(state: FinderUiState, actions: FinderActions, modifier: Modifi
                     Text(stringResource(R.string.finder_found))
                 }
             }
-            AdvancedSection(state.advanced)
         }
     }
 }
@@ -343,29 +348,35 @@ private fun findColorsFor(state: FinderUiState): FindStateColors {
     }
 }
 
-/** Raw numbers for testers; collapsed by default. */
+/** Raw numbers for testers, behind the "⋯" button in the top bar. */
 @Composable
-private fun AdvancedSection(info: AdvancedInfo) {
+private fun AdvancedMenu(info: AdvancedInfo, tint: Color) {
     var expanded by rememberSaveable { mutableStateOf(false) }
-    // Content colour, not the theme's purple: it must read on every state background.
-    TextButton(onClick = { expanded = !expanded }, modifier = Modifier.navigationBarsPadding()) {
-        Text(stringResource(R.string.finder_advanced), color = LocalContentColor.current)
-    }
-    if (expanded) {
-        Text(
-            text = stringResource(
-                R.string.finder_advanced_values,
-                info.address,
-                info.rawRssi?.toString() ?: NO_VALUE,
-                info.smoothedRssi?.let { "%.1f".format(Locale.ROOT, it) } ?: NO_VALUE,
-                info.headingDegrees?.roundToInt()?.toString() ?: NO_VALUE,
-                info.bearingDegrees?.roundToInt()?.toString() ?: NO_VALUE,
-                info.addressSwitches,
-                info.elapsedSeconds,
-            ),
-            style = MaterialTheme.typography.bodySmall,
-            color = LocalContentColor.current.copy(alpha = MUTED_ALPHA),
-        )
+    Box {
+        IconButton(onClick = { expanded = true }) {
+            Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.finder_advanced), tint = tint)
+        }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            Text(
+                text = stringResource(R.string.finder_advanced),
+                style = MaterialTheme.typography.titleSmall,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            )
+            Text(
+                text = stringResource(
+                    R.string.finder_advanced_values,
+                    info.address,
+                    info.rawRssi?.toString() ?: NO_VALUE,
+                    info.smoothedRssi?.let { "%.1f".format(Locale.ROOT, it) } ?: NO_VALUE,
+                    info.headingDegrees?.roundToInt()?.toString() ?: NO_VALUE,
+                    info.bearingDegrees?.roundToInt()?.toString() ?: NO_VALUE,
+                    info.addressSwitches,
+                    info.elapsedSeconds,
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).widthIn(max = 280.dp),
+            )
+        }
     }
 }
 
