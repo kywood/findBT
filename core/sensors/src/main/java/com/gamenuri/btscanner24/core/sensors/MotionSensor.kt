@@ -11,14 +11,6 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.conflate
 import kotlin.math.sqrt
 
-/** Phone heading and walking state at one moment. */
-data class MotionSample(
-    val timeMs: Long,
-    /** 0..360 clockwise. With [MotionSensor.Source.GAME] this is relative to an arbitrary start, not north. */
-    val headingDegrees: Double,
-    val walking: Boolean,
-)
-
 /**
  * Heading from the rotation vector sensor plus walking state from linear acceleration.
  *
