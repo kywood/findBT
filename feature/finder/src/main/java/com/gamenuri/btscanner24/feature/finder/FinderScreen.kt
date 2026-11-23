@@ -27,6 +27,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeOff
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
@@ -72,6 +74,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -384,7 +387,13 @@ private fun DistanceBlock(state: FinderUiState) {
         modifier = Modifier.slot(visible = showBand),
         style = MaterialTheme.typography.titleMedium,
     )
-    Text(text = distanceText(meters), style = NearoTextStyles.findDistance, maxLines = 1)
+    // One line in every language: "a menos de 1 m" shrinks from 54 sp down to 34 sp instead of losing "m" (#74).
+    BasicText(
+        text = distanceText(meters),
+        style = NearoTextStyles.findDistance.copy(color = LocalContentColor.current, textAlign = TextAlign.Center),
+        maxLines = 1,
+        autoSize = TextAutoSize.StepBased(minFontSize = 34.sp, maxFontSize = 54.sp, stepSize = 2.sp),
+    )
     Text(
         text = stringResource(R.string.finder_distance_label),
         style = MaterialTheme.typography.labelMedium,

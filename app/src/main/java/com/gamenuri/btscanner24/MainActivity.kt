@@ -42,8 +42,9 @@ class MainActivity : ComponentActivity() {
         if (demo != null) app.demo = demo
         val showOnboarding = demo == null && needsOnboarding(app)
         setContent {
-            NearoTheme {
-                WithLocale(demo?.locale) {
+            // Locale outside the theme, so locale-dependent typography (#75) follows demo languages too.
+            WithLocale(demo?.locale) {
+                NearoTheme {
                     val findState = demo?.findState
                     val onboardingPage = demo?.onboardingPage
                     when {
