@@ -9,6 +9,7 @@ import com.gamenuri.btscanner24.core.ble.DeviceRepository
 import com.gamenuri.btscanner24.core.data.DataDependenciesProvider
 import com.gamenuri.btscanner24.core.data.HiddenDevicesRepository
 import com.gamenuri.btscanner24.core.data.ListPreferencesRepository
+import com.gamenuri.btscanner24.demo.DemoMode
 import kotlin.concurrent.thread
 
 class BtScannerApp :
@@ -18,8 +19,12 @@ class BtScannerApp :
 
     private val companies by lazy { CompanyDirectory(this) }
 
+    /** Set by MainActivity before any screen reads [bleDependencies]; debug builds only (#47). */
+    internal var demo: DemoRequest? = null
+
     // Manual DI for now; to be replaced by Hilt (see docs/CONVENTION.md).
     override val bleDependencies: BleDependencies by lazy {
+        if (demo != null) return@lazy DemoMode.dependencies(this)
         BleDependencies(
             scanner = BleScanner(this),
             repository = DeviceRepository(companies),
