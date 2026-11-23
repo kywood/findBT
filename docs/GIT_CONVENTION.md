@@ -1,17 +1,18 @@
 # Git 컨벤션 (Nearo / findBT)
 
-기존 저장소(`kywood/findBT`, 기본 브랜치 `main`)의 이력을 이어갑니다.
+기존 저장소(`kywood/findBT`, 기본 브랜치 `main`, 통합 브랜치 `develop`)의 이력을 이어갑니다.
 지금까지의 커밋은 `feat : 설명` / `feat: 설명` 형태의 한국어 메시지였고, 이를 [Conventional Commits](https://www.conventionalcommits.org/ko/v1.0.0/) 형식으로 통일합니다.
 
 ## 1. 기본 흐름: 이슈 → 브랜치 → PR → 이슈 자동 종료
 
 1. **이슈 만들기:** 작업 하나당 GitHub 이슈 하나. 템플릿(기능 / 버그)을 씁니다.
-2. **브랜치 만들기:** 최신 `main`에서 이슈 번호를 넣어 만듭니다.
+2. **브랜치 만들기:** 최신 `develop`에서 이슈 번호를 넣어 만듭니다.
 3. **커밋:** 작은 단위로, 아래 메시지 형식에 맞춰 커밋합니다.
-4. **PR 열기:** 본문에 `Closes #이슈번호`를 넣습니다. 머지되면 이슈가 자동으로 닫힙니다.
-5. **머지:** 리뷰 후 **Squash and merge**. 머지 후 브랜치는 삭제합니다.
+4. **PR 열기:** 대상은 `develop`입니다. 본문에 `Closes #이슈번호`를 넣습니다.
+5. **머지:** PC에서 `spotlessCheck assembleDebug testDebugUnitTest`가 통과하고 실기기(A50, 연결돼 있으면 Flip3)에서 실행을 확인하면 `develop`에 **Squash and merge**. 머지 후 브랜치는 삭제합니다.
+6. **main 반영:** 작업 단계가 끝나거나 출시할 때 `develop` → `main` PR 하나로 합칩니다(merge commit). 이때 `Closes #N`이 적용되어 이슈가 닫힙니다(GitHub은 기본 브랜치에 들어간 커밋만 이슈를 닫습니다).
 
-`main`에 직접 커밋하거나 푸시하지 않습니다.
+`main`과 `develop`에 직접 커밋하거나 푸시하지 않고, force-push도 하지 않습니다.
 
 ## 2. 브랜치 이름
 
