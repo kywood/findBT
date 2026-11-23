@@ -60,8 +60,8 @@ import com.gamenuri.btscanner24.core.model.PairedDevice
 import com.gamenuri.btscanner24.core.model.SignalLevel
 import com.gamenuri.btscanner24.core.ui.DeviceIcon
 import com.gamenuri.btscanner24.core.ui.R as UiR
-import com.gamenuri.btscanner24.core.ui.distanceText
 import com.gamenuri.btscanner24.core.ui.SignalBars
+import com.gamenuri.btscanner24.core.ui.distanceText
 import com.gamenuri.btscanner24.core.ui.label
 import com.gamenuri.btscanner24.core.ui.permission.rememberBlePermissionState
 

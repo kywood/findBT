@@ -71,9 +71,9 @@ import com.gamenuri.btscanner24.core.model.DeviceLabel
 import com.gamenuri.btscanner24.core.model.NameSource
 import com.gamenuri.btscanner24.core.ui.distanceText
 import com.gamenuri.btscanner24.core.ui.text
-import kotlinx.coroutines.delay
 import java.util.Locale
 import kotlin.math.roundToInt
+import kotlinx.coroutines.delay
 
 /** Entry point: owns the ViewModel, lifecycle, haptics and keep-screen-on. Visuals are in [FinderContent]. */
 @Composable

@@ -114,7 +114,9 @@ fun DeviceCard(
 @Composable
 private fun subtitle(device: BleDevice, label: DeviceLabel): String = when (label) {
     is DeviceLabel.Generic -> label.noNameLine()
-    is DeviceLabel.Named -> device.manufacturer?.let { stringResource(R.string.device_maker_type, it, device.category.label()) }
+    is DeviceLabel.Named -> device.manufacturer?.let {
+        stringResource(R.string.device_maker_type, it, device.category.label())
+    }
         ?: device.category.label()
 }
 
