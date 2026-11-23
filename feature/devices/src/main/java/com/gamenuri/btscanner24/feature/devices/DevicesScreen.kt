@@ -243,7 +243,9 @@ private fun subtitle(item: MyDeviceItem, now: Long): String {
     val sighting = item.sighting
     return when {
         item.isNearby -> {
-            sighting?.manufacturer?.let { stringResource(UiR.string.device_maker_type, it, item.paired.category.label()) }
+            sighting?.manufacturer?.let {
+                stringResource(UiR.string.device_maker_type, it, item.paired.category.label())
+            }
                 ?: item.paired.category.label()
         }
         sighting == null -> stringResource(R.string.devices_not_seen)

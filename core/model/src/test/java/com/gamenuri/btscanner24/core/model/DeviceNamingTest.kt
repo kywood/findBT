@@ -45,7 +45,9 @@ class DeviceNamingTest {
 
     @Test
     fun `no name gives maker, type and address suffix instead of Unknown`() {
-        val label = DeviceNaming.label(device(name = "Unknown", manufacturer = "Samsung", category = DeviceCategory.EARBUDS))
+        val label = DeviceNaming.label(
+            device(name = "Unknown", manufacturer = "Samsung", category = DeviceCategory.EARBUDS),
+        )
         assertEquals(DeviceLabel.Generic("Samsung", DeviceCategory.EARBUDS, "3F2A"), label)
     }
 

@@ -85,7 +85,10 @@ fun DeviceCard(
                 }
                 Text(
                     // No "Unknown maker": without a company the line is just the type.
-                    text = device.manufacturer?.let { stringResource(R.string.device_maker_type, it, device.category.label()) }
+                    text =
+                    device.manufacturer?.let {
+                        stringResource(R.string.device_maker_type, it, device.category.label())
+                    }
                         ?: device.category.label(),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
