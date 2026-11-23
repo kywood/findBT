@@ -49,4 +49,6 @@
         <item quantity="one">%d s</item>
         <item quantity="other">%d s</item>
     </plurals>
+    <string name="finder_very_close_title">Very close</string>
+    <string name="finder_very_close_body">Slow down and look around</string>
 </resources>

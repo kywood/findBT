@@ -49,6 +49,8 @@ data class FinderUiState(
     val heat: Float = 0f,
     val trend: ProximityTrend = ProximityTrend.STEADY,
     val secondsSinceSeen: Int = 0,
+    /** Very close for a while without reaching "right here": suggest confirming by touch (design review #55). */
+    val showConfirmHint: Boolean = false,
     val vibrationOn: Boolean = true,
     val advanced: AdvancedInfo = AdvancedInfo(),
 )

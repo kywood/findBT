@@ -45,4 +45,6 @@
     <plurals name="found_seconds">
         <item quantity="other">%d초</item>
     </plurals>
+    <string name="finder_very_close_title">아주 가까워요</string>
+    <string name="finder_very_close_body">천천히 주변을 살펴보세요</string>
 </resources>

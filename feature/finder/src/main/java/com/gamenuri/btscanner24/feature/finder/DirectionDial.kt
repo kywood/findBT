@@ -12,7 +12,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -45,7 +46,13 @@ import kotlin.math.abs
  */
 @Composable
 internal fun DirectionDial(state: FinderUiState, modifier: Modifier = Modifier) {
-    Box(modifier = modifier.size(280.dp), contentAlignment = Alignment.Center) {
+    // Up to 280 dp, square, shrinking with the space the screen gives it.
+    Box(
+        modifier = modifier
+            .sizeIn(maxWidth = 280.dp, maxHeight = 280.dp)
+            .aspectRatio(1f, matchHeightConstraintsFirst = true),
+        contentAlignment = Alignment.Center,
+    ) {
         val arrow = state.arrowDegrees
         when {
             state.stage == FinderStage.RIGHT_HERE -> RightHereRings()
