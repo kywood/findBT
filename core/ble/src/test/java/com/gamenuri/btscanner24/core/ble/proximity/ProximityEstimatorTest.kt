@@ -13,7 +13,9 @@ class ProximityEstimatorTest {
         // 22 dB weaker with n = 2.2 is 10x farther.
         assertEquals(10.0, estimator.distanceFor(-81.0, txPower = null), 0.1)
         // Advertised TX power -12 dBm means about -53 dBm at 1 m.
-        assertEquals(1.0, estimator.distanceFor(-53.0, txPower = -12), 0.01)
+        assertEquals(1.0, estimator.distanceFor(-37.0, txPower = 4), 0.01)
+        // Implausible TX power (an LG device advertised about -26 dBm) falls back to the default.
+        assertEquals(estimator.distanceFor(-60.0, txPower = null), estimator.distanceFor(-60.0, txPower = -26), 0.001)
     }
 
     @Test

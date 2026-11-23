@@ -31,6 +31,8 @@ data class ProximityConfig(
     val outlierDb: Int = 15,
     /** RSSI at 1 m when the device does not advertise TX power. */
     val defaultMeasuredPower: Int = -59,
+    /** Advertised TX power outside this range (dBm) is ignored as implausible. */
+    val trustedTxPowerRange: IntRange = -10..20,
     /** Path-loss exponent: 2 in free space, ~2-3 indoors. */
     val pathLossExponent: Double = 2.2,
     val rightHereMeters: Double = 0.5,
@@ -110,7 +112,11 @@ class ProximityEstimator(private val config: ProximityConfig = ProximityConfig()
 
     /** Log-distance path loss: d = 10 ^ ((P1m - RSSI) / (10 n)). Advertised TX power is at 0 m, ~41 dB above 1 m. */
     fun distanceFor(rssi: Double, txPower: Int?): Double {
-        val measuredPower = txPower?.let { it - 41 } ?: config.defaultMeasuredPower
+        // Some devices put a very low or bogus value in the TX Power field (seen on an LG device
+        // advertising about -26 dBm, which turned -60 dBm into "right here, 0.5 m"). Trust it only in
+        // the range real radios use; otherwise fall back to the typical 1 m reading.
+        val trusted = txPower?.takeIf { it in config.trustedTxPowerRange }
+        val measuredPower = trusted?.let { it - TX_TO_ONE_METRE_DB } ?: config.defaultMeasuredPower
         val meters = 10.0.pow((measuredPower - rssi) / (10 * config.pathLossExponent))
         return meters.coerceIn(0.1, 50.0)
     }
@@ -154,5 +160,10 @@ class ProximityEstimator(private val config: ProximityConfig = ProximityConfig()
             delta <= -config.trendDb -> ProximityTrend.FARTHER
             else -> ProximityTrend.STEADY
         }
+    }
+
+    private companion object {
+        /** TX power is radiated power at the antenna; about 41 dB is lost by 1 m (iBeacon convention). */
+        const val TX_TO_ONE_METRE_DB = 41
     }
 }
