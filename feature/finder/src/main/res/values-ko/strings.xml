@@ -15,7 +15,7 @@
     <string name="finder_spin_again_body">다시 천천히 한 바퀴 돌아 주세요</string>
     <string name="finder_walk_title">이제 화살표 쪽으로 걸어가세요</string>
     <string name="finder_walk_body">방향을 확인하는 중…</string>
-    <string name="finder_locked_title">방향 잡힘</string>
+    <string name="finder_locked_title">🔒 방향 잡힘</string>
     <string name="finder_locked_body">이 방향으로 계속 가세요</string>
     <string name="finder_turn_around_title">뒤로 돌아요</string>
     <string name="finder_turn_around_body">뒤쪽에 있을 가능성이 커요</string>

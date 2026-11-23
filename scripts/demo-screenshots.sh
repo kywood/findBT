@@ -5,6 +5,8 @@
 #   ANDROID_SERIAL=R59N300DBHH scripts/demo-screenshots.sh [out-dir] [locales...]
 #
 # Default: out-dir shots/demo, locales "en ko". Files: <out>/<locale>/<screen>.png
+# adb must be on PATH. In Git Bash on Windows, for example:
+#   export PATH="$PATH:$LOCALAPPDATA/Android/Sdk/platform-tools"
 # Demo mode shows fixed, generically named devices only; nothing is scanned or sent anywhere.
 set -euo pipefail
 
