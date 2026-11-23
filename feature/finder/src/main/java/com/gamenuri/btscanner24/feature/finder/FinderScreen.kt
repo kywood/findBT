@@ -87,6 +87,13 @@ fun FinderScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
+    // "I found it" swaps in the Found screen; leaving this branch stops the scan, sensors and haptics.
+    var foundAfterSeconds by rememberSaveable { mutableStateOf<Int?>(null) }
+    foundAfterSeconds?.let { seconds ->
+        FoundContent(label = state.deviceLabel, elapsedSeconds = seconds, onDone = onClose)
+        return
+    }
+
     // Scan and read sensors only while the screen is visible.
     LifecycleStartEffect(viewModel) {
         viewModel.start()
@@ -115,7 +122,7 @@ fun FinderScreen(
         state = state,
         actions = FinderActions(
             onClose = onClose,
-            onFound = onClose,
+            onFound = { foundAfterSeconds = state.advanced.elapsedSeconds },
             onToggleVibration = viewModel::toggleVibration,
             onSpinAgain = viewModel::spinAgain,
         ),

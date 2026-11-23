@@ -14,6 +14,7 @@ import com.gamenuri.btscanner24.core.ble.ScanEvent
 import com.gamenuri.btscanner24.core.model.PairedDevice
 import com.gamenuri.btscanner24.feature.finder.FinderActions
 import com.gamenuri.btscanner24.feature.finder.FinderContent
+import com.gamenuri.btscanner24.feature.finder.FoundContent
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -46,6 +47,10 @@ internal object DemoMode {
 
     @Composable
     fun FindScreen(state: String, onClose: () -> Unit) {
+        if (state == "found") {
+            FoundContent(label = DemoData.findState("here").deviceLabel, elapsedSeconds = 102, onDone = onClose)
+            return
+        }
         FinderContent(state = DemoData.findState(state), actions = FinderActions(onClose = onClose, onFound = onClose))
     }
 

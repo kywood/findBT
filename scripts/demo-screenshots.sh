@@ -16,7 +16,7 @@ if [ "$#" -gt 0 ]; then LOCALES=("$@"); else LOCALES=(en ko); fi
 
 PKG="com.gamenuri.btscanner24.debug"
 ACTIVITY="$PKG/com.gamenuri.btscanner24.MainActivity"
-FIND_STATES=(spin walk locked close very_close here lost turn_around far waiting)
+FIND_STATES=(spin walk locked close very_close here found lost turn_around far waiting)
 WAIT_SECONDS="${WAIT_SECONDS:-3}"
 
 shot() { # shot <locale> <file-name> <am extras...>
