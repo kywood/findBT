@@ -21,6 +21,7 @@ import com.google.accompanist.permissions.shouldShowRationale
  * Runtime-permission helper shared by every screen that needs Bluetooth.
  * Accompanist is isolated here so it can be replaced without touching features.
  */
+@OptIn(ExperimentalPermissionsApi::class)
 @Stable
 class BlePermissionState internal constructor(
     private val delegate: MultiplePermissionsState,
