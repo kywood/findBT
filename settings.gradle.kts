@@ -23,5 +23,12 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "btScanner24"
+enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+
 include(":app")
+include(":core:model")
+include(":core:ble")
+include(":core:designsystem")
+include(":core:ui")
+include(":feature:scan")
  
