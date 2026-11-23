@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.sample
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
@@ -57,6 +58,10 @@ class DevicesViewModel(
         paired.value = bondedDevices.list()
         if (scanJob?.isActive == true || !scanner.hasScanPermission()) return
         scanJob = viewModelScope.launch(Dispatchers.Default) {
+            // Shares Android's 5-starts-per-30-s budget with the Nearby tab; quick tab switches would
+            // otherwise hit "scanning too frequently" (#62).
+            val cooldown = scanner.startCooldownMillis()
+            if (cooldown > 0) delay(cooldown)
             scanner.scan().collect { event ->
                 if (event is ScanEvent.Result) repository.onScanResult(event.result)
             }
