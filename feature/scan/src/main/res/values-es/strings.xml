@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="action_start_scan">Iniciar búsqueda</string>
+    <string name="action_stop_scan">Detener búsqueda</string>
+    <string name="action_reset">Restablecer</string>
+    <string name="action_retry">Reintentar</string>
+    <string name="action_ok">Aceptar</string>
+    <string name="action_allow">Permitir</string>
+    <string name="action_turn_on">Activar</string>
+    <string name="action_open_settings">Ajustes</string>
+    <string name="search_hint">Buscar por nombre o fabricante</string>
+    <string name="filter_named_only">Solo con nombre</string>
+    <plurals name="devices_found">
+        <item quantity="one">%d dispositivo encontrado</item>
+        <item quantity="other">%d dispositivos encontrados</item>
+    </plurals>
+    <string name="permission_rationale">Se necesita el permiso de Bluetooth para encontrar dispositivos cercanos.</string>
+    <string name="permission_denied_settings">El permiso de Bluetooth está desactivado. Actívalo en Ajustes para buscar.</string>
+    <string name="error_bluetooth_off">El Bluetooth está desactivado.</string>
+    <string name="error_not_supported">Este dispositivo no es compatible con Bluetooth Low Energy.</string>
+    <string name="error_too_frequent">La búsqueda se reinició demasiadas veces. Espera unos segundos y vuelve a intentarlo.</string>
+    <string name="error_location_off">La ubicación está desactivada. En esta versión de Android, la búsqueda Bluetooth necesita la ubicación activada.</string>
+    <string name="error_scan_failed">No se pudo iniciar la búsqueda.</string>
+    <string name="action_search">Buscar</string>
+    <string name="action_close_search">Cerrar búsqueda</string>
+    <string name="action_refresh_order">Actualizar orden</string>
+    <string name="sort_menu">Ordenar</string>
+    <string name="sort_nearest">Más cerca</string>
+    <string name="sort_name">Nombre</string>
+    <string name="sort_recent">Encontrados recientemente</string>
+    <string name="filter_hide_gone">Ocultar ausentes</string>
+    <string name="empty_bluetooth_off_title">El Bluetooth está desactivado</string>
+    <string name="empty_bluetooth_off_body">Activa el Bluetooth para encontrar dispositivos a tu alrededor.</string>
+    <string name="empty_location_off_title">La ubicación está desactivada</string>
+</resources>

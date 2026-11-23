@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="finder_close">Fechar</string>
+    <string name="finder_found">Achei</string>
+    <string name="finder_vibration">Vibração</string>
+    <string name="finder_spin_again">Girar de novo</string>
+    <string name="finder_advanced">Avançado</string>
+    <string name="finder_direction_label">Direção aproximada</string>
+    <string name="finder_waiting_title">Procurando o sinal…</string>
+    <string name="finder_waiting_body">Fique perto de onde você o viu por último</string>
+    <string name="finder_spin_title">Gire devagar no lugar</string>
+    <string name="finder_spin_body">Como uma bússola: dê uma volta completa com o celular à sua frente</string>
+    <string name="finder_spin_again_title">Direção perdida</string>
+    <string name="finder_spin_again_body">Gire devagar de novo</string>
+    <string name="finder_walk_title">Agora ande na direção da seta</string>
+    <string name="finder_walk_body">Verificando a direção…</string>
+    <string name="finder_locked_title">🔒 Direção travada</string>
+    <string name="finder_locked_body">Continue nesta direção</string>
+    <string name="finder_turn_around_title">Vire-se</string>
+    <string name="finder_turn_around_body">Provavelmente está atrás de você</string>
+    <string name="finder_right_here_title">Bem aqui</string>
+    <string name="finder_right_here_body">Está ao seu alcance. Olhe ao redor.</string>
+    <string name="finder_signal_lost_title">Sinal perdido</string>
+    <string name="finder_signal_lost_body">Visto há %1$d s · volte para onde o sinal estava mais forte</string>
+    <string name="finder_no_compass_title">Siga o quente e frio</string>
+    <string name="finder_no_compass_body">Este celular não tem sensor de direção, então não há seta</string>
+    <string name="finder_distance_label">distância aproximada</string>
+    <string name="finder_band_right_here">Bem aqui</string>
+    <string name="finder_band_very_close">Muito perto</string>
+    <string name="finder_band_near">Perto</string>
+    <string name="finder_band_far">Longe</string>
+    <string name="finder_trend_closer">▲ Esquentando</string>
+    <string name="finder_trend_farther">▼ Esfriando</string>
+    <string name="finder_trend_steady">Continue</string>
+    <string name="finder_advanced_values">MAC %1$s · RSSI %2$s dBm (suavizado %3$s) · rumo %4$s° · direção %5$s° · trocas de MAC %6$d · %7$d s</string>
+    <string name="finder_confirm_hint">Não tem certeza se é este? Aproxime o celular bem perto dele. Se aparecer \"Bem aqui\", você achou.</string>
+    <string name="found_title">Achou!</string>
+    <string name="found_summary">%1$s · encontrado em %2$s</string>
+    <string name="found_minutes_seconds">%1$d min %2$d s</string>
+    <string name="found_done">Concluir</string>
+    <plurals name="found_seconds">
+        <item quantity="one">%d s</item>
+        <item quantity="other">%d s</item>
+    </plurals>
+    <string name="finder_very_close_title">Muito perto</string>
+    <string name="finder_very_close_body">Vá devagar e olhe ao redor</string>
+    <string name="finder_sound_play">Tocar som</string>
+    <string name="finder_sound_stop">Parar som</string>
+    <string name="finder_sound_connecting">Conectando…</string>
+    <string name="finder_sound_retry">Tentar de novo</string>
+    <string name="finder_sound_failed">Não foi possível tocar o som. Chegue mais perto e tente de novo.</string>
+</resources>

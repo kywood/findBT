@@ -11,7 +11,7 @@ Android app "Nearo: Bluetooth Finder" (package `com.gamenuri.btscanner24`), rene
   - `Closes #N` only auto-closes when the commit reaches `main`, so issues stay open until that PR merges.
   - Commit: `<type>(<scope>): <한국어 요약> (#<issue>)`.
 - Shared functionality goes in `core/*` modules and is reused by `feature/*`. Features never depend on each other.
-- All user-visible text in `strings.xml`; base language English, plus `values-ko` (later ja, es, pt, de).
+- All user-visible text in `strings.xml`; base language English, plus `values-ko`, `values-ja`, `values-es`, `values-pt-rBR`, `values-de`. Every new string goes into all six; `python3 scripts/check-strings.py .` must report 0 issues (glossary, placeholders, banned words such as "Unknown").
 - Never send scan data (device names, MAC, RSSI, company, UUIDs, location) to Analytics, Crashlytics or AdMob; aggregate events only (#19).
 - Never change `applicationId`; bump `versionCode` for every release; never commit signing keys or `google-services.json`.
 
