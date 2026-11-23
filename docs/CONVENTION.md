@@ -97,3 +97,7 @@
   - 확인: `./gradlew spotlessCheck` / 자동 수정: `./gradlew spotlessApply`
 - PR 전에 `spotlessCheck`, `assembleDebug`, `testDebugUnitTest`가 모두 통과해야 합니다.
 - detekt(Compose 규칙 포함)는 UI 구현 단계에서 추가합니다. CI가 생기면 PR마다 자동 실행합니다.
+
+## 개인정보
+
+- 스캔 데이터(기기 이름, MAC 주소, RSSI, 제조사, 서비스 UUID, 위치)는 Analytics, Crashlytics 커스텀 키·로그, AdMob 어디에도 보내지 않습니다. 이벤트는 집계 값만 보냅니다 (예: `find_started`, `found_in_seconds` 구간). (#19)

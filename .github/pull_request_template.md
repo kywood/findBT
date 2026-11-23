@@ -9,6 +9,7 @@
 - [ ] `./gradlew assembleDebug` 통과
 - [ ] `./gradlew testDebugUnitTest` 통과
 - [ ] 실기기 확인 (기종 / Android 버전: )
+- [ ] 스캔 데이터(기기 이름, MAC, RSSI, 제조사, UUID, 위치)를 Analytics·Crashlytics·AdMob에 보내지 않음 (#19)
 
 ## 스크린샷
 <!-- UI 변경이 있으면 전/후 -->
