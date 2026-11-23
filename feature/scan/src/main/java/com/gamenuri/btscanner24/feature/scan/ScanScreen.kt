@@ -2,6 +2,7 @@ package com.gamenuri.btscanner24.feature.scan
 
 import android.bluetooth.BluetoothAdapter
 import android.content.Intent
+import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -80,6 +81,10 @@ fun ScanScreen(title: String, viewModel: ScanViewModel = viewModel(factory = Sca
     val enableBluetooth = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult(),
     ) { viewModel.startScan() }
+    // Coming back from the system Location screen: try again (it is checked before scanning).
+    val enableLocation = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult(),
+    ) { viewModel.startScan() }
 
     ScanContent(
         title = title,
@@ -102,6 +107,10 @@ fun ScanScreen(title: String, viewModel: ScanViewModel = viewModel(factory = Sca
                 viewModel.dismissError()
                 enableBluetooth.launch(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
             },
+            onEnableLocation = {
+                viewModel.dismissError()
+                enableLocation.launch(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+            },
             onRetry = viewModel::startScan,
             onDismissError = viewModel::dismissError,
             onReset = viewModel::reset,
@@ -122,6 +131,7 @@ data class ScanActions(
     val onScanClick: () -> Unit = {},
     val onPermissionAction: () -> Unit = {},
     val onEnableBluetooth: () -> Unit = {},
+    val onEnableLocation: () -> Unit = {},
     val onRetry: () -> Unit = {},
     val onDismissError: () -> Unit = {},
     val onReset: () -> Unit = {},
@@ -316,6 +326,8 @@ private fun ScanErrorBanner(reason: ScanFailure, actions: ScanActions) {
     val (message, actionLabel, onAction) = when (reason) {
         ScanFailure.BLUETOOTH_OFF ->
             Triple(R.string.error_bluetooth_off, R.string.action_turn_on, actions.onEnableBluetooth)
+        ScanFailure.LOCATION_OFF ->
+            Triple(R.string.error_location_off, R.string.action_turn_on, actions.onEnableLocation)
         ScanFailure.NOT_SUPPORTED ->
             Triple(R.string.error_not_supported, R.string.action_ok, actions.onDismissError)
         ScanFailure.PERMISSION_MISSING ->
