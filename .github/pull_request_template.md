@@ -5,6 +5,7 @@
 -
 
 ## 테스트
+- [ ] `./gradlew spotlessCheck` 통과
 - [ ] `./gradlew assembleDebug` 통과
 - [ ] `./gradlew testDebugUnitTest` 통과
 - [ ] 실기기 확인 (기종 / Android 버전: )

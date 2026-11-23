@@ -12,7 +12,7 @@ data class ParsedAdvertiseData(
     val txPower: Int? = null,
     val flags: String = Constants.UNKNOWN,
     val serviceUuids: List<String> = emptyList(),
-    val rawBytes: String = Constants.UNKNOWN
+    val rawBytes: String = Constants.UNKNOWN,
 )
 
 object BleParser {
@@ -33,7 +33,6 @@ object BleParser {
             // 루프 탈출 조건 조건 강화 (패딩 검사 및 인덱스 오버플로우 방지)
             if (length == 0) break
             if (i + 1 >= rawBytes.size) break
-//            if (i + length >= rawBytes.size) break
 
             val type = rawBytes[i + 1].toInt() and 0xFF
 
@@ -100,8 +99,8 @@ object BleParser {
                         val uuid = data.reversedArray().joinToString("") { "%02X".format(it) }
                         serviceUuids.add(
                             "${uuid.substring(0, 8)}-${uuid.substring(8, 12)}-" +
-                                    "${uuid.substring(12, 16)}-${uuid.substring(16, 20)}-" +
-                                    "${uuid.substring(20)}"
+                                "${uuid.substring(12, 16)}-${uuid.substring(16, 20)}-" +
+                                "${uuid.substring(20)}",
                         )
                     }
                 }
@@ -125,7 +124,7 @@ object BleParser {
             txPower = txPower,
             flags = flags,
             serviceUuids = serviceUuids,
-            rawBytes = rawBytes.toHex()
+            rawBytes = rawBytes.toHex(),
         )
     }
 

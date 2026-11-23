@@ -12,7 +12,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.gamenuri.btscanner24.core.designsystem.theme.FindBTTheme
 import com.gamenuri.btscanner24.core.model.BleDevice
 import com.gamenuri.btscanner24.core.model.SignalLevel
 import java.util.Date
@@ -27,7 +29,7 @@ fun DeviceCard(device: BleDevice, modifier: Modifier = Modifier) {
             SignalLevel.STRONG -> R.string.signal_strong
             SignalLevel.MEDIUM -> R.string.signal_medium
             SignalLevel.WEAK -> R.string.signal_weak
-        }
+        },
     )
 
     Card(modifier = modifier.fillMaxWidth()) {
@@ -51,5 +53,23 @@ fun DeviceCard(device: BleDevice, modifier: Modifier = Modifier) {
                 style = MaterialTheme.typography.labelSmall,
             )
         }
+    }
+}
+
+@Preview(name = "Light")
+@Preview(name = "Dark", uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
+@Composable
+private fun DeviceCardPreview() {
+    FindBTTheme(dynamicColor = false) {
+        DeviceCard(
+            device = BleDevice(
+                address = "AA:BB:CC:DD:EE:FF",
+                name = "Galaxy Buds2 Pro",
+                rssi = -58,
+                firstSeen = 0,
+                lastSeen = 0,
+                manufacturer = "Samsung",
+            ),
+        )
     }
 }

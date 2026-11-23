@@ -15,5 +15,6 @@ Android app "Nearo: Bluetooth Finder" (package `com.gamenuri.btscanner24`), rene
 `:app` → `:feature:scan` → `:core:ui`, `:core:ble` → `:core:designsystem`, `:core:model`
 
 ## Build
-- `./gradlew assembleDebug` / `./gradlew testDebugUnitTest`
+- `./gradlew spotlessCheck assembleDebug testDebugUnitTest` before every PR (`spotlessApply` auto-fixes formatting)
+- The cloud container cannot reach Google Maven: build on the user's PC.
 - AGP 9.x with built-in Kotlin (no `kotlin-android` plugin), Gradle 9.x, JDK 17, Compose BOM, version catalog in `gradle/libs.versions.toml`.
