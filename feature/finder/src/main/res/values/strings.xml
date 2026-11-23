@@ -39,4 +39,14 @@
     <string name="finder_confirm_hint">Not sure it\'s this one? Hold your phone right next to it. If it says \"Right here\", you\'ve found it.</string>
     <string name="finder_gauge_cold" translatable="false">❄</string>
     <string name="finder_gauge_hot" translatable="false">🔥</string>
+    <!-- Found it screen (#53) -->
+    <string name="found_emoji" translatable="false">🎉</string>
+    <string name="found_title">Found it!</string>
+    <string name="found_summary">%1$s · found in %2$s</string>
+    <string name="found_minutes_seconds">%1$d min %2$d s</string>
+    <string name="found_done">Done</string>
+    <plurals name="found_seconds">
+        <item quantity="one">%d s</item>
+        <item quantity="other">%d s</item>
+    </plurals>
 </resources>
