@@ -7,6 +7,8 @@ data class BleDevice(
     val address: String,
     val name: String?,
     val rssi: Int,
+    /** RSSI after exponential smoothing; used for "nearest" sorting so the order does not jitter. */
+    val smoothedRssi: Double = rssi.toDouble(),
     val firstSeen: Long,
     val lastSeen: Long,
     /** Company name from Bluetooth SIG data, null while unknown. */

@@ -27,4 +27,6 @@
     <string name="category_group_watch">워치</string>
     <string name="category_group_tracker">트래커</string>
     <string name="category_group_other">기타</string>
+    <string name="badge_new">새로 발견</string>
+    <string name="device_gone">방금 전</string>
 </resources>

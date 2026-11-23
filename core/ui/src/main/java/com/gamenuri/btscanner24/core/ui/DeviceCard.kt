@@ -5,6 +5,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.Alignment
+import androidx.compose.material3.Badge
+import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,7 +24,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.gamenuri.btscanner24.core.designsystem.theme.FindBTTheme
 
 @Composable
-fun DeviceCard(device: BleDevice, modifier: Modifier = Modifier) {
+fun DeviceCard(
+    device: BleDevice,
+    modifier: Modifier = Modifier,
+    isNew: Boolean = false,
+    isGone: Boolean = false,
+) {
     val context = LocalContext.current
     // Locale-aware time format (12h/24h follows the user's system setting).
     val timeFormat = remember(context) { DateFormat.getTimeFormat(context) }
@@ -32,15 +41,30 @@ fun DeviceCard(device: BleDevice, modifier: Modifier = Modifier) {
         }
     )
 
-    Card(modifier = modifier.fillMaxWidth()) {
+    // Devices not heard from recently stay in place but dimmed, so they don't look "nearby".
+    Card(modifier = modifier.fillMaxWidth().alpha(if (isGone) 0.45f else 1f)) {
         Column(modifier = Modifier.padding(10.dp)) {
-            Text(
-                text = device.name?.takeIf { device.hasName } ?: stringResource(R.string.device_unnamed),
-                style = MaterialTheme.typography.bodyMedium,
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = device.name?.takeIf { device.hasName } ?: stringResource(R.string.device_unnamed),
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.weight(1f, fill = false),
+                )
+                if (isNew) {
+                    Badge(modifier = Modifier.padding(start = 6.dp)) { Text(stringResource(R.string.badge_new)) }
+                }
+                if (isGone) {
+                    Text(
+                        text = stringResource(R.string.device_gone),
+                        style = MaterialTheme.typography.labelSmall,
+                        modifier = Modifier.padding(start = 6.dp),
+                    )
+                }
+            }
             Text(device.address, style = MaterialTheme.typography.labelSmall)
+            val maker = device.manufacturer ?: stringResource(R.string.manufacturer_unknown)
             Text(
-                "${device.category.label()}  |  ${device.manufacturer ?: stringResource(R.string.manufacturer_unknown)}",
+                "${device.category.label()}  |  $maker",
                 style = MaterialTheme.typography.labelSmall,
             )
             Text(
