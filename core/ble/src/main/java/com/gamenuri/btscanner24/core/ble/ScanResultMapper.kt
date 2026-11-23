@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.bluetooth.le.ScanResult
 import com.gamenuri.btscanner24.core.model.BleDevice
 import com.gamenuri.btscanner24.core.model.Constants
+import com.gamenuri.btscanner24.core.model.DeviceCategory
 
 /** Converts a platform [ScanResult] into a [BleDevice], keeping what earlier packets already told us. */
 object ScanResultMapper {
@@ -31,13 +32,20 @@ object ScanResultMapper {
             lastSeen = now,
             manufacturer = parsed.manufacturer,
             companyId = parsed.companyId,
-            deviceType = parsed.deviceType,
+            category = parsed.category,
+            serviceUuids16 = parsed.serviceUuids16,
             uuids = parsed.serviceUuids,
             txPower = parsed.txPower,
             flags = parsed.flags,
             rawBytes = parsed.rawBytes,
         )
-        return mergeKnown(previous, next)
+        // The system name (e.g. "Galaxy Buds2") can arrive without any advertised category hint.
+        val withName = if (next.category == DeviceCategory.UNKNOWN) {
+            next.copy(category = DeviceCategoryResolver.fromName(name))
+        } else {
+            next
+        }
+        return mergeKnown(previous, withName)
     }
 
     /**
@@ -50,8 +58,9 @@ object ScanResultMapper {
             name = next.name?.takeIf { it.isNotBlank() } ?: previous.name,
             manufacturer = next.manufacturer ?: previous.manufacturer,
             companyId = next.companyId ?: previous.companyId,
-            deviceType = next.deviceType.takeIf { it != Constants.UNKNOWN } ?: previous.deviceType,
+            category = next.category.takeIf { it != DeviceCategory.UNKNOWN } ?: previous.category,
             uuids = next.uuids.ifEmpty { previous.uuids },
+            serviceUuids16 = next.serviceUuids16.ifEmpty { previous.serviceUuids16 },
             txPower = next.txPower ?: previous.txPower,
             flags = next.flags.takeIf { it != Constants.UNKNOWN } ?: previous.flags,
         )

@@ -1,6 +1,7 @@
 package com.gamenuri.btscanner24.core.ble
 
 import com.gamenuri.btscanner24.core.model.Constants
+import com.gamenuri.btscanner24.core.model.DeviceCategory
 
 data class ParsedAdvertiseData(
     val name: String = Constants.UNKNOWN,
@@ -8,11 +9,13 @@ data class ParsedAdvertiseData(
     val manufacturer: String? = null,
     /** Raw Bluetooth SIG company ID from manufacturer-specific data, even if not in the table. */
     val companyId: Int? = null,
-    val deviceType: String = Constants.UNKNOWN,
+    val category: DeviceCategory = DeviceCategory.UNKNOWN,
+    /** 16-bit service UUIDs as numbers, for category and feature checks (e.g. 0x1802). */
+    val serviceUuids16: List<Int> = emptyList(),
     val txPower: Int? = null,
     val flags: String = Constants.UNKNOWN,
     val serviceUuids: List<String> = emptyList(),
-    val rawBytes: String = Constants.UNKNOWN
+    val rawBytes: String = Constants.UNKNOWN,
 )
 
 object BleParser {
@@ -22,7 +25,9 @@ object BleParser {
         var name = Constants.UNKNOWN
         var companyId: Int? = null
         var serviceOwner: String? = null
-        var deviceType = Constants.UNKNOWN
+        var appearanceCategory = DeviceCategory.UNKNOWN
+        var vendorCategory = DeviceCategory.UNKNOWN
+        val serviceUuids16 = mutableListOf<Int>()
         var txPower: Int? = null
         var flags = Constants.UNKNOWN
         val serviceUuids = mutableListOf<String>()
@@ -48,15 +53,18 @@ object BleParser {
                 // 제조사 데이터
                 0xFF -> {
                     if (data.size >= 2 && companyId == null) {
-                        companyId = ((data[1].toInt() and 0xFF) shl 8) or (data[0].toInt() and 0xFF)
+                        val id = ((data[1].toInt() and 0xFF) shl 8) or (data[0].toInt() and 0xFF)
+                        companyId = id
+                        vendorCategory = DeviceCategoryResolver.fromManufacturerData(id, data.copyOfRange(2, data.size))
                     }
                 }
 
                 // Service Data (16-bit UUID) → 제조사 추정 fallback
                 0x16 -> {
-                    if (data.size >= 2 && serviceOwner == null) {
+                    if (data.size >= 2) {
                         val uuid = ((data[1].toInt() and 0xFF) shl 8) or (data[0].toInt() and 0xFF)
-                        serviceOwner = companies.memberServiceOwner(uuid)
+                        if (uuid !in serviceUuids16) serviceUuids16.add(uuid)
+                        if (serviceOwner == null) serviceOwner = companies.memberServiceOwner(uuid)
                     }
                 }
 
@@ -64,7 +72,7 @@ object BleParser {
                 0x19 -> {
                     if (data.size >= 2) {
                         val appearance = ((data[1].toInt() and 0xFF) shl 8) or (data[0].toInt() and 0xFF)
-                        deviceType = DeviceTypeResolver.resolveByAppearance(appearance)
+                        appearanceCategory = DeviceCategoryResolver.fromAppearance(appearance)
                     }
                 }
 
@@ -88,6 +96,7 @@ object BleParser {
                     while (j + 1 < data.size) {
                         val uuid = ((data[j + 1].toInt() and 0xFF) shl 8) or (data[j].toInt() and 0xFF)
                         serviceUuids.add("0x${"%04X".format(uuid)}")
+                        serviceUuids16.add(uuid)
                         if (serviceOwner == null) serviceOwner = companies.memberServiceOwner(uuid)
                         j += 2
                     }
@@ -108,23 +117,24 @@ object BleParser {
             i += length + 1
         }
 
-        // 기기 타입 못찾으면 UUID 기반으로 fallback
-        val resolvedDeviceType = if (deviceType == Constants.UNKNOWN && serviceUuids.isNotEmpty()) {
-            DeviceTypeResolver.resolveByServiceUuid(serviceUuids)
-        } else {
-            deviceType
-        }
+        val category = DeviceCategoryResolver.firstKnown(
+            { appearanceCategory },
+            { vendorCategory },
+            { DeviceCategoryResolver.fromServiceUuids(serviceUuids16) },
+            { DeviceCategoryResolver.fromName(name.takeIf { it != Constants.UNKNOWN }) },
+        )
 
         return ParsedAdvertiseData(
             name = name,
             // Manufacturer data names the maker directly; a member service UUID is only a hint.
             manufacturer = companyId?.let(companies::companyName) ?: serviceOwner,
             companyId = companyId,
-            deviceType = resolvedDeviceType,
+            category = category,
+            serviceUuids16 = serviceUuids16,
             txPower = txPower,
             flags = flags,
             serviceUuids = serviceUuids,
-            rawBytes = rawBytes.toHex()
+            rawBytes = rawBytes.toHex(),
         )
     }
 
