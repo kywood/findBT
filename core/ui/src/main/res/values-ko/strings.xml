@@ -35,6 +35,7 @@
     <string name="device_generic">블루투스 기기</string>
     <string name="badge_paired">내 기기</string>
     <string name="device_no_name_suffix">이름 없음 · …%1$s</string>
+    <string name="device_distance_within_1">1m 이내</string>
     <string name="device_distance_5_to_10">약 5~10m</string>
     <string name="device_distance_over_10">10m 이상</string>
 </resources>

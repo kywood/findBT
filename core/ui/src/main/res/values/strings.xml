@@ -35,6 +35,7 @@
     <string name="device_generic">Bluetooth device</string>
     <string name="badge_paired">Mine</string>
     <string name="device_no_name_suffix">No name · …%1$s</string>
+    <string name="device_distance_within_1">within 1 m</string>
     <string name="device_distance_5_to_10">~5–10 m</string>
     <string name="device_distance_over_10">10 m+</string>
 </resources>

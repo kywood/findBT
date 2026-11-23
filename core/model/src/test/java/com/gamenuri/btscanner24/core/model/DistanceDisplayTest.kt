@@ -6,15 +6,16 @@ import org.junit.Test
 class DistanceDisplayTest {
 
     @Test
-    fun `under 1 m rounds to 0_1 m and never shows zero`() {
-        assertEquals(DistanceDisplay.About(0.8), DistanceDisplay.of(0.83))
-        assertEquals(DistanceDisplay.About(0.1), DistanceDisplay.of(0.02))
+    fun `under 1 m reads within 1 m, no false decimals`() {
+        assertEquals(DistanceDisplay.WithinOne, DistanceDisplay.of(0.83))
+        assertEquals(DistanceDisplay.WithinOne, DistanceDisplay.of(0.02))
     }
 
     @Test
-    fun `1 to 5 m rounds to half metres`() {
-        assertEquals(DistanceDisplay.About(2.5), DistanceDisplay.of(2.4))
-        assertEquals(DistanceDisplay.About(3.0), DistanceDisplay.of(3.2))
+    fun `1 to 5 m rounds to whole metres`() {
+        assertEquals(DistanceDisplay.About(2), DistanceDisplay.of(2.4))
+        assertEquals(DistanceDisplay.About(1), DistanceDisplay.of(1.2))
+        assertEquals(DistanceDisplay.About(4), DistanceDisplay.of(4.8))
     }
 
     @Test

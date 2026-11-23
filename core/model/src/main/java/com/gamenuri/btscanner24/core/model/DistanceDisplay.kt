@@ -7,8 +7,11 @@ import kotlin.math.roundToInt
  * so far devices get a coarse range instead of a jumping value (PM decision, #21).
  */
 sealed interface DistanceDisplay {
-    /** "~0.8 m", "~2.5 m": 0.1 m steps under 1 m, 0.5 m steps up to 5 m. */
-    data class About(val meters: Double) : DistanceDisplay
+    /** "within 1 m": below that RSSI cannot tell 0.3 m from 0.9 m, so no decimals (design review, #52). */
+    data object WithinOne : DistanceDisplay
+
+    /** "~3 m": whole metres from 1 to 5 m. */
+    data class About(val meters: Int) : DistanceDisplay
 
     /** "~5–10 m". */
     data object FiveToTen : DistanceDisplay
@@ -18,8 +21,8 @@ sealed interface DistanceDisplay {
 
     companion object {
         fun of(meters: Double): DistanceDisplay = when {
-            meters < 1.0 -> About(((meters * 10).roundToInt() / 10.0).coerceAtLeast(0.1))
-            meters < 5.0 -> About((meters * 2).roundToInt() / 2.0)
+            meters < 1.0 -> WithinOne
+            meters < 5.0 -> About(meters.roundToInt().coerceIn(1, 4))
             meters < 10.0 -> FiveToTen
             else -> OverTen
         }
