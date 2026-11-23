@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Button
@@ -70,6 +71,7 @@ import com.gamenuri.btscanner24.core.ui.permission.rememberBlePermissionState
 fun DevicesScreen(
     onDeviceClick: (String) -> Unit,
     modifier: Modifier = Modifier,
+    onAddTracker: () -> Unit = {},
     viewModel: DevicesViewModel = viewModel(factory = DevicesViewModel.Factory),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -89,6 +91,7 @@ fun DevicesScreen(
         onHide = viewModel::hide,
         onRequestPermission = permission::request,
         onOpenBluetoothSettings = { context.startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS)) },
+        onAddTracker = onAddTracker,
     )
 }
 
@@ -101,6 +104,7 @@ fun DevicesContent(
     onRequestPermission: () -> Unit,
     onOpenBluetoothSettings: () -> Unit,
     modifier: Modifier = Modifier,
+    onAddTracker: () -> Unit = {},
     now: Long = System.currentTimeMillis(),
 ) {
     Scaffold(
@@ -116,7 +120,7 @@ fun DevicesContent(
                 )
             }
             state.isEmpty -> EmptyState(onOpenBluetoothSettings, Modifier.padding(padding))
-            else -> DeviceSections(state, now, onDeviceClick, onHide, Modifier.padding(padding))
+            else -> DeviceSections(state, now, onDeviceClick, onHide, onAddTracker, Modifier.padding(padding))
         }
     }
 }
@@ -127,6 +131,7 @@ private fun DeviceSections(
     now: Long,
     onDeviceClick: (MyDeviceItem) -> Unit,
     onHide: (MyDeviceItem) -> Unit,
+    onAddTracker: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var othersOpen by rememberSaveable { mutableStateOf(false) }
@@ -156,6 +161,13 @@ private fun DeviceSections(
             }
             if (othersOpen) {
                 items(state.others, key = { "o-" + it.paired.address }) { PairedRow(it, now, onDeviceClick, onHide) }
+            }
+        }
+        // Trackers are not paired, so they never show up above on their own (design home-v3).
+        item(key = "add-tracker") {
+            TextButton(onClick = onAddTracker, modifier = Modifier.padding(top = 8.dp)) {
+                Icon(Icons.Filled.Add, contentDescription = null)
+                Text(stringResource(R.string.devices_add_tracker), modifier = Modifier.padding(start = 8.dp))
             }
         }
     }

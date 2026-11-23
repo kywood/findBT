@@ -39,4 +39,6 @@
     <string name="finder_confirm_hint">Not sure it\'s this one? Hold your phone right next to it. If it says \"Right here\", you\'ve found it.</string>
     <string name="finder_gauge_cold" translatable="false">❄</string>
     <string name="finder_gauge_hot" translatable="false">🔥</string>
+    <string name="finder_very_close_title">Very close</string>
+    <string name="finder_very_close_body">Slow down and look around</string>
 </resources>

@@ -17,14 +17,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
@@ -158,19 +158,24 @@ fun FinderContent(state: FinderUiState, actions: FinderActions, modifier: Modifi
                 actions = { AdvancedMenu(state.advanced, tint = content) },
             )
         },
+        // The action row is pinned above the navigation bar and never scrolls away (design review #55).
+        bottomBar = { ActionRow(state, actions, content, background) },
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp, vertical = 16.dp),
+                .padding(horizontal = 24.dp, vertical = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             StageText(state)
-            Spacer(Modifier.height(24.dp))
-            DirectionDial(state)
-            Spacer(Modifier.height(24.dp))
+            // The dial takes what is left and shrinks on short screens (Flip3 cover, small phones).
+            Box(
+                modifier = Modifier.weight(1f).fillMaxWidth().padding(vertical = 12.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                DirectionDial(state, Modifier.heightIn(min = DIAL_MIN))
+            }
             DistanceBlock(state)
             val canRespin = state.stage == FinderStage.WALK || state.stage == FinderStage.TURN_AROUND
             if (canRespin) {
@@ -178,8 +183,8 @@ fun FinderContent(state: FinderUiState, actions: FinderActions, modifier: Modifi
                     Text(stringResource(R.string.finder_spin_again), color = content)
                 }
             }
-            if (state.stage != FinderStage.WAITING && state.stage != FinderStage.SIGNAL_LOST) {
-                // Names can be vague ("hiot0"); being able to confirm by touch matters more than the name (#46).
+            if (state.showConfirmHint) {
+                // Names can be vague ("hiot0"); confirming by touch matters more than the name (#46).
                 Spacer(Modifier.height(8.dp))
                 Text(
                     text = stringResource(R.string.finder_confirm_hint),
@@ -188,43 +193,49 @@ fun FinderContent(state: FinderUiState, actions: FinderActions, modifier: Modifi
                     textAlign = TextAlign.Center,
                 )
             }
-            Spacer(Modifier.height(24.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                FilterChip(
-                    colors = FilterChipDefaults.filterChipColors(
-                        labelColor = content,
-                        iconColor = content,
-                        selectedContainerColor = content.copy(alpha = 0.18f),
-                        selectedLabelColor = content,
-                        selectedLeadingIconColor = content,
-                    ),
-                    border = FilterChipDefaults.filterChipBorder(
-                        enabled = true,
-                        selected = state.vibrationOn,
-                        borderColor = content.copy(alpha = 0.5f),
-                    ),
-                    selected = state.vibrationOn,
-                    onClick = actions.onToggleVibration,
-                    label = { Text(stringResource(R.string.finder_vibration)) },
-                    leadingIcon = if (state.vibrationOn) {
-                        { Icon(Icons.Filled.Check, contentDescription = null) }
-                    } else {
-                        null
-                    },
-                )
-                // Inverted colours keep the main button readable on every state background.
-                Button(
-                    onClick = actions.onFound,
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(containerColor = content, contentColor = background),
-                ) {
-                    Text(stringResource(R.string.finder_found))
-                }
-            }
+        }
+    }
+}
+
+@Composable
+private fun ActionRow(state: FinderUiState, actions: FinderActions, content: Color, background: Color) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .navigationBarsPadding()
+            .padding(horizontal = 24.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        FilterChip(
+            colors = FilterChipDefaults.filterChipColors(
+                labelColor = content,
+                iconColor = content,
+                selectedContainerColor = content.copy(alpha = 0.18f),
+                selectedLabelColor = content,
+                selectedLeadingIconColor = content,
+            ),
+            border = FilterChipDefaults.filterChipBorder(
+                enabled = true,
+                selected = state.vibrationOn,
+                borderColor = content.copy(alpha = 0.5f),
+            ),
+            selected = state.vibrationOn,
+            onClick = actions.onToggleVibration,
+            label = { Text(stringResource(R.string.finder_vibration)) },
+            leadingIcon = if (state.vibrationOn) {
+                { Icon(Icons.Filled.Check, contentDescription = null) }
+            } else {
+                null
+            },
+        )
+        // Inverted colours keep the main button readable on every state background.
+        Button(
+            onClick = actions.onFound,
+            modifier = Modifier.weight(1f),
+            colors = ButtonDefaults.buttonColors(containerColor = content, contentColor = background),
+        ) {
+            Text(stringResource(R.string.finder_found))
         }
     }
 }
@@ -235,7 +246,12 @@ private fun StageText(state: FinderUiState) {
         FinderStage.WAITING -> R.string.finder_waiting_title to R.string.finder_waiting_body
         FinderStage.SPIN -> R.string.finder_spin_title to R.string.finder_spin_body
         FinderStage.SPIN_AGAIN -> R.string.finder_spin_again_title to R.string.finder_spin_again_body
-        FinderStage.WALK -> R.string.finder_walk_title to R.string.finder_walk_body
+        FinderStage.WALK -> if (state.band == ProximityBand.VERY_CLOSE || state.band == ProximityBand.RIGHT_HERE) {
+            // Under 1.5 m the arrow is less reliable; looking around beats following it (v3.3).
+            R.string.finder_very_close_title to R.string.finder_very_close_body
+        } else {
+            R.string.finder_walk_title to R.string.finder_walk_body
+        }
         FinderStage.LOCKED -> R.string.finder_locked_title to R.string.finder_locked_body
         FinderStage.TURN_AROUND -> R.string.finder_turn_around_title to R.string.finder_turn_around_body
         FinderStage.RIGHT_HERE -> R.string.finder_right_here_title to R.string.finder_right_here_body
@@ -278,7 +294,9 @@ private fun DistanceBlock(state: FinderUiState) {
     )
     Spacer(Modifier.height(16.dp))
     HeatGauge(state.heat, Modifier.fillMaxWidth(0.8f))
-    if (state.stage != FinderStage.RIGHT_HERE) {
+    // No "Keep going" while the user is asked to spin in place.
+    val spinning = state.stage == FinderStage.SPIN || state.stage == FinderStage.SPIN_AGAIN
+    if (state.stage != FinderStage.RIGHT_HERE && !spinning) {
         Spacer(Modifier.height(12.dp))
         TrendChip(state.trend)
     }
@@ -453,6 +471,7 @@ private const val LONG_HAPTIC_MS = 400L
 private const val COLOR_FADE_MS = 400
 private const val MUTED_ALPHA = 0.78f
 private val GAUGE_TRACK = 6.dp
+private val DIAL_MIN = 180.dp
 private val GAUGE_DOT = 16.dp
 private const val NO_VALUE = "–"
 

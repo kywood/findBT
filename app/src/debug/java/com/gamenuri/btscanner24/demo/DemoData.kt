@@ -22,11 +22,11 @@ internal object DemoData {
     private val fakes = listOf(
         Fake("My Earbuds", DeviceCategory.EARBUDS, 0.7),
         Fake("Running Watch", DeviceCategory.WATCH, 2.2),
-        Fake("Keyboard", DeviceCategory.KEYBOARD, 1.4),
+        Fake("Office Keyboard", DeviceCategory.KEYBOARD, 1.4),
         Fake("Bike Sensor", DeviceCategory.FITNESS_BAND, 3.1),
         Fake("Keys Tag", DeviceCategory.TRACKER, 4.0),
         Fake(null, DeviceCategory.TRACKER, 6.5),
-        Fake("Headphones", DeviceCategory.HEADPHONES, 7.5),
+        Fake("Studio Headphones", DeviceCategory.HEADPHONES, 7.5),
         Fake("Living Room Speaker", DeviceCategory.SPEAKER, 12.0),
     )
 
@@ -51,7 +51,10 @@ internal object DemoData {
     val paired: List<PairedDevice> = listOf(
         PairedDevice(address(0), "My Earbuds", DeviceCategory.EARBUDS),
         PairedDevice(address(1), "Running Watch", DeviceCategory.WATCH),
-        PairedDevice("DE:00:00:00:00:F1", "Car Audio", DeviceCategory.SPEAKER),
+        // Car and computer go into the collapsed "Other paired devices" group (design home-v3).
+        PairedDevice("DE:00:00:00:00:F1", "My Car", DeviceCategory.UNKNOWN),
+        PairedDevice("DE:00:00:00:00:F2", "Work Laptop", DeviceCategory.COMPUTER),
+        PairedDevice("DE:00:00:00:00:F3", "Gym Band", DeviceCategory.FITNESS_BAND),
     )
 
     /** Every find state the design review asks for (#52): spin, walk, locked, far, close, very close, here, lost. */
@@ -92,6 +95,7 @@ internal object DemoData {
                 arrowDegrees = 8f,
                 confidence = ArrowConfidence.MEDIUM,
                 trend = ProximityTrend.CLOSER,
+                showConfirmHint = true,
             ).distance(1.2, ProximityBand.VERY_CLOSE)
             "here" -> base.copy(stage = FinderStage.RIGHT_HERE).distance(0.3, ProximityBand.RIGHT_HERE)
             "lost" -> base.copy(stage = FinderStage.SIGNAL_LOST, secondsSinceSeen = 12).distance(6.0, ProximityBand.FAR)
