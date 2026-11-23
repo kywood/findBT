@@ -31,6 +31,7 @@ fun DeviceCategory.iconRes(): Int = when (this) {
     DeviceCategory.MOUSE -> R.drawable.ic_device_mouse
     DeviceCategory.GAMEPAD -> R.drawable.ic_device_gamepad
     DeviceCategory.TV -> R.drawable.ic_device_tv
+    DeviceCategory.CAR -> R.drawable.ic_device_car
     DeviceCategory.HEALTH -> R.drawable.ic_device_health
     DeviceCategory.SENSOR -> R.drawable.ic_device_beacon
     DeviceCategory.UNKNOWN -> R.drawable.ic_device_unknown
