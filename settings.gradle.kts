@@ -30,6 +30,7 @@ include(":core:model")
 include(":core:ble")
 include(":core:data")
 include(":core:designsystem")
+include(":core:sensors")
 include(":core:ui")
 include(":feature:scan")
  
