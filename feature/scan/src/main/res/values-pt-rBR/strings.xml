@@ -19,7 +19,7 @@
     <string name="error_bluetooth_off">O Bluetooth está desligado.</string>
     <string name="error_not_supported">Este aparelho não é compatível com Bluetooth Low Energy.</string>
     <string name="error_too_frequent">A busca foi reiniciada vezes demais. Aguarde alguns segundos e tente de novo.</string>
-    <string name="error_location_off">A localização está desativada. Nesta versão do Android, a busca Bluetooth só funciona com a localização ativada.</string>
+    <string name="error_location_off">A localização está desativada. Nesta versão do Android, a busca Bluetooth precisa da localização ativada.</string>
     <string name="error_scan_failed">Não foi possível iniciar a busca.</string>
     <string name="action_search">Buscar</string>
     <string name="action_close_search">Fechar busca</string>

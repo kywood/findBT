@@ -18,14 +18,14 @@
     <string name="finder_locked_body">Weiter in diese Richtung</string>
     <string name="finder_turn_around_title">Dreh dich um</string>
     <string name="finder_turn_around_body">Es ist wahrscheinlich hinter dir</string>
-    <string name="finder_right_here_title">Direkt hier</string>
+    <string name="finder_right_here_title">Genau hier</string>
     <string name="finder_right_here_body">Es ist in Reichweite. Schau dich um.</string>
     <string name="finder_signal_lost_title">Signal verloren</string>
     <string name="finder_signal_lost_body">Vor %1$d s gesehen · geh zurück, wo das Signal stärker war</string>
     <string name="finder_no_compass_title">Folge wärmer und kälter</string>
     <string name="finder_no_compass_body">Dieses Handy hat keinen Richtungssensor, daher gibt es keinen Pfeil</string>
     <string name="finder_distance_label">ungefähre Entfernung</string>
-    <string name="finder_band_right_here">Direkt hier</string>
+    <string name="finder_band_right_here">Genau hier</string>
     <string name="finder_band_very_close">Sehr nah</string>
     <string name="finder_band_near">Nah</string>
     <string name="finder_band_far">Weit</string>
@@ -33,7 +33,7 @@
     <string name="finder_trend_farther">▼ Kälter</string>
     <string name="finder_trend_steady">Weiter so</string>
     <string name="finder_advanced_values">MAC %1$s · RSSI %2$s dBm (geglättet %3$s) · Kurs %4$s° · Peilung %5$s° · MAC-Wechsel %6$d · %7$d s</string>
-    <string name="finder_confirm_hint">Nicht sicher, ob es das richtige ist? Halte dein Handy direkt daneben. Steht dort \"Direkt hier\", hast du es gefunden.</string>
+    <string name="finder_confirm_hint">Nicht sicher, ob es das richtige ist? Halte dein Handy direkt daneben. Steht dort \"Genau hier\", hast du es gefunden.</string>
     <string name="found_title">Gefunden!</string>
     <string name="found_summary">%1$s · gefunden in %2$s</string>
     <string name="found_minutes_seconds">%1$d Min. %2$d s</string>

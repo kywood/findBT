@@ -12,6 +12,7 @@ GLOSSARY = {
     'tab_nearby':        dict(ko='주변', ja='周り', es='Cerca', pt='Por perto', de='In der Nähe'),
     'tab_my_devices':    dict(ko='내 기기', ja='マイデバイス', es='Mis dispositivos', pt='Meus dispositivos', de='Meine Geräte'),
     'devices_title':     dict(ko='내 기기', ja='マイデバイス', es='Mis dispositivos', pt='Meus dispositivos', de='Meine Geräte'),
+    'finder_band_right_here': dict(ko='바로 여기', ja='ここ', es='Aquí', pt='Bem aqui', de='Genau hier'),
     'finder_found':      dict(ko='찾았어요', ja='見つけた', es='Lo encontré', pt='Achei', de='Gefunden'),
     'finder_distance_label': dict(ko='대략적인 거리', ja='おおよその距離', es='aproximada', pt='aproximada', de='ungefähr'),
     'finder_direction_label': dict(ko='대략적인 방향', ja='おおよその方向', es='aproximada', pt='aproximada', de='ungefähr'),
@@ -22,9 +23,12 @@ GLOSSARY = {
     'devices_others':    dict(ko='다른 페어링 기기', ja='ペアリング', es='vinculados', pt='pareados', de='gekoppelte'),
 }
 BANNED = {  # never show "Unknown" (#46), never promise precision
-    'all': [r'\bUnknown\b', r'\bexact', r'\bprecis'],
-    'ko': ['알 수 없는', '정확한'], 'ja': ['不明', '正確'], 'es': ['Desconocido', 'exact', 'precis'],
-    'pt': ['Desconhecido', 'exat', 'precis'], 'de': ['Unbekannt', 'genau ', 'exakt', 'präzis'],
+    'all': [r'\bUnknown\b', r'\bexact', r'\bprecise', r'\bprecision'],
+    'ko': ['알 수 없는', '정확한'], 'ja': ['不明', '正確'], 'es': ['Desconocido', r'\bexact', r'\bprecis[oa]', r'precisión'],
+    # PT: "precisa/preciso" also means "needs", so only the noun/adjective forms are banned
+    'pt': ['Desconhecido', r'\bexat', r'precisão', r'\bprecis[oa]s? (de )?(dist|loc|dire)'],
+    # DE: "Genau hier" (Right here) is fine; only ban precision claims
+    'de': ['Unbekannt', r'genaue[nrs]? (Entfernung|Richtung|Position|Standort)', 'exakt', 'präzis'],
 }
 # keys shown in tight spots: max ratio of target length vs EN
 TIGHT = {'tab_nearby': 1.6, 'tab_my_devices': 1.6, 'badge_paired': 1.5, 'badge_new': 1.8, 'finder_found': 1.8,
