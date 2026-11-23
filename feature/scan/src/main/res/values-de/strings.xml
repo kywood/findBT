@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="action_start_scan">Scan starten</string>
+    <string name="action_stop_scan">Scan stoppen</string>
+    <string name="action_reset">Zurücksetzen</string>
+    <string name="action_retry">Erneut versuchen</string>
+    <string name="action_ok">OK</string>
+    <string name="action_allow">Erlauben</string>
+    <string name="action_turn_on">Einschalten</string>
+    <string name="action_open_settings">Einstellungen</string>
+    <string name="search_hint">Nach Name oder Hersteller suchen</string>
+    <string name="filter_named_only">Nur mit Namen</string>
+    <plurals name="devices_found">
+        <item quantity="one">%d Gerät gefunden</item>
+        <item quantity="other">%d Geräte gefunden</item>
+    </plurals>
+    <string name="permission_rationale">Für die Suche nach Geräten in der Nähe ist die Bluetooth-Berechtigung nötig.</string>
+    <string name="permission_denied_settings">Die Bluetooth-Berechtigung ist aus. Schalte sie in den Einstellungen ein, um zu scannen.</string>
+    <string name="error_bluetooth_off">Bluetooth ist aus.</string>
+    <string name="error_not_supported">Dieses Gerät unterstützt kein Bluetooth Low Energy.</string>
+    <string name="error_too_frequent">Der Scan wurde zu oft neu gestartet. Warte ein paar Sekunden und versuche es erneut.</string>
+    <string name="error_location_off">Der Standort ist aus. Auf dieser Android-Version braucht der Bluetooth-Scan den Standort.</string>
+    <string name="error_scan_failed">Der Scan konnte nicht gestartet werden.</string>
+    <string name="action_search">Suchen</string>
+    <string name="action_close_search">Suche schließen</string>
+    <string name="action_refresh_order">Reihenfolge aktualisieren</string>
+    <string name="sort_menu">Sortieren</string>
+    <string name="sort_nearest">Am nächsten</string>
+    <string name="sort_name">Name</string>
+    <string name="sort_recent">Zuletzt gefunden</string>
+    <string name="filter_hide_gone">Alte ausblenden</string>
+    <string name="empty_bluetooth_off_title">Bluetooth ist aus</string>
+    <string name="empty_bluetooth_off_body">Schalte Bluetooth ein, um Geräte in deiner Nähe zu finden.</string>
+    <string name="empty_location_off_title">Standort ist aus</string>
+</resources>

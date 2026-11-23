@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="action_start_scan">スキャン開始</string>
+    <string name="action_stop_scan">スキャン停止</string>
+    <string name="action_reset">リセット</string>
+    <string name="action_retry">再試行</string>
+    <string name="action_ok">OK</string>
+    <string name="action_allow">許可</string>
+    <string name="action_turn_on">オンにする</string>
+    <string name="action_open_settings">設定</string>
+    <string name="search_hint">名前またはメーカーで検索</string>
+    <string name="filter_named_only">名前ありのみ</string>
+    <plurals name="devices_found">
+        <item quantity="other">%d 台のデバイス</item>
+    </plurals>
+    <string name="permission_rationale">周りのデバイスを探すにはBluetoothの権限が必要です。</string>
+    <string name="permission_denied_settings">Bluetoothの権限がオフです。スキャンするには設定でオンにしてください。</string>
+    <string name="error_bluetooth_off">Bluetoothがオフです。</string>
+    <string name="error_not_supported">このデバイスはBluetooth Low Energyに対応していません。</string>
+    <string name="error_too_frequent">スキャンの再開が多すぎます。数秒待ってからもう一度お試しください。</string>
+    <string name="error_location_off">位置情報がオフです。このAndroidバージョンでは、Bluetoothスキャンに位置情報をオンにする必要があります。</string>
+    <string name="error_scan_failed">スキャンを開始できませんでした。</string>
+    <string name="action_search">検索</string>
+    <string name="action_close_search">検索を閉じる</string>
+    <string name="action_refresh_order">並び順を更新</string>
+    <string name="sort_menu">並べ替え</string>
+    <string name="sort_nearest">近い順</string>
+    <string name="sort_name">名前</string>
+    <string name="sort_recent">最近見つかった順</string>
+    <string name="filter_hide_gone">消えた機器を隠す</string>
+    <string name="empty_bluetooth_off_title">Bluetoothがオフです</string>
+    <string name="empty_bluetooth_off_body">Bluetoothをオンにすると、周りのデバイスを探せます。</string>
+    <string name="empty_location_off_title">位置情報がオフです</string>
+</resources>

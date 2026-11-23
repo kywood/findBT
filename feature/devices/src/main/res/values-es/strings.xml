@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="devices_title">Mis dispositivos</string>
+    <string name="devices_section_nearby">Cerca ahora</string>
+    <string name="devices_section_not_nearby">Fuera de alcance</string>
+    <string name="devices_others">Otros dispositivos vinculados (%1$d)</string>
+    <string name="devices_last_seen_now">Visto ahora mismo</string>
+    <string name="devices_last_seen_minutes">Visto por última vez: hace %1$d min</string>
+    <string name="devices_not_seen">Vinculado · aún no visto</string>
+    <string name="devices_more">Más</string>
+    <string name="devices_hide">Ocultar de la lista</string>
+    <string name="devices_empty_title">No hay dispositivos vinculados</string>
+    <string name="devices_empty_body">Los dispositivos vinculados a este teléfono aparecen aquí automáticamente.</string>
+    <string name="devices_open_bluetooth_settings">Vincular en ajustes de Bluetooth</string>
+    <string name="devices_permission_body">Permite \"Dispositivos cercanos\" para ver los dispositivos vinculados a este teléfono.</string>
+    <string name="devices_permission_action">Permitir</string>
+    <string name="devices_add_tracker">Añadir un rastreador</string>
+</resources>

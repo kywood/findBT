@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="devices_title">Meine Geräte</string>
+    <string name="devices_section_nearby">Jetzt in der Nähe</string>
+    <string name="devices_section_not_nearby">Außer Reichweite</string>
+    <string name="devices_others">Weitere gekoppelte Geräte (%1$d)</string>
+    <string name="devices_last_seen_now">Gerade eben gesehen</string>
+    <string name="devices_last_seen_minutes">Zuletzt gesehen: vor %1$d Min.</string>
+    <string name="devices_not_seen">Gekoppelt · noch nicht gesehen</string>
+    <string name="devices_more">Mehr</string>
+    <string name="devices_hide">Aus Liste ausblenden</string>
+    <string name="devices_empty_title">Keine gekoppelten Geräte</string>
+    <string name="devices_empty_body">Mit diesem Smartphone gekoppelte Geräte erscheinen hier automatisch.</string>
+    <string name="devices_open_bluetooth_settings">In den Bluetooth-Einstellungen koppeln</string>
+    <string name="devices_permission_body">Erlaube \"Geräte in der Nähe\", um die mit diesem Smartphone gekoppelten Geräte zu sehen.</string>
+    <string name="devices_permission_action">Erlauben</string>
+    <string name="devices_add_tracker">Tracker hinzufügen</string>
+</resources>
