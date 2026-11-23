@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.update
  * Updates go through [MutableStateFlow.update], so callbacks from any thread are safe.
  */
 class DeviceRepository(
+    private val companies: CompanyDirectory,
     private val clock: () -> Long = System::currentTimeMillis,
 ) {
     private val _devices = MutableStateFlow<Map<String, BleDevice>>(emptyMap())
@@ -20,7 +21,7 @@ class DeviceRepository(
         val now = clock()
         _devices.update { current ->
             val address = result.device.address
-            current + (address to ScanResultMapper.map(result, current[address], now))
+            current + (address to ScanResultMapper.map(result, current[address], now, companies))
         }
     }
 

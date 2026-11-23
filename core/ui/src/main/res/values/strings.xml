@@ -5,4 +5,5 @@
     <string name="signal_strong">Strong</string>
     <string name="signal_medium">Medium</string>
     <string name="signal_weak">Weak</string>
+    <string name="manufacturer_unknown">Unknown maker</string>
 </resources>

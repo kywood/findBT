@@ -5,4 +5,5 @@
     <string name="signal_strong">강함</string>
     <string name="signal_medium">보통</string>
     <string name="signal_weak">약함</string>
+    <string name="manufacturer_unknown">제조사 알 수 없음</string>
 </resources>

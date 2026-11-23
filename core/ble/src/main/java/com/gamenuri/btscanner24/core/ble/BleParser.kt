@@ -4,7 +4,10 @@ import com.gamenuri.btscanner24.core.model.Constants
 
 data class ParsedAdvertiseData(
     val name: String = Constants.UNKNOWN,
-    val manufacturerId: String = Constants.UNKNOWN,
+    /** Company name, or null when the packet does not identify one. */
+    val manufacturer: String? = null,
+    /** Raw Bluetooth SIG company ID from manufacturer-specific data, even if not in the table. */
+    val companyId: Int? = null,
     val deviceType: String = Constants.UNKNOWN,
     val txPower: Int? = null,
     val flags: String = Constants.UNKNOWN,
@@ -14,10 +17,11 @@ data class ParsedAdvertiseData(
 
 object BleParser {
 
-    fun parse(rawBytes: ByteArray): ParsedAdvertiseData {
+    fun parse(rawBytes: ByteArray, companies: CompanyDirectory): ParsedAdvertiseData {
         var i = 0
         var name = Constants.UNKNOWN
-        var manufacturerId = Constants.UNKNOWN
+        var companyId: Int? = null
+        var serviceOwner: String? = null
         var deviceType = Constants.UNKNOWN
         var txPower: Int? = null
         var flags = Constants.UNKNOWN
@@ -44,17 +48,16 @@ object BleParser {
 
                 // 제조사 데이터
                 0xFF -> {
-                    if (data.size >= 2 && manufacturerId == Constants.UNKNOWN) {
-                        val id = ((data[1].toInt() and 0xFF) shl 8) or (data[0].toInt() and 0xFF)
-                        manufacturerId = ManufacturerResolver.resolveByManufacturerId(id)
+                    if (data.size >= 2 && companyId == null) {
+                        companyId = ((data[1].toInt() and 0xFF) shl 8) or (data[0].toInt() and 0xFF)
                     }
                 }
 
                 // Service Data (16-bit UUID) → 제조사 추정 fallback
                 0x16 -> {
-                    if (data.size >= 2 && manufacturerId == Constants.UNKNOWN) {
+                    if (data.size >= 2 && serviceOwner == null) {
                         val uuid = ((data[1].toInt() and 0xFF) shl 8) or (data[0].toInt() and 0xFF)
-                        manufacturerId = ManufacturerResolver.resolveByServiceUuid(uuid)
+                        serviceOwner = companies.memberServiceOwner(uuid)
                     }
                 }
 
@@ -86,6 +89,7 @@ object BleParser {
                     while (j + 1 < data.size) {
                         val uuid = ((data[j + 1].toInt() and 0xFF) shl 8) or (data[j].toInt() and 0xFF)
                         serviceUuids.add("0x${"%04X".format(uuid)}")
+                        if (serviceOwner == null) serviceOwner = companies.memberServiceOwner(uuid)
                         j += 2
                     }
                 }
@@ -114,7 +118,9 @@ object BleParser {
 
         return ParsedAdvertiseData(
             name = name,
-            manufacturerId = manufacturerId,
+            // Manufacturer data names the maker directly; a member service UUID is only a hint.
+            manufacturer = companyId?.let(companies::companyName) ?: serviceOwner,
+            companyId = companyId,
             deviceType = resolvedDeviceType,
             txPower = txPower,
             flags = flags,
