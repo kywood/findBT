@@ -21,6 +21,7 @@
     <string name="sort_name">Name</string>
     <string name="sort_recent">Zuletzt gefunden</string>
     <string name="filter_hide_gone">Verschwundene ausblenden</string>
+    <string name="filter_show_other">Andere Geräte anzeigen</string>
     <string name="empty_bluetooth_off_title">Bluetooth ist aus</string>
     <string name="empty_bluetooth_off_body">Schalte Bluetooth ein, um Geräte in deiner Nähe zu finden.</string>
     <string name="empty_location_off_title">Standort ist aus</string>

@@ -150,6 +150,7 @@ fun ScanScreen(
             onSortChange = viewModel::setSort,
             onToggleNamedOnly = viewModel::toggleNamedOnly,
             onToggleHideGone = viewModel::toggleHideGone,
+            onToggleShowOther = viewModel::toggleShowOther,
             onToggleGroup = viewModel::toggleGroup,
             onClearGroups = viewModel::clearGroups,
             onResetFilters = viewModel::resetFilters,
@@ -175,6 +176,7 @@ data class ScanActions(
     val onSortChange: (DeviceSort) -> Unit = {},
     val onToggleNamedOnly: () -> Unit = {},
     val onToggleHideGone: () -> Unit = {},
+    val onToggleShowOther: () -> Unit = {},
     val onToggleGroup: (CategoryGroup) -> Unit = {},
     val onClearGroups: () -> Unit = {},
     val onResetFilters: () -> Unit = {},
@@ -478,21 +480,23 @@ private fun FilterSheet(prefs: ListPreferences, actions: ScanActions, onDismiss:
             )
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 FilterChip(
-                    selected = prefs.groups.isEmpty(),
+                    selected = prefs.filter.types.isEmpty(),
                     onClick = actions.onClearGroups,
                     label = { Text(stringResource(R.string.filter_all)) },
                 )
                 CategoryGroup.entries.forEach { group ->
                     FilterChip(
-                        selected = group in prefs.groups,
+                        selected = group in prefs.filter.types,
                         onClick = { actions.onToggleGroup(group) },
                         label = { Text(group.label()) },
                     )
                 }
             }
             Spacer(Modifier.height(8.dp))
-            SwitchRow(R.string.filter_named_only, prefs.namedOnly, actions.onToggleNamedOnly)
-            SwitchRow(R.string.filter_hide_gone, prefs.hideGone, actions.onToggleHideGone)
+            SwitchRow(R.string.filter_named_only, !prefs.filter.showUnnamed, actions.onToggleNamedOnly)
+            SwitchRow(R.string.filter_hide_gone, prefs.filter.hideGone, actions.onToggleHideGone)
+            // Off by default (#82); the full filter screen comes with #85.
+            SwitchRow(R.string.filter_show_other, prefs.filter.showOther, actions.onToggleShowOther)
             Row(
                 modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
                 horizontalArrangement = Arrangement.End,

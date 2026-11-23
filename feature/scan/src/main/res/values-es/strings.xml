@@ -21,6 +21,7 @@
     <string name="sort_name">Nombre</string>
     <string name="sort_recent">Encontrados recientemente</string>
     <string name="filter_hide_gone">Ocultar dispositivos ausentes</string>
+    <string name="filter_show_other">Mostrar otros dispositivos</string>
     <string name="empty_bluetooth_off_title">El Bluetooth está desactivado</string>
     <string name="empty_bluetooth_off_body">Activa el Bluetooth para encontrar dispositivos a tu alrededor.</string>
     <string name="empty_location_off_title">La ubicación está desactivada</string>

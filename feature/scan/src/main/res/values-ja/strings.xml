@@ -21,6 +21,7 @@
     <string name="sort_name">名前</string>
     <string name="sort_recent">最近見つかった順</string>
     <string name="filter_hide_gone">消えたデバイスを隠す</string>
+    <string name="filter_show_other">その他のデバイスを表示</string>
     <string name="empty_bluetooth_off_title">Bluetoothがオフです</string>
     <string name="empty_bluetooth_off_body">Bluetoothをオンにすると、周りのデバイスを探せます。</string>
     <string name="empty_location_off_title">位置情報がオフです</string>
