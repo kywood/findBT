@@ -178,7 +178,7 @@ class ScanViewModel(
     /** Filter sheet "Reset": types, names and gone devices back to the defaults; sort stays. */
     // "Show other devices" is a view choice, not a narrowing filter, so reset keeps it.
     fun resetFilters() = updateFilter { DeviceFilter(showOther = it.showOther) }
-    fun toggleGroup(group: CategoryGroup) = updatePreferences {
+    fun toggleGroup(group: CategoryGroup) = updateFilter {
         it.copy(types = if (group in it.types) it.types - group else it.types + group)
     }
 
@@ -209,11 +209,7 @@ class ScanViewModel(
     }
 }
 
-internal data class OrderedList(
-    val items: List<DeviceListItem>,
-    val reorderAvailable: Boolean,
-    val hiddenOther: Int,
-)
+internal data class OrderedList(val items: List<DeviceListItem>, val reorderAvailable: Boolean, val hiddenOther: Int)
 
 private data class ListInputs(
     val prefs: ListPreferences,
