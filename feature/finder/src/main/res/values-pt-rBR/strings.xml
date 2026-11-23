@@ -49,4 +49,5 @@
     <string name="finder_sound_connecting">Conectando…</string>
     <string name="finder_sound_retry">Tentar de novo</string>
     <string name="finder_sound_failed">Não foi possível tocar o som. Chegue mais perto e tente de novo.</string>
+    <string name="finder_sound_not_supported">Este dispositivo não pode tocar som.</string>
 </resources>
