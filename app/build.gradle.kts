@@ -40,6 +40,7 @@ android {
 }
 
 dependencies {
+    implementation(projects.core.ble)
     implementation(projects.core.designsystem)
     implementation(projects.feature.scan)
 
