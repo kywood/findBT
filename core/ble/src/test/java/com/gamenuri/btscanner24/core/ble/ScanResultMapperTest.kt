@@ -1,7 +1,7 @@
 package com.gamenuri.btscanner24.core.ble
 
 import com.gamenuri.btscanner24.core.model.BleDevice
-import com.gamenuri.btscanner24.core.model.Constants
+import com.gamenuri.btscanner24.core.model.DeviceCategory
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -10,7 +10,7 @@ class ScanResultMapperTest {
     private fun device(
         name: String? = null,
         manufacturer: String? = null,
-        deviceType: String = Constants.UNKNOWN,
+        category: DeviceCategory = DeviceCategory.UNKNOWN,
         rssi: Int = -70,
     ) = BleDevice(
         address = "AA:BB",
@@ -19,15 +19,15 @@ class ScanResultMapperTest {
         firstSeen = 0,
         lastSeen = 0,
         manufacturer = manufacturer,
-        deviceType = deviceType,
+        category = category,
     )
 
     @Test
     fun `packet without manufacturer keeps the one found earlier`() {
-        val first = device(manufacturer = "Apple", deviceType = "Headset")
+        val first = device(manufacturer = "Apple", category = DeviceCategory.EARBUDS)
         val merged = ScanResultMapper.mergeKnown(first, device(name = "AirPods", rssi = -50))
         assertEquals("Apple", merged.manufacturer)
-        assertEquals("Headset", merged.deviceType)
+        assertEquals(DeviceCategory.EARBUDS, merged.category)
         assertEquals("AirPods", merged.name)
         assertEquals(-50, merged.rssi)
     }

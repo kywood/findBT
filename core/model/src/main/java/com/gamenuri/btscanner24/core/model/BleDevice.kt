@@ -13,8 +13,10 @@ data class BleDevice(
     val manufacturer: String? = null,
     /** Raw SIG company ID from manufacturer data, shown in the Advanced section. */
     val companyId: Int? = null,
-    val deviceType: String = Constants.UNKNOWN,
+    val category: DeviceCategory = DeviceCategory.UNKNOWN,
     val uuids: List<String> = emptyList(),
+    /** 16-bit service UUIDs, e.g. 0x1802 Immediate Alert decides whether "Play sound" is offered. */
+    val serviceUuids16: List<Int> = emptyList(),
     val txPower: Int? = null,
     val flags: String = Constants.UNKNOWN,
     val rawBytes: String = Constants.UNKNOWN,

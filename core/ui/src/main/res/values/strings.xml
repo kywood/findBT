@@ -6,4 +6,25 @@
     <string name="signal_medium">Medium</string>
     <string name="signal_weak">Weak</string>
     <string name="manufacturer_unknown">Unknown maker</string>
+    <string name="category_earbuds">Earbuds</string>
+    <string name="category_headphones">Headphones</string>
+    <string name="category_hearing_aid">Hearing aid</string>
+    <string name="category_speaker">Speaker</string>
+    <string name="category_watch">Watch</string>
+    <string name="category_fitness_band">Fitness band</string>
+    <string name="category_tracker">Tracker</string>
+    <string name="category_phone">Phone</string>
+    <string name="category_tablet">Tablet</string>
+    <string name="category_computer">Computer</string>
+    <string name="category_keyboard">Keyboard</string>
+    <string name="category_mouse">Mouse</string>
+    <string name="category_gamepad">Game controller</string>
+    <string name="category_tv">TV</string>
+    <string name="category_health">Health device</string>
+    <string name="category_sensor">Sensor</string>
+    <string name="category_unknown">Other device</string>
+    <string name="category_group_earbuds">Earbuds</string>
+    <string name="category_group_watch">Watches</string>
+    <string name="category_group_tracker">Trackers</string>
+    <string name="category_group_other">Other</string>
 </resources>
