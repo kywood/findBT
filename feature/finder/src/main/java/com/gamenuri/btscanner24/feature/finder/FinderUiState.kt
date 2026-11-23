@@ -73,6 +73,9 @@ enum class SoundState {
 
     /** The last attempt failed (out of range, busy); the button retries. */
     FAILED,
+
+    /** A tap showed the device has no Immediate Alert service: a short note instead of the button. */
+    NOT_SUPPORTED,
 }
 
 /** Raw numbers for the Advanced section and for the prototype measurements. */
