@@ -1,6 +1,7 @@
 package com.gamenuri.btscanner24.feature.onboarding
 
 import android.os.Build
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,10 +15,14 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -30,17 +35,27 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.gamenuri.btscanner24.core.ble.BleScanner
+import com.gamenuri.btscanner24.core.designsystem.component.FloorArrowIllustration
 import com.gamenuri.btscanner24.core.designsystem.component.IllustratedMessage
 import com.gamenuri.btscanner24.core.designsystem.component.IllustrationTone
 import com.gamenuri.btscanner24.core.designsystem.icon.NearoIcons
+import com.gamenuri.btscanner24.core.designsystem.theme.BrandIconGradientBottom
+import com.gamenuri.btscanner24.core.designsystem.theme.BrandIconGradientTop
 import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
+import com.gamenuri.btscanner24.core.ui.R as UiR
 import com.gamenuri.btscanner24.core.ui.permission.openAppSettings
 import com.gamenuri.btscanner24.core.ui.permission.rememberBlePermissionState
 
@@ -111,11 +126,7 @@ fun OnboardingContent(
                 contentAlignment = Alignment.Center,
             ) {
                 when (page) {
-                    OnboardingPage.INTRO -> IllustratedMessage(
-                        icon = NearoIcons.PinSignal,
-                        title = stringResource(R.string.onboarding_intro_title),
-                        body = stringResource(R.string.onboarding_intro_body),
-                    )
+                    OnboardingPage.INTRO -> IntroPage()
                     OnboardingPage.PERMISSION -> IllustratedMessage(
                         icon = NearoIcons.NearbySignal,
                         title = stringResource(
@@ -134,9 +145,12 @@ fun OnboardingContent(
                         ),
                     ) {
                         Spacer(Modifier.height(8.dp))
-                        CheckLine(R.string.onboarding_check_location)
-                        CheckLine(R.string.onboarding_check_local)
-                        CheckLine(R.string.onboarding_check_stops)
+                        // At most 300 dp and centred like the rest; lines stay left-aligned (#69).
+                        Column(Modifier.widthIn(max = 300.dp).align(Alignment.CenterHorizontally)) {
+                            CheckLine(R.string.onboarding_check_location)
+                            CheckLine(R.string.onboarding_check_local)
+                            CheckLine(R.string.onboarding_check_stops)
+                        }
                     }
                     OnboardingPage.DENIED -> IllustratedMessage(
                         icon = NearoIcons.NearbySignal,
@@ -156,6 +170,100 @@ fun OnboardingContent(
         }
     }
 }
+
+/** Page 1 (#72): a small picture of the find screen says "follow the arrow" before any words. */
+@Composable
+private fun IntroPage() {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        IntroHero(Modifier.widthIn(max = 420.dp).fillMaxWidth())
+        Spacer(Modifier.height(28.dp))
+        Text(
+            text = stringResource(R.string.onboarding_intro_title),
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(10.dp))
+        Text(
+            text = stringResource(R.string.onboarding_intro_body),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
+/** Blue card with rings, the floor arrow, a device chip and the distance pill; a still picture. */
+@Composable
+private fun IntroHero(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .height(268.dp)
+            .clip(RoundedCornerShape(26.dp))
+            .background(Brush.radialGradient(listOf(BrandIconGradientTop, BrandIconGradientBottom))),
+    ) {
+        Canvas(Modifier.fillMaxSize()) {
+            val ring = Color.White.copy(alpha = 0.14f)
+            val stroke = Stroke(1.5.dp.toPx())
+            for (radius in listOf(56.dp, 92.dp, 128.dp)) drawCircle(ring, radius = radius.toPx(), style = stroke)
+        }
+        FloorArrowIllustration(color = Color.White, modifier = Modifier.size(190.dp).align(Alignment.Center))
+        Row(
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(14.dp)
+                .background(Color.Black.copy(alpha = 0.28f), RoundedCornerShape(14.dp))
+                .padding(start = 6.dp, end = 12.dp, top = 6.dp, bottom = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier.size(26.dp).background(Color.White, RoundedCornerShape(8.dp)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    painter = painterResource(UiR.drawable.ic_device_earbuds),
+                    contentDescription = null,
+                    tint = BrandIconGradientBottom,
+                    modifier = Modifier.size(18.dp),
+                )
+            }
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text = stringResource(R.string.onboarding_hero_device),
+                color = Color.White,
+                style = MaterialTheme.typography.labelLarge,
+            )
+        }
+        Row(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 16.dp, start = 16.dp, end = 16.dp)
+                .background(Color.White, CircleShape)
+                .padding(horizontal = 14.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(R.string.onboarding_hero_distance),
+                color = BrandIconGradientBottom,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text = stringResource(R.string.onboarding_hero_distance_label),
+                color = HeroMuted,
+                style = MaterialTheme.typography.labelMedium,
+                maxLines = 1,
+            )
+        }
+    }
+}
+
+private val HeroMuted = Color(0xFF44474F)
 
 @Composable
 private fun CheckLine(text: Int) {
@@ -213,6 +321,12 @@ private fun PageDots(selected: Int) {
             Box(Modifier.size(7.dp).background(color, CircleShape))
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun OnboardingIntroPreview() {
+    NearoTheme { OnboardingContent(OnboardingPage.INTRO, OnboardingActions()) }
 }
 
 @Preview(showBackground = true)

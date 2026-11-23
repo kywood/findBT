@@ -23,14 +23,18 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeOff
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material.icons.filled.AcUnit
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -348,7 +352,14 @@ private fun StageText(state: FinderUiState) {
         style = MaterialTheme.typography.labelLarge,
         color = LocalContentColor.current.copy(alpha = MUTED_ALPHA),
     )
-    Text(stringResource(title), style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        // A vector lock instead of the 🔒 emoji, which looks different on every phone (#71).
+        if (state.stage == FinderStage.LOCKED) {
+            Icon(Icons.Filled.Lock, contentDescription = null, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(6.dp))
+        }
+        Text(stringResource(title), style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
+    }
     Text(
         text = if (state.stage == FinderStage.SIGNAL_LOST) {
             stringResource(body, state.secondsSinceSeen)
@@ -388,14 +399,14 @@ private fun DistanceBlock(state: FinderUiState) {
 }
 
 /**
- * Hot-cold gauge: cold (far) on the left, hot (right here) on the right. The ❄/🔥 ends and the dot's
- * position carry the meaning, so it does not depend on colour.
+ * Hot-cold gauge: cold (far) on the left, hot (right here) on the right. The snowflake and flame
+ * icons and the dot's position carry the meaning, so it does not depend on colour.
  */
 @Composable
 private fun HeatGauge(heat: Float, modifier: Modifier = Modifier) {
     val content = LocalContentColor.current
     Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
-        Text(stringResource(R.string.finder_gauge_cold), style = MaterialTheme.typography.titleMedium)
+        Icon(Icons.Filled.AcUnit, contentDescription = null, tint = GaugeCold, modifier = Modifier.size(GAUGE_ICON))
         BoxWithConstraints(
             modifier = Modifier.weight(1f).padding(horizontal = 8.dp).height(GAUGE_DOT),
             contentAlignment = Alignment.CenterStart,
@@ -413,7 +424,12 @@ private fun HeatGauge(heat: Float, modifier: Modifier = Modifier) {
                     .background(content, CircleShape),
             )
         }
-        Text(stringResource(R.string.finder_gauge_hot), style = MaterialTheme.typography.titleMedium)
+        Icon(
+            Icons.Filled.LocalFireDepartment,
+            contentDescription = null,
+            tint = GaugeHot,
+            modifier = Modifier.size(GAUGE_ICON),
+        )
     }
 }
 
@@ -566,6 +582,11 @@ private const val MUTED_ALPHA = 0.78f
 private val GAUGE_TRACK = 6.dp
 private val DIAL_MIN = 180.dp
 private val GAUGE_DOT = 16.dp
+private val GAUGE_ICON = 16.dp
+
+// Gauge ends (#71): the same on every find state background.
+private val GaugeCold = Color(0xFFB2C5FF)
+private val GaugeHot = Color(0xFFFF8A5C)
 private const val NO_VALUE = "–"
 
 @Preview(name = "Walk")

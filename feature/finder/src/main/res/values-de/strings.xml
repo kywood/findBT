@@ -14,7 +14,7 @@
     <string name="finder_spin_again_body">Dreh dich noch einmal langsam</string>
     <string name="finder_walk_title">Geh jetzt in Pfeilrichtung</string>
     <string name="finder_walk_body">Richtung wird geprüft…</string>
-    <string name="finder_locked_title">🔒 Richtung erfasst</string>
+    <string name="finder_locked_title">Richtung erfasst</string>
     <string name="finder_locked_body">Weiter in diese Richtung</string>
     <string name="finder_turn_around_title">Dreh dich um</string>
     <string name="finder_turn_around_body">Es ist wahrscheinlich hinter dir</string>

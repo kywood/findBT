@@ -14,7 +14,7 @@
     <string name="finder_spin_again_body">もう一度ゆっくり回ってください</string>
     <string name="finder_walk_title">矢印の方へ歩いて</string>
     <string name="finder_walk_body">方向を確認中…</string>
-    <string name="finder_locked_title">🔒 方向をキャッチ</string>
+    <string name="finder_locked_title">方向をキャッチ</string>
     <string name="finder_locked_body">この方向に進んで</string>
     <string name="finder_turn_around_title">後ろを向いて</string>
     <string name="finder_turn_around_body">後ろにある可能性が高いです</string>
