@@ -103,8 +103,7 @@ internal object DemoData {
         copy(distanceMeters = meters, band = band, heat = heatFor(meters))
 
     /** Same curve as ProximityEstimator: 0.3 m is hot, 15 m is cold. */
-    private fun heatFor(meters: Double): Float =
-        (1 - ln(meters / 0.3) / ln(15.0 / 0.3)).coerceIn(0.0, 1.0).toFloat()
+    private fun heatFor(meters: Double): Float = (1 - ln(meters / 0.3) / ln(15.0 / 0.3)).coerceIn(0.0, 1.0).toFloat()
 
     private const val DAY_MS = 86_400_000L
 }
