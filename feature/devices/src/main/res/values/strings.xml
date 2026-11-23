@@ -14,4 +14,5 @@
     <string name="devices_open_bluetooth_settings">Pair in Bluetooth settings</string>
     <string name="devices_permission_body">Allow Nearby devices to see the devices paired with this phone.</string>
     <string name="devices_permission_action">Allow</string>
+    <string name="devices_add_tracker">Add a tracker</string>
 </resources>

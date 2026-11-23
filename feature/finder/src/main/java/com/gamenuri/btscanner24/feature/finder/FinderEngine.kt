@@ -38,6 +38,7 @@ internal class FinderEngine(
     private var estimate: BearingEstimator.Estimate? = null
     private var hadDirection = false
     private var rightHereSinceMs: Long? = null
+    private var veryCloseSinceMs: Long? = null
     private var shownDistance: Double? = null
     private var listDistance: Double? = null
     private var shownAtMs: Long = Long.MIN_VALUE
@@ -54,6 +55,8 @@ internal class FinderEngine(
         listDistance = device.distanceMeters
         lastSightingMs = nowMs
         rightHereSinceMs = if (newReading.band == ProximityBand.RIGHT_HERE) rightHereSinceMs ?: nowMs else null
+        val close = newReading.band == ProximityBand.VERY_CLOSE || newReading.band == ProximityBand.RIGHT_HERE
+        veryCloseSinceMs = if (close) veryCloseSinceMs ?: nowMs else null
         return true
     }
 
@@ -103,6 +106,8 @@ internal class FinderEngine(
             heat = current?.heat ?: 0f,
             trend = current?.trend ?: ProximityTrend.STEADY,
             secondsSinceSeen = lastSightingMs?.let { ((nowMs - it) / 1000).toInt() } ?: 0,
+            showConfirmHint = stage != FinderStage.RIGHT_HERE && stage != FinderStage.SIGNAL_LOST &&
+                veryCloseSinceMs?.let { nowMs - it >= CONFIRM_HINT_AFTER_MS } == true,
             vibrationOn = vibrationOn,
             advanced = AdvancedInfo(
                 address = tracker.address,
@@ -159,6 +164,7 @@ internal class FinderEngine(
         const val SIGNAL_LOST_MS = 8_000L
         const val RIGHT_HERE_HOLD_MS = 2_000L
         const val DISTANCE_REFRESH_MS = 1_000L
+        const val CONFIRM_HINT_AFTER_MS = 15_000L
         const val TURN_AROUND_DEGREES = 135.0
         const val FLIP_DEGREES = 90.0
     }

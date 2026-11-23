@@ -14,4 +14,5 @@
     <string name="devices_open_bluetooth_settings">블루투스 설정에서 페어링</string>
     <string name="devices_permission_body">이 폰에 페어링된 기기를 보려면 근처 기기 권한을 허용해 주세요.</string>
     <string name="devices_permission_action">허용</string>
+    <string name="devices_add_tracker">트래커 추가</string>
 </resources>

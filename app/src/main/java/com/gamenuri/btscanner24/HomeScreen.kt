@@ -58,7 +58,9 @@ fun HomeScreen(onFind: (address: String) -> Unit, startOnMyDevices: Boolean = fa
                 onDeviceClick = { onFind(it.address) },
                 modifier = content,
             )
-            HomeTab.MY_DEVICES -> DevicesScreen(onDeviceClick = onFind, modifier = content)
+            // Saving unpaired trackers comes with device storage; until then "Add a tracker" opens Nearby.
+            HomeTab.MY_DEVICES ->
+                DevicesScreen(onDeviceClick = onFind, modifier = content, onAddTracker = { tab = HomeTab.NEARBY })
         }
     }
 }

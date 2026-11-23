@@ -4,6 +4,7 @@ import com.gamenuri.btscanner24.core.model.BleDevice
 import com.gamenuri.btscanner24.core.sensors.MotionSample
 import kotlin.math.cos
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -115,5 +116,33 @@ class FinderEngineTest {
             engine.onSighting(sighting(-35, now), now)
         }
         assertEquals(FinderStage.RIGHT_HERE, engine.state(now, true).stage)
+    }
+
+    @Test
+    fun `confirm hint appears only after 15 s very close`() {
+        val engine = FinderEngine(buds, startMs = 0, hasCompass = true)
+        // -60 dBm is about 1.1 m with the default 1 m power: very close, not right here.
+        var now = 0L
+        while (now <= 5_000) {
+            engine.onSighting(sighting(-60, now), now)
+            now += 200
+        }
+        assertFalse(engine.state(now, true).showConfirmHint)
+        while (now <= 16_000) {
+            engine.onSighting(sighting(-60, now), now)
+            now += 200
+        }
+        assertTrue(engine.state(now, true).showConfirmHint)
+    }
+
+    @Test
+    fun `confirm hint never shows when far`() {
+        val engine = FinderEngine(buds, startMs = 0, hasCompass = true)
+        var now = 0L
+        while (now <= 20_000) {
+            engine.onSighting(sighting(-85, now), now)
+            now += 200
+        }
+        assertFalse(engine.state(now, true).showConfirmHint)
     }
 }

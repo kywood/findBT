@@ -37,4 +37,6 @@
 
     <string name="finder_advanced_values">MAC %1$s · RSSI %2$s dBm (평활 %3$s) · 방위 %4$s° · 추정 방향 %5$s° · MAC 변경 %6$d회 · %7$d초</string>
     <string name="finder_confirm_hint">이 기기가 맞는지 모르겠다면 폰을 기기 바로 옆에 대 보세요. \"바로 여기\"가 나오면 찾은 거예요.</string>
+    <string name="finder_very_close_title">아주 가까워요</string>
+    <string name="finder_very_close_body">천천히 주변을 살펴보세요</string>
 </resources>
