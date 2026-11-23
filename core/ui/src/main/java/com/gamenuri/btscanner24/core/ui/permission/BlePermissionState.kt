@@ -44,10 +44,7 @@ class BlePermissionState internal constructor(
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun rememberBlePermissionState(
-    permissions: List<String>,
-    onGranted: () -> Unit = {},
-): BlePermissionState {
+fun rememberBlePermissionState(permissions: List<String>, onGranted: () -> Unit = {}): BlePermissionState {
     val context = LocalContext.current
     var requested by rememberSaveable { mutableStateOf(false) }
     val delegate = rememberMultiplePermissionsState(permissions) { result ->
@@ -60,6 +57,6 @@ fun rememberBlePermissionState(
 fun openAppSettings(context: Context) {
     context.startActivity(
         Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null))
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
     )
 }

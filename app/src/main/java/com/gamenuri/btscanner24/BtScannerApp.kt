@@ -8,7 +8,10 @@ import com.gamenuri.btscanner24.core.ble.DeviceRepository
 import com.gamenuri.btscanner24.core.data.DataDependenciesProvider
 import com.gamenuri.btscanner24.core.data.ListPreferencesRepository
 
-class BtScannerApp : Application(), BleDependencies.Provider, DataDependenciesProvider {
+class BtScannerApp :
+    Application(),
+    BleDependencies.Provider,
+    DataDependenciesProvider {
 
     // Manual DI for now; to be replaced by Hilt (see docs/CONVENTION.md).
     override val bleDependencies: BleDependencies by lazy {

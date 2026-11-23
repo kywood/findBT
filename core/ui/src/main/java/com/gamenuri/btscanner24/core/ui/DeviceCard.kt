@@ -2,34 +2,29 @@ package com.gamenuri.btscanner24.core.ui
 
 import android.text.format.DateFormat
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Card
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.Alignment
 import androidx.compose.material3.Badge
-import androidx.compose.foundation.layout.Row
+import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.gamenuri.btscanner24.core.designsystem.theme.FindBTTheme
 import com.gamenuri.btscanner24.core.model.BleDevice
 import com.gamenuri.btscanner24.core.model.SignalLevel
 import java.util.Date
-import androidx.compose.ui.tooling.preview.Preview
-import com.gamenuri.btscanner24.core.designsystem.theme.FindBTTheme
 
 @Composable
-fun DeviceCard(
-    device: BleDevice,
-    modifier: Modifier = Modifier,
-    isNew: Boolean = false,
-    isGone: Boolean = false,
-) {
+fun DeviceCard(device: BleDevice, modifier: Modifier = Modifier, isNew: Boolean = false, isGone: Boolean = false) {
     val context = LocalContext.current
     // Locale-aware time format (12h/24h follows the user's system setting).
     val timeFormat = remember(context) { DateFormat.getTimeFormat(context) }
@@ -38,7 +33,7 @@ fun DeviceCard(
             SignalLevel.STRONG -> R.string.signal_strong
             SignalLevel.MEDIUM -> R.string.signal_medium
             SignalLevel.WEAK -> R.string.signal_weak
-        }
+        },
     )
 
     // Devices not heard from recently stay in place but dimmed, so they don't look "nearby".

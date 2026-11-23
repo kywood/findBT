@@ -64,10 +64,7 @@ import com.gamenuri.btscanner24.core.ui.permission.rememberBlePermissionState
 
 /** Entry point: owns the ViewModel, permissions and system intents. Everything visual is in [ScanContent]. */
 @Composable
-fun ScanScreen(
-    title: String,
-    viewModel: ScanViewModel = viewModel(factory = ScanViewModel.Factory),
-) {
+fun ScanScreen(title: String, viewModel: ScanViewModel = viewModel(factory = ScanViewModel.Factory)) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     // Stop scanning whenever the screen is not visible; resume when it comes back.

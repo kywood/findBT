@@ -33,4 +33,3 @@ include(":core:designsystem")
 include(":core:sensors")
 include(":core:ui")
 include(":feature:scan")
- 
