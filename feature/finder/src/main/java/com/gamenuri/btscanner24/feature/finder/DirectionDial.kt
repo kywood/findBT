@@ -13,7 +13,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -76,7 +76,7 @@ private fun FloorArrow(degrees: Float, confidence: ArrowConfidence, locked: Bool
     val arrowAlpha by animateFloatAsState(if (wide) 0.75f else 1f, label = "arrowAlpha")
     val sectorHalf by animateFloatAsState(if (wide) 45f else 25f, label = "sector")
 
-    val color = MaterialTheme.colorScheme.primary
+    val color = LocalContentColor.current
     val shade = lerp(color, Color.Black, 0.35f)
     val highlight = lerp(color, Color.White, 0.25f)
 
@@ -132,8 +132,8 @@ private fun SpinningNeedle(progress: Float) {
         animationSpec = infiniteRepeatable(tween(durationMillis = 2_400, easing = LinearEasing)),
         label = "needle",
     )
-    val color = MaterialTheme.colorScheme.primary
-    val track = MaterialTheme.colorScheme.surfaceVariant
+    val color = LocalContentColor.current
+    val track = LocalContentColor.current.copy(alpha = 0.25f)
     Canvas(modifier = Modifier.fillMaxSize()) {
         progressRing(track, color, progress)
         val path = arrowPath(scale = 0.75f)
@@ -149,8 +149,8 @@ private fun SpinningNeedle(progress: Float) {
 
 @Composable
 private fun HeatRing(heat: Float) {
-    val color = MaterialTheme.colorScheme.tertiary
-    val track = MaterialTheme.colorScheme.surfaceVariant
+    val color = LocalContentColor.current
+    val track = LocalContentColor.current.copy(alpha = 0.25f)
     Canvas(modifier = Modifier.fillMaxSize()) { progressRing(track, color, heat) }
 }
 
@@ -163,7 +163,7 @@ private fun RightHereRings() {
         animationSpec = infiniteRepeatable(tween(durationMillis = 1_600, easing = LinearEasing)),
         label = "pulse",
     )
-    val color = MaterialTheme.colorScheme.primary
+    val color = LocalContentColor.current
     Canvas(modifier = Modifier.fillMaxSize()) {
         val maxRadius = size.minDimension / 2
         for (ring in 0 until RINGS) {

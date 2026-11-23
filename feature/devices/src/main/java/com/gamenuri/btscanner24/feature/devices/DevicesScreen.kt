@@ -56,13 +56,12 @@ import com.gamenuri.btscanner24.core.designsystem.component.StatusBanner
 import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
 import com.gamenuri.btscanner24.core.model.BleDevice
 import com.gamenuri.btscanner24.core.model.DeviceCategory
-import com.gamenuri.btscanner24.core.model.DeviceNaming
 import com.gamenuri.btscanner24.core.model.PairedDevice
 import com.gamenuri.btscanner24.core.model.SignalLevel
 import com.gamenuri.btscanner24.core.ui.DeviceIcon
 import com.gamenuri.btscanner24.core.ui.R as UiR
 import com.gamenuri.btscanner24.core.ui.SignalBars
-import com.gamenuri.btscanner24.core.ui.formatMeters
+import com.gamenuri.btscanner24.core.ui.distanceText
 import com.gamenuri.btscanner24.core.ui.label
 import com.gamenuri.btscanner24.core.ui.permission.rememberBlePermissionState
 
@@ -188,12 +187,8 @@ private fun PairedRow(item: MyDeviceItem, now: Long, onClick: (MyDeviceItem) -> 
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = item.paired.name?.takeIf { it.isNotBlank() }
-                        ?: stringResource(
-                            UiR.string.device_generic_type,
-                            item.paired.category.label(),
-                            DeviceNaming.addressSuffix(item.paired.address),
-                        ),
+                    // A paired device with no name is rare; its type is enough here (no address suffix in My devices).
+                    text = item.paired.name?.takeIf { it.isNotBlank() } ?: item.paired.category.label(),
                     style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -213,7 +208,7 @@ private fun PairedRow(item: MyDeviceItem, now: Long, onClick: (MyDeviceItem) -> 
                     SignalBars(level = sighting.signalLevel, label = signalLabel(sighting.signalLevel))
                     if (meters != null) {
                         Text(
-                            text = stringResource(UiR.string.device_distance, formatMeters(meters)),
+                            text = distanceText(meters),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )

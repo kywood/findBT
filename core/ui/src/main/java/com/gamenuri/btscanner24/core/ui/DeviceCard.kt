@@ -8,10 +8,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Badge
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -27,8 +29,6 @@ import com.gamenuri.btscanner24.core.model.DeviceCategory
 import com.gamenuri.btscanner24.core.model.DeviceLabel
 import com.gamenuri.btscanner24.core.model.DeviceNaming
 import com.gamenuri.btscanner24.core.model.SignalLevel
-import java.util.Locale
-import kotlin.math.roundToInt
 
 /**
  * One row of the device list (design home-v3): type icon, name with Mine/NEW badges, "Maker · Type",
@@ -72,24 +72,13 @@ fun DeviceCard(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f, fill = false),
                     )
-                    if (isPaired) {
-                        Badge(
-                            modifier = Modifier.padding(start = 6.dp),
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                        ) { Text(stringResource(R.string.badge_paired)) }
-                    }
+                    if (isPaired) PairedBadge(Modifier.padding(start = 6.dp))
                     if (isNew) {
                         Badge(modifier = Modifier.padding(start = 6.dp)) { Text(stringResource(R.string.badge_new)) }
                     }
                 }
                 Text(
-                    // No "Unknown maker": without a company the line is just the type.
-                    text =
-                    device.manufacturer?.let {
-                        stringResource(R.string.device_maker_type, it, device.category.label())
-                    }
-                        ?: device.category.label(),
+                    text = subtitle(device, label),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
@@ -102,7 +91,7 @@ fun DeviceCard(
                 Text(
                     text = when {
                         isGone -> stringResource(R.string.device_gone)
-                        distanceMeters != null -> stringResource(R.string.device_distance, formatMeters(distanceMeters))
+                        distanceMeters != null -> distanceText(distanceMeters)
                         else -> signal
                     },
                     style = MaterialTheme.typography.labelMedium,
@@ -118,9 +107,37 @@ fun DeviceCard(
     }
 }
 
-/** "~0.8" under 2 m, whole metres above: anything more precise would be false precision. */
-fun formatMeters(meters: Double): String =
-    if (meters < 2.0) String.format(Locale.getDefault(), "%.1f", meters) else meters.roundToInt().toString()
+/**
+ * Second line. Named: "Samsung · Earbuds" (just the type when the maker is unknown, never "Unknown maker").
+ * Unnamed: the title already says maker and type, so this line tells look-alikes apart: "No name · …3F2A".
+ */
+@Composable
+private fun subtitle(device: BleDevice, label: DeviceLabel): String = when (label) {
+    is DeviceLabel.Generic -> label.noNameLine()
+    is DeviceLabel.Named -> device.manufacturer?.let {
+        stringResource(R.string.device_maker_type, it, device.category.label())
+    }
+        ?: device.category.label()
+}
+
+/** "Mine" pill after the name (design note on #51): labelSmall, 6×2 dp padding, 4 dp corners, never wraps. */
+@Composable
+private fun PairedBadge(modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(4.dp),
+        color = MaterialTheme.colorScheme.secondaryContainer,
+        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+    ) {
+        Text(
+            text = stringResource(R.string.badge_paired),
+            style = MaterialTheme.typography.labelSmall,
+            maxLines = 1,
+            softWrap = false,
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+        )
+    }
+}
 
 @Preview(name = "Light")
 @Preview(name = "Dark", uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)

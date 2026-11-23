@@ -26,7 +26,6 @@
     <string name="finder_no_compass_title">Follow warmer and colder</string>
     <string name="finder_no_compass_body">This phone has no direction sensor, so there is no arrow</string>
 
-    <string name="finder_distance_value">~%1$s m</string>
     <string name="finder_distance_label">approximate distance</string>
     <string name="finder_band_right_here">Right here</string>
     <string name="finder_band_very_close">Very close</string>
@@ -34,8 +33,10 @@
     <string name="finder_band_far">Far</string>
     <string name="finder_trend_closer">▲ Warmer</string>
     <string name="finder_trend_farther">▼ Colder</string>
-    <string name="finder_trend_steady">Steady</string>
+    <string name="finder_trend_steady">Keep going</string>
 
     <string name="finder_advanced_values">MAC %1$s · RSSI %2$s dBm (smoothed %3$s) · heading %4$s° · bearing %5$s° · MAC changes %6$d · %7$d s</string>
-    <string name="finder_confirm_hint">Not sure it\'s this one? Hold your phone right next to it. If the distance drops to about 0.5 m, you\'ve found it.</string>
+    <string name="finder_confirm_hint">Not sure it\'s this one? Hold your phone right next to it. If it says \"Right here\", you\'ve found it.</string>
+    <string name="finder_gauge_cold" translatable="false">❄</string>
+    <string name="finder_gauge_hot" translatable="false">🔥</string>
 </resources>

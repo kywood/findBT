@@ -63,4 +63,15 @@ class ProximityEstimatorTest {
         assertEquals(0f, ProximityEstimator().add(-120, 0).heat)
         assertEquals(1f, ProximityEstimator().add(-20, 0).heat)
     }
+
+    @Test
+    fun `far devices are smoothed harder than near ones`() {
+        fun swing(start: Int): Double {
+            val estimator = ProximityEstimator()
+            repeat(20) { estimator.add(start, it * 100L) }
+            // One 8 dB jump (inside the outlier window) after a steady run.
+            return estimator.add(start + 8, 2_100L).smoothedRssi - start
+        }
+        assertTrue("far ${swing(-85)} should move less than near ${swing(-55)}", swing(-85) < swing(-55))
+    }
 }
