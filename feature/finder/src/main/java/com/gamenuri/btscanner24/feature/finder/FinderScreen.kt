@@ -56,8 +56,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -66,6 +68,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
@@ -157,6 +160,7 @@ fun FinderContent(state: FinderUiState, actions: FinderActions, modifier: Modifi
     val palette = findColorsFor(state)
     val background by animateColorAsState(palette.background, tween(COLOR_FADE_MS), label = "findBackground")
     val content by animateColorAsState(palette.content, tween(COLOR_FADE_MS), label = "findContent")
+    val accent by animateColorAsState(palette.accent, tween(COLOR_FADE_MS), label = "findAccent")
     Scaffold(
         modifier = modifier,
         containerColor = background,
@@ -183,46 +187,50 @@ fun FinderContent(state: FinderUiState, actions: FinderActions, modifier: Modifi
         // The action row is pinned above the navigation bar and never scrolls away (design review #55).
         bottomBar = { ActionRow(state, actions, content, background) },
     ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 24.dp, vertical = 8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            StageText(state)
-            // The dial takes what is left and shrinks on short screens (Flip3 cover, small phones). The
-            // confirm hint borrows its height from here too, so the distance below never moves (#60).
+        CompositionLocalProvider(LocalFindAccent provides accent) {
             Column(
-                modifier = Modifier.weight(1f).fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .padding(horizontal = 24.dp, vertical = 8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Box(
-                    modifier = Modifier.weight(1f).fillMaxWidth().padding(vertical = 12.dp),
-                    contentAlignment = Alignment.Center,
+                StageText(state)
+                // The dial takes what is left and shrinks on short screens (Flip3 cover, small phones). The
+                // confirm hint borrows its height from here too, so the distance below never moves (#60).
+                Column(
+                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    DirectionDial(state, Modifier.heightIn(min = DIAL_MIN))
+                    Box(
+                        modifier = Modifier.weight(1f).fillMaxWidth().padding(vertical = 12.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        CompositionLocalProvider(LocalContentColor provides accent) {
+                            DirectionDial(state, Modifier.heightIn(min = DIAL_MIN))
+                        }
+                    }
+                    if (state.showConfirmHint) {
+                        // Names can be vague ("hiot0"); confirming by touch matters more than the name (#46).
+                        Text(
+                            text = stringResource(R.string.finder_confirm_hint),
+                            modifier = Modifier.padding(bottom = 12.dp),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = LocalContentColor.current.copy(alpha = MUTED_ALPHA),
+                            textAlign = TextAlign.Center,
+                        )
+                    }
                 }
-                if (state.showConfirmHint) {
-                    // Names can be vague ("hiot0"); confirming by touch matters more than the name (#46).
-                    Text(
-                        text = stringResource(R.string.finder_confirm_hint),
-                        modifier = Modifier.padding(bottom = 12.dp),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = LocalContentColor.current.copy(alpha = MUTED_ALPHA),
-                        textAlign = TextAlign.Center,
-                    )
+                DistanceBlock(state)
+                // Always takes its space; hidden by alpha so the rows above keep their place (#60).
+                val canRespin = state.stage == FinderStage.WALK || state.stage == FinderStage.TURN_AROUND
+                TextButton(
+                    onClick = actions.onSpinAgain,
+                    enabled = canRespin,
+                    modifier = Modifier.slot(visible = canRespin),
+                ) {
+                    Text(stringResource(R.string.finder_spin_again), color = content)
                 }
-            }
-            DistanceBlock(state)
-            // Always takes its space; hidden by alpha so the rows above keep their place (#60).
-            val canRespin = state.stage == FinderStage.WALK || state.stage == FinderStage.TURN_AROUND
-            TextButton(
-                onClick = actions.onSpinAgain,
-                enabled = canRespin,
-                modifier = Modifier.slot(visible = canRespin),
-            ) {
-                Text(stringResource(R.string.finder_spin_again), color = content)
             }
         }
     }
@@ -413,7 +421,7 @@ private fun DistanceBlock(state: FinderUiState) {
  */
 @Composable
 private fun HeatGauge(heat: Float, modifier: Modifier = Modifier) {
-    val content = LocalContentColor.current
+    val content = LocalFindAccent.current.takeOrElse { LocalContentColor.current }
     Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
         Icon(Icons.Filled.AcUnit, contentDescription = null, tint = GaugeCold, modifier = Modifier.size(GAUGE_ICON))
         BoxWithConstraints(
@@ -587,6 +595,7 @@ private fun vibrator(context: Context): Vibrator? {
 private const val HAPTIC_MS = 40L
 private const val LONG_HAPTIC_MS = 400L
 private const val COLOR_FADE_MS = 400
+
 private const val MUTED_ALPHA = 0.78f
 private val GAUGE_TRACK = 6.dp
 private val DIAL_MIN = 180.dp
@@ -597,6 +606,9 @@ private val GAUGE_ICON = 16.dp
 private val GaugeCold = Color(0xFFB2C5FF)
 private val GaugeHot = Color(0xFFFF8A5C)
 private const val NO_VALUE = "–"
+
+/** The find state's highlight (arrow, gauge); unset outside [FinderContent], where content colour is used. */
+private val LocalFindAccent = compositionLocalOf { Color.Unspecified }
 
 @Preview(name = "Walk")
 @Composable

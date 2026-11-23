@@ -4,16 +4,23 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
-/** Background and content colour of the find screen for one proximity state. */
+/**
+ * Background and content colour of the find screen for one proximity state. [accent] colours the
+ * arrow, rings and gauge; close states keep the brand blue and turn only these mint (#77).
+ */
 @Immutable
-data class FindStateColors(val background: Color, val content: Color)
+data class FindStateColors(val background: Color, val content: Color, val accent: Color = content)
 
 /** "Found it!" screen (#70). Its own token so the palette can change (#77) without touching layout. */
 @Immutable
 data class FoundColors(
-    val background: Color,
-    /** Title, summary and the rings around the check. */
+    /** Vertical gradient, top to bottom. */
+    val backgroundTop: Color,
+    val backgroundBottom: Color,
+    /** Title and summary. */
     val content: Color,
+    /** The two rings around the check. */
+    val rings: Color,
     val heroCircle: Color,
     val check: Color,
     val buttonContainer: Color,
@@ -41,16 +48,20 @@ private val findColors = NearoColors(
     findSearching = FindStateColors(Color(0xFF111318), Color(0xFFB2C5FF)),
     findFar = FindStateColors(Color(0xFF1747C2), Color(0xFFFFFFFF)),
     findClose = FindStateColors(Color(0xFF2F6BF0), Color(0xFFFFFFFF)),
-    findVeryClose = FindStateColors(Color(0xFF00A88A), Color(0xFFFFFFFF)),
-    findHere = FindStateColors(Color(0xFF2EE6A0), Color(0xFF00391F)),
+    // Blue all the way through the find flow; mint only marks success on the arrow, rings and gauge (#77).
+    findVeryClose = FindStateColors(Color(0xFF2F6BF0), Color(0xFFFFFFFF), accent = Color(0xFF2EE6A0)),
+    findHere = FindStateColors(Color(0xFF2F6BF0), Color(0xFFFFFFFF), accent = Color(0xFF2EE6A0)),
     findLost = FindStateColors(Color(0xFF2A2D34), Color(0xFFC5C6D0)),
+    // Design found-blue-v2 (#77): brand gradient, mint only on the check circle and rings, white Done.
     found = FoundColors(
-        background = Color(0xFF2EE6A0),
-        content = Color(0xFF00391F),
-        heroCircle = Color(0xFFFFFFFF),
+        backgroundTop = Color(0xFF2F6BF0),
+        backgroundBottom = Color(0xFF173FA8),
+        content = Color(0xFFFFFFFF),
+        rings = Color(0xFF2EE6A0),
+        heroCircle = Color(0xFF2EE6A0),
         check = Color(0xFF00391F),
-        buttonContainer = Color(0xFF00391F),
-        buttonContent = Color(0xFF2EE6A0),
+        buttonContainer = Color(0xFFFFFFFF),
+        buttonContent = Color(0xFF173FA8),
     ),
     signalStrong = Color.Unspecified,
     signalMedium = Color.Unspecified,

@@ -27,6 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -52,7 +53,7 @@ fun FoundContent(label: DeviceLabel, elapsedSeconds: Int, onDone: () -> Unit, mo
         Column(
             modifier = modifier
                 .fillMaxSize()
-                .background(colors.background)
+                .background(Brush.verticalGradient(listOf(colors.backgroundTop, colors.backgroundBottom)))
                 .safeDrawingPadding()
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -91,10 +92,10 @@ fun FoundContent(label: DeviceLabel, elapsedSeconds: Int, onDone: () -> Unit, mo
     }
 }
 
-/** 84 dp circle with a check, inside two rings (110 and 150 dp) at 25 % of the content colour. */
+/** 84 dp circle with a check, inside two rings (110 and 150 dp) at 25 % of the ring colour. */
 @Composable
 private fun CheckHero(colors: FoundColors) {
-    val content = colors.content
+    val content = colors.rings
     Box(modifier = Modifier.size(150.dp), contentAlignment = Alignment.Center) {
         Canvas(Modifier.fillMaxSize()) {
             val ring = content.copy(alpha = 0.25f)
