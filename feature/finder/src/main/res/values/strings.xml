@@ -51,4 +51,10 @@
     </plurals>
     <string name="finder_very_close_title">Very close</string>
     <string name="finder_very_close_body">Slow down and look around</string>
+    <!-- Play sound (#28) -->
+    <string name="finder_sound_play">Play sound</string>
+    <string name="finder_sound_stop">Stop sound</string>
+    <string name="finder_sound_connecting">Connecting…</string>
+    <string name="finder_sound_retry">Try again</string>
+    <string name="finder_sound_failed">Couldn\'t play a sound. Move closer and try again.</string>
 </resources>
