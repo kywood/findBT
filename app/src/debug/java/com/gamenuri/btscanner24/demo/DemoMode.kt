@@ -1,10 +1,14 @@
 package com.gamenuri.btscanner24.demo
 
+import android.app.Activity
 import android.app.Application
 import android.content.Context
 import android.content.Intent
 import androidx.compose.runtime.Composable
 import com.gamenuri.btscanner24.DemoRequest
+import com.gamenuri.btscanner24.core.billing.PremiumState
+import com.gamenuri.btscanner24.core.billing.PremiumStore
+import com.gamenuri.btscanner24.core.billing.RestoreResult
 import com.gamenuri.btscanner24.core.ble.BleDependencies
 import com.gamenuri.btscanner24.core.ble.BleScanner
 import com.gamenuri.btscanner24.core.ble.BondedDevices
@@ -17,6 +21,8 @@ import com.gamenuri.btscanner24.feature.finder.FinderContent
 import com.gamenuri.btscanner24.feature.finder.FoundContent
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flow
 
 /**
@@ -28,6 +34,7 @@ internal object DemoMode {
 
     fun request(intent: Intent): DemoRequest? {
         val screen = intent.getStringExtra(EXTRA_SCREEN) ?: return null
+        active = true
         return DemoRequest(
             screen = screen,
             findState = intent.getStringExtra(EXTRA_FIND),
@@ -55,6 +62,12 @@ internal object DemoMode {
         FinderContent(state = DemoData.findState(state), actions = FinderActions(onClose = onClose, onFound = onClose))
     }
 
+    /** Fixed "$4.99" so paywall and settings shots never depend on Play (#32). */
+    fun premium(): PremiumStore? = if (active) DemoPremiumStore else null
+
+    /** Set by MainActivity when a demo intent arrives. */
+    var active: Boolean = false
+
     private const val EXTRA_SCREEN = "demo"
     private const val EXTRA_FIND = "demo_find"
     private const val EXTRA_LOCALE = "demo_locale"
@@ -72,6 +85,16 @@ private class DemoScanner(context: Context) : BleScanner(context) {
     override fun startCooldownMillis(now: Long): Long = 0
 
     override fun scan(): Flow<ScanEvent> = flow { awaitCancellation() }
+}
+
+private object DemoPremiumStore : PremiumStore {
+    override val state: StateFlow<PremiumState> = MutableStateFlow(PremiumState(formattedPrice = "$4.99"))
+
+    override fun refresh() = Unit
+
+    override fun purchase(activity: Activity): Boolean = false
+
+    override suspend fun restore(): RestoreResult = RestoreResult.NOTHING_TO_RESTORE
 }
 
 private class DemoBondedDevices(context: Context) : BondedDevices(context) {
