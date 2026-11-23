@@ -1,80 +1,104 @@
 package com.gamenuri.btscanner24.core.ble.proximity
 
 import kotlin.math.abs
+import kotlin.math.ln
+import kotlin.math.pow
 
-/** Coarse distance shown to the user. No metres: TX power is often missing, so numbers would mislead. */
-enum class ProximityBand { VERY_CLOSE, NEAR, FAR }
+/** Coarse distance shown with the approximate number. Edges come from the plan (0.5 / 1.5 / 5 m). */
+enum class ProximityBand { RIGHT_HERE, VERY_CLOSE, NEAR, FAR }
 
 enum class ProximityTrend { CLOSER, FARTHER, STEADY }
 
 data class ProximityReading(
-    /** Smoothed RSSI in dBm. */
+    /** Kalman-smoothed RSSI in dBm. */
     val smoothedRssi: Double,
+    /** Rough distance in metres. Always shown as "approximate": walls, bodies and pockets move it a lot. */
+    val distanceMeters: Double,
     val band: ProximityBand,
-    /** 0.0 = cold (far) to 1.0 = hot (very close), for the hot-cold meter. */
+    /** 0.0 = cold (far) to 1.0 = hot (right here), for the hot-cold gauge. */
     val heat: Float,
     val trend: ProximityTrend,
     /** Last raw RSSI, for the Advanced section. */
     val rawRssi: Int,
 )
 
+data class ProximityConfig(
+    /** Kalman process noise: how fast the true signal is allowed to change between samples. */
+    val processNoise: Double = 0.6,
+    /** Kalman measurement noise: typical RSSI variance indoors (dB²). */
+    val measurementNoise: Double = 9.0,
+    val medianWindow: Int = 5,
+    val outlierDb: Int = 15,
+    /** RSSI at 1 m when the device does not advertise TX power. */
+    val defaultMeasuredPower: Int = -59,
+    /** Path-loss exponent: 2 in free space, ~2-3 indoors. */
+    val pathLossExponent: Double = 2.2,
+    val rightHereMeters: Double = 0.5,
+    val veryCloseMeters: Double = 1.5,
+    val nearMeters: Double = 5.0,
+    val hysteresisMeters: Double = 0.3,
+    val trendWindowMs: Long = 3_000,
+    val trendDb: Double = 3.0,
+    val hotMeters: Double = 0.3,
+    val coldMeters: Double = 15.0,
+)
+
 /**
- * Turns noisy RSSI samples into a stable proximity reading.
+ * Turns noisy RSSI samples into a stable proximity reading for the find screen.
  *
- * Steps per sample: drop outliers against a short median window, smooth with an
- * exponential moving average, then map to a band with hysteresis so the band does
- * not flicker at the edges. Not thread safe: feed it from one coroutine.
+ * Per sample: drop outliers against a short median window, smooth with a 1-D Kalman filter,
+ * convert to distance with the log-distance path-loss model (the same model family the AltBeacon
+ * library uses), then map to a band with hysteresis so it does not flicker at the edges.
+ * Not thread safe: feed it from one coroutine.
  */
-class ProximityEstimator(
-    private val alpha: Double = 0.25,
-    private val medianWindow: Int = 5,
-    private val outlierDb: Int = 15,
-    private val veryCloseDbm: Double = -55.0,
-    private val nearDbm: Double = -72.0,
-    private val hysteresisDb: Double = 3.0,
-    private val trendDb: Double = 2.0,
-    private val trendWindow: Int = 6,
-    private val coldDbm: Double = -95.0,
-    private val hotDbm: Double = -40.0,
-) {
+class ProximityEstimator(private val config: ProximityConfig = ProximityConfig()) {
+
     private val recentRaw = ArrayDeque<Int>()
-    private val recentSmoothed = ArrayDeque<Double>()
-    private var smoothed: Double? = null
+    private val history = ArrayDeque<Pair<Long, Double>>()
+    private var estimate: Double? = null
+    private var errorCovariance = 1.0
     private var band: ProximityBand? = null
 
     fun reset() {
         recentRaw.clear()
-        recentSmoothed.clear()
-        smoothed = null
+        history.clear()
+        estimate = null
+        errorCovariance = 1.0
         band = null
     }
 
-    fun add(rssi: Int): ProximityReading {
+    fun add(rssi: Int, timeMs: Long, txPower: Int? = null): ProximityReading {
         val median = median()
-        val accepted = median == null || abs(rssi - median) <= outlierDb || recentRaw.size < medianWindow
+        val accepted = median == null || recentRaw.size < config.medianWindow || abs(rssi - median) <= config.outlierDb
         recentRaw.addLast(rssi)
-        if (recentRaw.size > medianWindow) recentRaw.removeFirst()
+        if (recentRaw.size > config.medianWindow) recentRaw.removeFirst()
 
-        val previous = smoothed
-        val next = when {
-            previous == null -> rssi.toDouble()
-            accepted -> previous + alpha * (rssi - previous)
-            else -> previous
-        }
-        smoothed = next
+        val smoothed = if (accepted) kalman(rssi.toDouble()) else estimate ?: rssi.toDouble()
 
-        recentSmoothed.addLast(next)
-        if (recentSmoothed.size > trendWindow) recentSmoothed.removeFirst()
+        history.addLast(timeMs to smoothed)
+        while (history.isNotEmpty() && timeMs - history.first().first > 2 * config.trendWindowMs) history.removeFirst()
 
-        val newBand = bandFor(next, band)
+        val distance = distanceFor(smoothed, txPower)
+        val newBand = bandFor(distance, band)
         band = newBand
         return ProximityReading(
-            smoothedRssi = next,
+            smoothedRssi = smoothed,
+            distanceMeters = distance,
             band = newBand,
-            heat = heatFor(next),
-            trend = trend(),
+            heat = heatFor(distance),
+            trend = trend(timeMs),
             rawRssi = rssi,
         )
+    }
+
+    private fun kalman(measurement: Double): Double {
+        val previous = estimate ?: return measurement.also { estimate = it }
+        val predictedCovariance = errorCovariance + config.processNoise
+        val gain = predictedCovariance / (predictedCovariance + config.measurementNoise)
+        val next = previous + gain * (measurement - previous)
+        errorCovariance = (1 - gain) * predictedCovariance
+        estimate = next
+        return next
     }
 
     private fun median(): Double? {
@@ -84,42 +108,50 @@ class ProximityEstimator(
         return if (sorted.size % 2 == 1) sorted[mid].toDouble() else (sorted[mid - 1] + sorted[mid]) / 2.0
     }
 
-    internal fun bandFor(rssi: Double, current: ProximityBand?): ProximityBand {
-        // Moving to a closer band needs to pass the threshold by hysteresisDb, and so does moving away.
-        val h = if (current == null) 0.0 else hysteresisDb
-        return when (current) {
-            ProximityBand.VERY_CLOSE -> when {
-                rssi >= veryCloseDbm - h -> ProximityBand.VERY_CLOSE
-                rssi >= nearDbm - h -> ProximityBand.NEAR
-                else -> ProximityBand.FAR
-            }
-            ProximityBand.NEAR -> when {
-                rssi >= veryCloseDbm + h -> ProximityBand.VERY_CLOSE
-                rssi >= nearDbm - h -> ProximityBand.NEAR
-                else -> ProximityBand.FAR
-            }
-            ProximityBand.FAR -> when {
-                rssi >= veryCloseDbm + h -> ProximityBand.VERY_CLOSE
-                rssi >= nearDbm + h -> ProximityBand.NEAR
-                else -> ProximityBand.FAR
-            }
-            null -> when {
-                rssi >= veryCloseDbm -> ProximityBand.VERY_CLOSE
-                rssi >= nearDbm -> ProximityBand.NEAR
-                else -> ProximityBand.FAR
-            }
-        }
+    /** Log-distance path loss: d = 10 ^ ((P1m - RSSI) / (10 n)). Advertised TX power is at 0 m, ~41 dB above 1 m. */
+    fun distanceFor(rssi: Double, txPower: Int?): Double {
+        val measuredPower = txPower?.let { it - 41 } ?: config.defaultMeasuredPower
+        val meters = 10.0.pow((measuredPower - rssi) / (10 * config.pathLossExponent))
+        return meters.coerceIn(0.1, 50.0)
     }
 
-    private fun heatFor(rssi: Double): Float =
-        ((rssi - coldDbm) / (hotDbm - coldDbm)).coerceIn(0.0, 1.0).toFloat()
+    internal fun bandFor(meters: Double, current: ProximityBand?): ProximityBand {
+        val edges = listOf(config.rightHereMeters, config.veryCloseMeters, config.nearMeters)
+        fun plain(d: Double) = when {
+            d < edges[0] -> ProximityBand.RIGHT_HERE
+            d < edges[1] -> ProximityBand.VERY_CLOSE
+            d < edges[2] -> ProximityBand.NEAR
+            else -> ProximityBand.FAR
+        }
+        if (current == null) return plain(meters)
+        val candidate = plain(meters)
+        if (candidate == current) return current
+        // Only leave the current band once the distance is past its edge by the hysteresis margin.
+        val h = config.hysteresisMeters
+        val stays = when (current) {
+            ProximityBand.RIGHT_HERE -> meters < edges[0] + h
+            ProximityBand.VERY_CLOSE -> meters >= edges[0] - h && meters < edges[1] + h
+            ProximityBand.NEAR -> meters >= edges[1] - h && meters < edges[2] + h
+            ProximityBand.FAR -> meters >= edges[2] - h
+        }
+        return if (stays) current else candidate
+    }
 
-    private fun trend(): ProximityTrend {
-        if (recentSmoothed.size < trendWindow) return ProximityTrend.STEADY
-        val delta = recentSmoothed.last() - recentSmoothed.first()
+    private fun heatFor(meters: Double): Float {
+        val span = ln(config.coldMeters / config.hotMeters)
+        return (1 - ln(meters / config.hotMeters) / span).coerceIn(0.0, 1.0).toFloat()
+    }
+
+    /** Compares the average of the last [ProximityConfig.trendWindowMs] with the window before it. */
+    private fun trend(now: Long): ProximityTrend {
+        val window = config.trendWindowMs
+        val recent = history.filter { now - it.first < window }.map { it.second }
+        val before = history.filter { now - it.first in window until 2 * window }.map { it.second }
+        if (recent.isEmpty() || before.isEmpty()) return ProximityTrend.STEADY
+        val delta = recent.average() - before.average()
         return when {
-            delta >= trendDb -> ProximityTrend.CLOSER
-            delta <= -trendDb -> ProximityTrend.FARTHER
+            delta >= config.trendDb -> ProximityTrend.CLOSER
+            delta <= -config.trendDb -> ProximityTrend.FARTHER
             else -> ProximityTrend.STEADY
         }
     }
