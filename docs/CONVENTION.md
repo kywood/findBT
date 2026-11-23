@@ -22,7 +22,9 @@
 | `:core:designsystem` | 테마, 색, 타이포, 공통 컴포넌트 (`StatusBanner` 등) | 없음 |
 | `:core:ui` | 여러 화면이 쓰는 UI 조각 (`DeviceCard`, 권한 처리 `rememberBlePermissionState`) | `core:model`, `core:designsystem` |
 
-새로 추가할 예정인 공통 모듈: `core:data`(Room, DataStore), `core:analytics`, `core:testing`.
+| `:core:data` | 저장소: 설정(DataStore), 이후 내 기기(Room) | `core:model` |
+
+새로 추가할 예정인 공통 모듈: `core:analytics`, `core:testing`.
 
 규칙:
 - feature끼리는 서로 의존하지 않습니다. 공유가 필요하면 `core`로 내립니다.

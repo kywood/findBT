@@ -8,12 +8,8 @@
     <string name="action_allow">허용</string>
     <string name="action_turn_on">켜기</string>
     <string name="action_open_settings">설정</string>
-    <string name="search_hint">이름 또는 주소로 검색</string>
-    <string name="sort_first_seen">발견 순</string>
-    <string name="sort_signal">신호 세기</string>
+    <string name="search_hint">이름 또는 제조사로 검색</string>
     <string name="filter_named_only">이름 있는 기기만</string>
-    <string name="sort_locked">순서 고정됨</string>
-    <string name="sort_unlocked">순서 고정 해제</string>
     <plurals name="devices_found">
         <item quantity="other">기기 %d개 발견</item>
     </plurals>
@@ -23,4 +19,12 @@
     <string name="error_not_supported">이 기기는 저전력 블루투스(BLE)를 지원하지 않습니다.</string>
     <string name="error_too_frequent">스캔을 너무 자주 다시 시작했습니다. 몇 초 후 다시 시도해 주세요.</string>
     <string name="error_scan_failed">스캔을 시작하지 못했습니다.</string>
+    <string name="action_search">검색</string>
+    <string name="action_close_search">검색 닫기</string>
+    <string name="action_refresh_order">순서 새로고침</string>
+    <string name="sort_menu">정렬</string>
+    <string name="sort_nearest">가까운 순</string>
+    <string name="sort_name">이름순</string>
+    <string name="sort_recent">최근 발견순</string>
+    <string name="filter_hide_gone">사라진 기기 숨기기</string>
 </resources>

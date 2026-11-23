@@ -27,4 +27,6 @@
     <string name="category_group_watch">Watches</string>
     <string name="category_group_tracker">Trackers</string>
     <string name="category_group_other">Other</string>
+    <string name="badge_new">New</string>
+    <string name="device_gone">Just now</string>
 </resources>
