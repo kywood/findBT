@@ -2,4 +2,6 @@
 <resources>
     <!-- App name. Store title: "Nearo: Bluetooth Finder". Change only this line to rename the app. -->
     <string name="app_name" translatable="false">Nearo</string>
+    <string name="tab_nearby">Nearby</string>
+    <string name="tab_my_devices">My devices</string>
 </resources>

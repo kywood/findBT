@@ -7,7 +7,8 @@ import java.io.InputStream
  * Looks up company names from the official Bluetooth SIG Assigned Numbers, bundled as assets
  * (`bt_company_ids.tsv`, `bt_member_uuids.tsv`; regenerate with scripts/update_bt_assigned_numbers.py).
  *
- * Tables load lazily on first lookup, which happens on the scan callback thread, not the main thread.
+ * Tables load lazily on first lookup. The app calls [preload] on a background thread at start so the
+ * first scan result never waits for (or, on the main thread, janks on) the asset read (#34).
  */
 class CompanyDirectory(private val openAsset: (String) -> InputStream) {
 
@@ -15,6 +16,12 @@ class CompanyDirectory(private val openAsset: (String) -> InputStream) {
 
     private val companies: Map<Int, String> by lazy { load(COMPANY_FILE) }
     private val memberServices: Map<Int, String> by lazy { load(MEMBER_UUID_FILE) }
+
+    /** Reads both tables now. Blocking: call it off the main thread. */
+    fun preload() {
+        companies.size
+        memberServices.size
+    }
 
     /** Company for a manufacturer-specific data ID (AD type 0xFF), or null if not assigned. */
     fun companyName(companyId: Int): String? = companies[companyId]?.let { displayName(companyId, it) }

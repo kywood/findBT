@@ -68,6 +68,7 @@ import com.gamenuri.btscanner24.core.ui.permission.rememberBlePermissionState
 fun ScanScreen(
     title: String,
     onDeviceClick: (BleDevice) -> Unit = {},
+    modifier: Modifier = Modifier,
     viewModel: ScanViewModel = viewModel(factory = ScanViewModel.Factory),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -91,6 +92,7 @@ fun ScanScreen(
     ) { viewModel.startScan() }
 
     ScanContent(
+        modifier = modifier,
         title = title,
         state = state,
         permissionBanner = when {
