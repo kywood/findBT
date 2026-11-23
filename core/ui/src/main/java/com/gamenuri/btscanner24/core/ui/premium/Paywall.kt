@@ -32,11 +32,7 @@ import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
 import com.gamenuri.btscanner24.core.ui.R
 
 /** Paywall events; the caller talks to the billing store. */
-data class PaywallActions(
-    val onBuy: () -> Unit = {},
-    val onRestore: () -> Unit = {},
-    val onClose: () -> Unit = {},
-)
+data class PaywallActions(val onBuy: () -> Unit = {}, val onRestore: () -> Unit = {}, val onClose: () -> Unit = {})
 
 /**
  * "Nearo Premium" lifetime unlock (design screens-rest-v3 §3) in a bottom sheet. [price] is Google
