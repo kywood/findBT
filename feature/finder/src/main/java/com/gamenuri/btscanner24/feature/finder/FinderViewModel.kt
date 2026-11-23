@@ -5,9 +5,12 @@ import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.AP
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.gamenuri.btscanner24.core.ble.AlertSupport
 import com.gamenuri.btscanner24.core.ble.BleDependencies
 import com.gamenuri.btscanner24.core.ble.BleScanner
 import com.gamenuri.btscanner24.core.ble.DeviceRepository
+import com.gamenuri.btscanner24.core.ble.ImmediateAlert
+import com.gamenuri.btscanner24.core.ble.RingResult
 import com.gamenuri.btscanner24.core.ble.ScanEvent
 import com.gamenuri.btscanner24.core.model.BleDevice
 import com.gamenuri.btscanner24.core.sensors.MotionSensor
@@ -32,6 +35,7 @@ class FinderViewModel(
     private val scanner: BleScanner,
     private val repository: DeviceRepository,
     private val motion: MotionSensor,
+    private val alert: ImmediateAlert? = null,
     pairedAlias: String? = null,
     private val clock: () -> Long = System::currentTimeMillis,
 ) : ViewModel() {
@@ -60,6 +64,14 @@ class FinderViewModel(
 
     private var job: Job? = null
 
+    // "Play sound" (#28): support is learned once (advertised 0x1802 or a short GATT probe) and sticks.
+    private var support: AlertSupport? = null
+    private var probeJob: Job? = null
+    private var probeAttempts = 0
+    private var lastProbeMs = 0L
+    private var soundJob: Job? = null
+    private val sound = MutableStateFlow(SoundState.UNAVAILABLE)
+
     fun start() {
         if (job?.isActive == true) return
         job = viewModelScope.launch {
@@ -87,6 +99,72 @@ class FinderViewModel(
     fun stop() {
         job?.cancel()
         job = null
+        probeJob?.cancel()
+        // Never leave a tracker ringing when the screen goes away.
+        soundJob?.cancel()
+    }
+
+    /** Starts ringing, or stops it while it rings. */
+    fun toggleSound() {
+        val alert = alert ?: return
+        if (soundJob?.isActive == true) {
+            soundJob?.cancel()
+            return
+        }
+        val address = engine.state(clock(), vibrationOn.value).advanced.address
+        probeJob?.cancel()
+        sound.value = SoundState.CONNECTING
+        publish()
+        soundJob = viewModelScope.launch {
+            var result = RingResult.FAILED
+            try {
+                result = alert.ring(address, SOUND_DURATION_MS) {
+                    sound.value = SoundState.PLAYING
+                    publish()
+                }
+            } finally {
+                if (result == RingResult.NOT_SUPPORTED) support = AlertSupport.NOT_SUPPORTED
+                sound.value = when (result) {
+                    RingResult.NOT_SUPPORTED -> SoundState.UNAVAILABLE
+                    // Stopped by the user or the screen, or the link dropped mid-ring: just offer it again.
+                    RingResult.FAILED -> if (!isActive || sound.value == SoundState.PLAYING) {
+                        SoundState.READY
+                    } else {
+                        SoundState.FAILED
+                    }
+                    RingResult.DONE -> SoundState.READY
+                }
+                publish()
+            }
+        }
+    }
+
+    /** Decides whether to offer "Play sound" once the target is in range. */
+    private fun checkSoundSupport(state: FinderUiState) {
+        val alert = alert ?: return
+        // Only while the screen is started (job), and never two GATT connections at once.
+        if (job?.isActive != true || support != null) return
+        if (probeJob?.isActive == true || soundJob?.isActive == true) return
+        if (state.stage == FinderStage.WAITING || state.stage == FinderStage.SIGNAL_LOST) return
+        if (!alert.hasPermission()) return
+        val address = state.advanced.address
+        if (repository.devices.value[address]?.serviceUuids16?.contains(ImmediateAlert.SERVICE_UUID_16) == true) {
+            onSupport(AlertSupport.SUPPORTED)
+            return
+        }
+        val now = clock()
+        if (probeAttempts >= MAX_PROBES || now - lastProbeMs < PROBE_RETRY_MS) return
+        probeAttempts++
+        lastProbeMs = now
+        probeJob = viewModelScope.launch {
+            val result = alert.probe(address)
+            if (result != AlertSupport.UNREACHABLE) onSupport(result)
+        }
+    }
+
+    private fun onSupport(result: AlertSupport) {
+        support = result
+        if (result == AlertSupport.SUPPORTED && sound.value == SoundState.UNAVAILABLE) sound.value = SoundState.READY
     }
 
     fun toggleVibration() {
@@ -100,7 +178,9 @@ class FinderViewModel(
     }
 
     private fun publish() {
-        _uiState.value = engine.state(clock(), vibrationOn.value)
+        val state = engine.state(clock(), vibrationOn.value)
+        checkSoundSupport(state)
+        _uiState.value = state.copy(sound = sound.value)
     }
 
     override fun onCleared() {
@@ -109,13 +189,23 @@ class FinderViewModel(
 
     companion object {
         private const val UI_REFRESH_MS = 200L
+        private const val SOUND_DURATION_MS = 20_000L
+        private const val MAX_PROBES = 3
+        private const val PROBE_RETRY_MS = 10_000L
 
         fun factory(address: String) = viewModelFactory {
             initializer {
                 val app = checkNotNull(this[APPLICATION_KEY])
                 val ble = (app as BleDependencies.Provider).bleDependencies
                 val alias = ble.bondedDevices.list().firstOrNull { it.address == address }?.name
-                FinderViewModel(address, ble.scanner, ble.repository, MotionSensor(app), pairedAlias = alias)
+                FinderViewModel(
+                    address,
+                    ble.scanner,
+                    ble.repository,
+                    MotionSensor(app),
+                    alert = ImmediateAlert(app),
+                    pairedAlias = alias,
+                )
             }
         }
     }

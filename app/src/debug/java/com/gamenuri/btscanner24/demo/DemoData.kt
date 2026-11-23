@@ -11,6 +11,7 @@ import com.gamenuri.btscanner24.feature.finder.AdvancedInfo
 import com.gamenuri.btscanner24.feature.finder.ArrowConfidence
 import com.gamenuri.btscanner24.feature.finder.FinderStage
 import com.gamenuri.btscanner24.feature.finder.FinderUiState
+import com.gamenuri.btscanner24.feature.finder.SoundState
 import kotlin.math.ln
 import kotlin.math.log10
 
@@ -72,14 +73,16 @@ internal object DemoData {
                 confidence = ArrowConfidence.MEDIUM,
                 trend = ProximityTrend.STEADY,
             ).distance(8.0, ProximityBand.FAR)
-            "close" -> base.copy(
+            "close", "sound" -> base.copy(
                 stage = FinderStage.WALK,
                 arrowDegrees = 12f,
                 confidence = ArrowConfidence.HIGH,
                 trend = ProximityTrend.CLOSER,
+                sound = if (name == "sound") SoundState.PLAYING else SoundState.READY,
             ).distance(3.0, ProximityBand.NEAR)
             "locked" -> base.copy(
                 stage = FinderStage.LOCKED,
+                sound = SoundState.READY,
                 arrowDegrees = 0f,
                 confidence = ArrowConfidence.HIGH,
                 trend = ProximityTrend.CLOSER,

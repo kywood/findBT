@@ -47,4 +47,10 @@
     </plurals>
     <string name="finder_very_close_title">아주 가까워요</string>
     <string name="finder_very_close_body">천천히 주변을 살펴보세요</string>
+    <!-- Play sound (#28) -->
+    <string name="finder_sound_play">소리 울리기</string>
+    <string name="finder_sound_stop">소리 끄기</string>
+    <string name="finder_sound_connecting">연결 중…</string>
+    <string name="finder_sound_retry">다시 시도</string>
+    <string name="finder_sound_failed">소리를 울리지 못했어요. 더 가까이 가서 다시 시도해 보세요.</string>
 </resources>

@@ -52,8 +52,28 @@ data class FinderUiState(
     /** Very close for a while without reaching "right here": suggest confirming by touch (design review #55). */
     val showConfirmHint: Boolean = false,
     val vibrationOn: Boolean = true,
+    /** "Play sound" button (#28); hidden while [SoundState.UNAVAILABLE]. */
+    val sound: SoundState = SoundState.UNAVAILABLE,
     val advanced: AdvancedInfo = AdvancedInfo(),
 )
+
+/** Immediate Alert (0x1802) "Play sound" state (#28). */
+enum class SoundState {
+    /** Not checked yet, not supported, or no BLUETOOTH_CONNECT permission: no button. */
+    UNAVAILABLE,
+
+    /** The device can ring. */
+    READY,
+
+    /** Connecting and sending "High Alert". */
+    CONNECTING,
+
+    /** Ringing; the button stops it. */
+    PLAYING,
+
+    /** The last attempt failed (out of range, busy); the button retries. */
+    FAILED,
+}
 
 /** Raw numbers for the Advanced section and for the prototype measurements. */
 data class AdvancedInfo(

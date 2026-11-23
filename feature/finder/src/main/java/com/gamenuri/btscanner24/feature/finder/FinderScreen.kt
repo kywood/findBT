@@ -7,6 +7,7 @@ import android.os.Vibrator
 import android.os.VibratorManager
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,6 +27,8 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.VolumeOff
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
@@ -40,6 +43,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -125,6 +129,7 @@ fun FinderScreen(
             onFound = { foundAfterSeconds = state.advanced.elapsedSeconds },
             onToggleVibration = viewModel::toggleVibration,
             onSpinAgain = viewModel::spinAgain,
+            onToggleSound = viewModel::toggleSound,
         ),
     )
 }
@@ -134,6 +139,7 @@ data class FinderActions(
     val onFound: () -> Unit = {},
     val onToggleVibration: () -> Unit = {},
     val onSpinAgain: () -> Unit = {},
+    val onToggleSound: () -> Unit = {},
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -206,11 +212,71 @@ fun FinderContent(state: FinderUiState, actions: FinderActions, modifier: Modifi
 
 @Composable
 private fun ActionRow(state: FinderUiState, actions: FinderActions, content: Color, background: Color) {
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .navigationBarsPadding()
             .padding(horizontal = 24.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        if (state.showSoundButton) SoundButton(state.sound, actions.onToggleSound, content)
+        MainActions(state, actions, content, background)
+    }
+}
+
+/** Only offered while the device is in range, or while a sound is already going (#28). */
+private val FinderUiState.showSoundButton: Boolean
+    get() = when (sound) {
+        SoundState.UNAVAILABLE -> false
+        SoundState.CONNECTING, SoundState.PLAYING -> true
+        SoundState.READY, SoundState.FAILED -> stage != FinderStage.WAITING && stage != FinderStage.SIGNAL_LOST
+    }
+
+@Composable
+private fun SoundButton(sound: SoundState, onClick: () -> Unit, content: Color) {
+    if (sound == SoundState.FAILED) {
+        Text(
+            text = stringResource(R.string.finder_sound_failed),
+            modifier = Modifier.fillMaxWidth(),
+            style = MaterialTheme.typography.bodySmall,
+            color = content.copy(alpha = MUTED_ALPHA),
+            textAlign = TextAlign.Center,
+        )
+    }
+    val label = when (sound) {
+        SoundState.CONNECTING -> R.string.finder_sound_connecting
+        SoundState.PLAYING -> R.string.finder_sound_stop
+        SoundState.FAILED -> R.string.finder_sound_retry
+        else -> R.string.finder_sound_play
+    }
+    OutlinedButton(
+        onClick = onClick,
+        // Tapping while connecting cancels, same as stop.
+        modifier = Modifier.fillMaxWidth(),
+        colors = ButtonDefaults.outlinedButtonColors(
+            containerColor = if (sound == SoundState.PLAYING) content.copy(alpha = 0.18f) else Color.Transparent,
+            contentColor = content,
+        ),
+        border = BorderStroke(1.dp, content.copy(alpha = 0.5f)),
+    ) {
+        Icon(
+            imageVector = if (sound == SoundState.PLAYING) {
+                Icons.AutoMirrored.Filled.VolumeOff
+            } else {
+                Icons.AutoMirrored.Filled.VolumeUp
+            },
+            contentDescription = null,
+            modifier = Modifier.size(18.dp),
+        )
+        Spacer(Modifier.size(8.dp))
+        Text(stringResource(label))
+    }
+}
+
+@Composable
+private fun MainActions(state: FinderUiState, actions: FinderActions, content: Color, background: Color) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
