@@ -31,4 +31,3 @@ include(":core:ble")
 include(":core:designsystem")
 include(":core:ui")
 include(":feature:scan")
- 

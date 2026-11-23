@@ -5,8 +5,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.ui.res.stringResource
-import com.gamenuri.btscanner24.feature.scan.ScanScreen
 import com.gamenuri.btscanner24.core.designsystem.theme.FindBTTheme
+import com.gamenuri.btscanner24.feature.scan.ScanScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

@@ -11,9 +11,11 @@ object DeviceListOrdering {
         val query = filter.query.trim()
         return devices.filter { device ->
             (!filter.namedOnly || device.hasName) &&
-                (query.isEmpty() ||
-                    device.name?.contains(query, ignoreCase = true) == true ||
-                    device.address.contains(query, ignoreCase = true))
+                (
+                    query.isEmpty() ||
+                        device.name?.contains(query, ignoreCase = true) == true ||
+                        device.address.contains(query, ignoreCase = true)
+                    )
         }
     }
 

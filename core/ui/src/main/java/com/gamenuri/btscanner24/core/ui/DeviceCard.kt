@@ -12,12 +12,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.gamenuri.btscanner24.core.designsystem.theme.FindBTTheme
 import com.gamenuri.btscanner24.core.model.BleDevice
 import com.gamenuri.btscanner24.core.model.SignalLevel
 import java.util.Date
-import androidx.compose.ui.tooling.preview.Preview
-import com.gamenuri.btscanner24.core.designsystem.theme.FindBTTheme
 
 @Composable
 fun DeviceCard(device: BleDevice, modifier: Modifier = Modifier) {
@@ -29,7 +29,7 @@ fun DeviceCard(device: BleDevice, modifier: Modifier = Modifier) {
             SignalLevel.STRONG -> R.string.signal_strong
             SignalLevel.MEDIUM -> R.string.signal_medium
             SignalLevel.WEAK -> R.string.signal_weak
-        }
+        },
     )
 
     Card(modifier = modifier.fillMaxWidth()) {

@@ -6,7 +6,9 @@ import com.gamenuri.btscanner24.core.ble.BleScanner
 import com.gamenuri.btscanner24.core.ble.CompanyDirectory
 import com.gamenuri.btscanner24.core.ble.DeviceRepository
 
-class BtScannerApp : Application(), BleDependencies.Provider {
+class BtScannerApp :
+    Application(),
+    BleDependencies.Provider {
 
     // Manual DI for now; to be replaced by Hilt (see docs/CONVENTION.md).
     override val bleDependencies: BleDependencies by lazy {

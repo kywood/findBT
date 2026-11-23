@@ -39,19 +39,16 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.gamenuri.btscanner24.feature.scan.R
+import com.gamenuri.btscanner24.core.ble.BleScanner
+import com.gamenuri.btscanner24.core.ble.ScanFailure
 import com.gamenuri.btscanner24.core.designsystem.component.StatusBanner
 import com.gamenuri.btscanner24.core.ui.DeviceCard
 import com.gamenuri.btscanner24.core.ui.permission.rememberBlePermissionState
-import com.gamenuri.btscanner24.core.ble.BleScanner
-import com.gamenuri.btscanner24.core.ble.ScanFailure
+import com.gamenuri.btscanner24.feature.scan.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ScanScreen(
-    title: String,
-    viewModel: ScanViewModel = viewModel(factory = ScanViewModel.Factory),
-) {
+fun ScanScreen(title: String, viewModel: ScanViewModel = viewModel(factory = ScanViewModel.Factory)) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     // Stop scanning whenever the screen is not visible; resume when it comes back.
@@ -66,7 +63,7 @@ fun ScanScreen(
     )
 
     val enableBluetooth = rememberLauncherForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
+        ActivityResultContracts.StartActivityForResult(),
     ) { viewModel.startScan() }
 
     fun onScanClick() {
@@ -109,7 +106,7 @@ fun ScanScreen(
                         },
                     ),
                     actionLabel = stringResource(
-                        if (permission.isPermanentlyDenied) R.string.action_open_settings else R.string.action_allow
+                        if (permission.isPermanentlyDenied) R.string.action_open_settings else R.string.action_allow,
                     ),
                     onAction = permission::request,
                 )
@@ -161,10 +158,13 @@ fun ScanScreen(
                     Icon(
                         imageVector = if (state.filter.sortLocked) Icons.Default.Lock else Icons.Default.LockOpen,
                         contentDescription = stringResource(
-                            if (state.filter.sortLocked) R.string.sort_locked else R.string.sort_unlocked
+                            if (state.filter.sortLocked) R.string.sort_locked else R.string.sort_unlocked,
                         ),
-                        tint = if (state.filter.sortLocked) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.onSurface,
+                        tint = if (state.filter.sortLocked) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurface
+                        },
                     )
                 }
             }
