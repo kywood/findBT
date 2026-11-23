@@ -14,14 +14,16 @@ fun DeviceLabel.text(withSuffix: Boolean = false): String = when (this) {
     is DeviceLabel.Named -> if (withSuffix) stringResource(R.string.device_name_with_suffix, text, suffix) else text
     is DeviceLabel.Generic -> {
         val known = category != DeviceCategory.UNKNOWN
+        // Local copy: no smart cast on a property from another module.
+        val company = maker
         when {
-            maker != null && known -> stringResource(
+            company != null && known -> stringResource(
                 R.string.device_generic_maker_type,
-                maker,
+                company,
                 category.label(),
                 suffix,
             )
-            maker != null -> stringResource(R.string.device_generic_maker, maker, suffix)
+            company != null -> stringResource(R.string.device_generic_maker, company, suffix)
             known -> stringResource(R.string.device_generic_type, category.label(), suffix)
             else -> stringResource(R.string.device_generic, suffix)
         }
