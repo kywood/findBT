@@ -10,7 +10,6 @@ import com.gamenuri.btscanner24.core.ble.BleScanner
 import com.gamenuri.btscanner24.core.ble.BondedDevices
 import com.gamenuri.btscanner24.core.ble.DeviceRepository
 import com.gamenuri.btscanner24.core.ble.ScanEvent
-import com.gamenuri.btscanner24.core.ble.ScanFailure
 import com.gamenuri.btscanner24.core.data.DataDependenciesProvider
 import com.gamenuri.btscanner24.core.data.ListPreferencesRepository
 import com.gamenuri.btscanner24.core.model.BleDevice
@@ -52,8 +51,7 @@ class ScanViewModel(
 
     private var scanJob: Job? = null
 
-    /** True when the scan was paused because the screen went to the background. */
-    private var resumeOnStart = false
+    private val paused = MutableStateFlow(false)
 
     private val ordering = OrderingState()
 
@@ -75,9 +73,12 @@ class ScanViewModel(
         ListInputs(prefs, q, token, aliases)
     }
 
+    private val scanState = combine(status, paused) { status, paused -> status to paused }
+
     val uiState: StateFlow<ScanUiState> =
-        combine(status, throttledDevices, listInputs, ticker) { status, devices, (prefs, q, token, aliases), _ ->
+        combine(scanState, throttledDevices, listInputs, ticker) { (status, paused), devices, inputs, _ ->
             val now = clock()
+            val (prefs, q, token, aliases) = inputs
             val (items, reorderAvailable) = ordering.update(devices.values, prefs, q, token, now, aliases)
             ScanUiState(
                 status = status,
@@ -85,22 +86,21 @@ class ScanViewModel(
                 preferences = prefs,
                 query = q,
                 reorderAvailable = reorderAvailable,
+                isPaused = paused,
+                totalCount = devices.size,
             )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ScanUiState())
 
-    fun toggleScan() {
-        if (scanJob?.isActive == true) stopScan() else startScan()
-    }
-
     fun startScan() {
         if (scanJob?.isActive == true) return
-        if (scanner.startCooldownMillis() > 0) {
-            status.value = ScanStatus.Error(ScanFailure.TOO_FREQUENT)
-            return
-        }
+        paused.value = false
         status.value = ScanStatus.Scanning
         // Parsing and the company-table lookup are too heavy for the main thread (cold-start jank, #34).
         scanJob = viewModelScope.launch(Dispatchers.Default) {
+            // Android allows 5 scan starts per 30 s. Switching tabs quickly can hit that; wait it out
+            // instead of showing an error, since scanning is automatic now (#62).
+            val cooldown = scanner.startCooldownMillis()
+            if (cooldown > 0) delay(cooldown)
             scanner.scan().collect { event ->
                 when (event) {
                     is ScanEvent.Result -> repository.onScanResult(event.result)
@@ -118,18 +118,24 @@ class ScanViewModel(
         status.value = ScanStatus.Idle
     }
 
-    /** Called when the screen leaves the foreground: never scan in the background. */
-    fun onScreenStopped() {
-        resumeOnStart = scanJob?.isActive == true
-        if (resumeOnStart) stopScan()
+    /** Top-bar pause; the scan stays off until [resume] or until the user leaves and comes back. */
+    fun pause() {
+        stopScan()
+        paused.value = true
     }
 
+    fun resume() = startScan()
+
+    /** Called when the tab leaves the screen or the app goes to the background: never scan then. */
+    fun onScreenStopped() {
+        stopScan()
+        paused.value = false
+    }
+
+    /** Scanning is automatic while the Nearby tab is visible (#62). */
     fun onScreenStarted() {
         refreshPaired()
-        if (resumeOnStart) {
-            resumeOnStart = false
-            startScan()
-        }
+        if (scanner.hasScanPermission()) startScan()
     }
 
     private fun refreshPaired() {
@@ -162,6 +168,12 @@ class ScanViewModel(
     fun setSort(sort: DeviceSort) = updatePreferences { it.copy(sort = sort) }
     fun toggleNamedOnly() = updatePreferences { it.copy(namedOnly = !it.namedOnly) }
     fun toggleHideGone() = updatePreferences { it.copy(hideGone = !it.hideGone) }
+
+    /** Filter sheet "All": show every type again. */
+    fun clearGroups() = updatePreferences { it.copy(groups = emptySet()) }
+
+    /** Filter sheet "Reset": types, names and gone devices back to the defaults; sort stays. */
+    fun resetFilters() = updatePreferences { ListPreferences(sort = it.sort) }
     fun toggleGroup(group: CategoryGroup) = updatePreferences {
         it.copy(groups = if (group in it.groups) it.groups - group else it.groups + group)
     }
