@@ -89,8 +89,9 @@
 - 순수 로직(파서, 정렬, 필터, 거리 구간 계산)은 반드시 단위 테스트를 함께 커밋합니다.
 - 코루틴 테스트는 `kotlinx-coroutines-test`의 `runTest`를 씁니다.
 
-## 8. 정적 분석 (도입 예정)
+## 8. 정적 분석
 
-- 포맷: ktlint (`.editorconfig` 기준, `ktlint_code_style = android_studio`)
-- 정적 분석: detekt 기본 규칙 + Compose 규칙
-- 둘 다 PR 전에 로컬에서 통과해야 합니다. CI가 생기면 PR마다 자동 실행합니다.
+- 포맷: ktlint (Spotless로 실행, `.editorconfig` 기준, `ktlint_code_style = android_studio`)
+  - 확인: `./gradlew spotlessCheck` / 자동 수정: `./gradlew spotlessApply`
+- PR 전에 `spotlessCheck`, `assembleDebug`, `testDebugUnitTest`가 모두 통과해야 합니다.
+- detekt(Compose 규칙 포함)는 UI 구현 단계에서 추가합니다. CI가 생기면 PR마다 자동 실행합니다.

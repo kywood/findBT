@@ -54,7 +54,10 @@ class CompanyDirectory(private val openAsset: (String) -> InputStream) {
         )
 
         private val LEGAL_SUFFIX = Regex(
-            """[,.]?\s+(Inc|Incorporated|Corp|Corporation|Co|Company|Ltd|Limited|LLC|L\.L\.C|GmbH|AG|SA|S\.A|AB|ASA|A/S|B\.V|N\.V|Oy|Pte|PLC|S\.r\.l|SAS|K\.K)\.?$""",
+            "[,.]?\\s+(" +
+                "Inc|Incorporated|Corp|Corporation|Co|Company|Ltd|Limited|LLC|L\\.L\\.C|GmbH|AG|SA|S\\.A|AB|ASA|" +
+                "A/S|B\\.V|N\\.V|Oy|Pte|PLC|S\\.r\\.l|SAS|K\\.K" +
+                ")\\.?$",
             RegexOption.IGNORE_CASE,
         )
 

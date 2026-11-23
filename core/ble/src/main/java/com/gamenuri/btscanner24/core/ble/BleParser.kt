@@ -33,7 +33,6 @@ object BleParser {
             // 루프 탈출 조건 조건 강화 (패딩 검사 및 인덱스 오버플로우 방지)
             if (length == 0) break
             if (i + 1 >= rawBytes.size) break
-//            if (i + length >= rawBytes.size) break
 
             val type = rawBytes[i + 1].toInt() and 0xFF
 

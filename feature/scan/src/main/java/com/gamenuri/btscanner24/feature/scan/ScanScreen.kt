@@ -33,7 +33,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleStartEffect
@@ -52,7 +52,6 @@ fun ScanScreen(
     title: String,
     viewModel: ScanViewModel = viewModel(factory = ScanViewModel.Factory),
 ) {
-    val context = LocalContext.current
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     // Stop scanning whenever the screen is not visible; resume when it comes back.
@@ -103,7 +102,11 @@ fun ScanScreen(
             if (permission.showRationale) {
                 StatusBanner(
                     message = stringResource(
-                        if (permission.isPermanentlyDenied) R.string.permission_denied_settings else R.string.permission_rationale
+                        if (permission.isPermanentlyDenied) {
+                            R.string.permission_denied_settings
+                        } else {
+                            R.string.permission_rationale
+                        },
                     ),
                     actionLabel = stringResource(
                         if (permission.isPermanentlyDenied) R.string.action_open_settings else R.string.action_allow
@@ -140,19 +143,19 @@ fun ScanScreen(
                 FilterChip(
                     selected = state.filter.sortType == SortType.FIRST_SEEN,
                     onClick = { viewModel.setSortType(SortType.FIRST_SEEN) },
-                    label = { Text(stringResource(R.string.sort_first_seen), style = MaterialTheme.typography.labelSmall) },
+                    label = { ChipLabel(R.string.sort_first_seen) },
                     modifier = Modifier.padding(end = 6.dp),
                 )
                 FilterChip(
                     selected = state.filter.sortType == SortType.RSSI,
                     onClick = { viewModel.setSortType(SortType.RSSI) },
-                    label = { Text(stringResource(R.string.sort_signal), style = MaterialTheme.typography.labelSmall) },
+                    label = { ChipLabel(R.string.sort_signal) },
                     modifier = Modifier.padding(end = 6.dp),
                 )
                 FilterChip(
                     selected = state.filter.namedOnly,
                     onClick = viewModel::toggleNamedOnly,
-                    label = { Text(stringResource(R.string.filter_named_only), style = MaterialTheme.typography.labelSmall) },
+                    label = { ChipLabel(R.string.filter_named_only) },
                 )
                 IconButton(onClick = viewModel::toggleSortLock) {
                     Icon(
@@ -167,7 +170,7 @@ fun ScanScreen(
             }
 
             Text(
-                text = context.resources.getQuantityString(R.plurals.devices_found, state.devices.size, state.devices.size),
+                text = pluralStringResource(R.plurals.devices_found, state.devices.size, state.devices.size),
                 style = MaterialTheme.typography.labelMedium,
                 modifier = Modifier.padding(vertical = 4.dp),
             )
@@ -219,4 +222,9 @@ private fun ScanErrorBanner(
             onAction = onRetry,
         )
     }
+}
+
+@Composable
+private fun ChipLabel(textRes: Int) {
+    Text(stringResource(textRes), style = MaterialTheme.typography.labelSmall)
 }

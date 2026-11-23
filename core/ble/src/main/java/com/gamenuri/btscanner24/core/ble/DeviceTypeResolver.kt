@@ -22,7 +22,9 @@ object DeviceTypeResolver {
 
     fun resolveByServiceUuid(uuids: List<String>): String {
         return when {
-            uuids.any { it.startsWith("0000111E") || it.startsWith("0000110B") || it.startsWith("0000110A") } -> "🎧 Headset/Earphone"
+            uuids.any {
+                it.startsWith("0000111E") || it.startsWith("0000110B") || it.startsWith("0000110A")
+            } -> "🎧 Headset/Earphone"
             uuids.any { it.startsWith("00001812") } -> "⌨️ Keyboard/Mouse"
             uuids.any { it.startsWith("00001800") || it.startsWith("0000180A") } -> "📱 Smartphone/Device"
             uuids.any { it.startsWith("00001810") } -> "💓 Healthcare"

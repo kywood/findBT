@@ -12,6 +12,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
+import com.gamenuri.btscanner24.core.designsystem.theme.FindBTTheme
 
 /** Inline message with one action, used for permission, Bluetooth-off and scan errors. */
 @Composable
@@ -39,5 +41,14 @@ fun StatusBanner(
             )
             TextButton(onClick = onAction) { Text(actionLabel) }
         }
+    }
+}
+
+@Preview(name = "Light")
+@Preview(name = "Dark", uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
+@Composable
+private fun StatusBannerPreview() {
+    FindBTTheme(dynamicColor = false) {
+        StatusBanner(message = "Bluetooth is off.", actionLabel = "Turn on", onAction = {})
     }
 }

@@ -16,6 +16,8 @@ import androidx.compose.ui.unit.dp
 import com.gamenuri.btscanner24.core.model.BleDevice
 import com.gamenuri.btscanner24.core.model.SignalLevel
 import java.util.Date
+import androidx.compose.ui.tooling.preview.Preview
+import com.gamenuri.btscanner24.core.designsystem.theme.FindBTTheme
 
 @Composable
 fun DeviceCard(device: BleDevice, modifier: Modifier = Modifier) {
@@ -51,5 +53,23 @@ fun DeviceCard(device: BleDevice, modifier: Modifier = Modifier) {
                 style = MaterialTheme.typography.labelSmall,
             )
         }
+    }
+}
+
+@Preview(name = "Light")
+@Preview(name = "Dark", uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
+@Composable
+private fun DeviceCardPreview() {
+    FindBTTheme(dynamicColor = false) {
+        DeviceCard(
+            device = BleDevice(
+                address = "AA:BB:CC:DD:EE:FF",
+                name = "Galaxy Buds2 Pro",
+                rssi = -58,
+                firstSeen = 0,
+                lastSeen = 0,
+                manufacturer = "Samsung",
+            ),
+        )
     }
 }
