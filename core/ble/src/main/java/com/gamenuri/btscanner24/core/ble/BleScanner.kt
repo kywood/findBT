@@ -113,11 +113,10 @@ class BleScanner(context: Context) {
         private const val START_WINDOW_MS = 30_000L
         private const val MAX_STARTS_PER_WINDOW = 5
 
-        fun requiredPermissions(): List<String> =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                listOf(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT)
-            } else {
-                listOf(Manifest.permission.ACCESS_FINE_LOCATION)
-            }
+        fun requiredPermissions(): List<String> = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            listOf(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT)
+        } else {
+            listOf(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
     }
 }

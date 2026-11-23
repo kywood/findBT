@@ -23,17 +23,16 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class ScanViewModel(
-    private val scanner: BleScanner,
-    private val repository: DeviceRepository,
-) : ViewModel() {
+class ScanViewModel(private val scanner: BleScanner, private val repository: DeviceRepository) : ViewModel() {
 
     private val status = MutableStateFlow<ScanStatus>(ScanStatus.Idle)
     private val filter = MutableStateFlow(ScanFilter())
 
     private var scanJob: Job? = null
+
     /** True when the scan was paused because the screen went to the background. */
     private var resumeOnStart = false
+
     /** Last displayed order, used when the sort is locked. */
     private var displayedOrder: List<String> = emptyList()
 
