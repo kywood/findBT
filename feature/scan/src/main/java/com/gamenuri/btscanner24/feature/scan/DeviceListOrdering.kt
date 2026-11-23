@@ -19,12 +19,13 @@ object DeviceListOrdering {
     fun filter(devices: Collection<BleDevice>, prefs: ListPreferences, query: String, now: Long): List<BleDevice> {
         val q = query.trim()
         return devices.filter { device ->
-            (!prefs.namedOnly || device.hasName) &&
+            (!prefs.namedOnly || device.hasName || device.modelName != null) &&
                 (prefs.groups.isEmpty() || device.category.filterGroup in prefs.groups) &&
                 (!prefs.hideGone || !isGone(device, now)) &&
                 (
                     q.isEmpty() ||
                         device.name?.contains(q, ignoreCase = true) == true ||
+                        device.modelName?.contains(q, ignoreCase = true) == true ||
                         device.manufacturer?.contains(q, ignoreCase = true) == true
                     )
         }
@@ -33,7 +34,8 @@ object DeviceListOrdering {
     fun sort(devices: List<BleDevice>, sort: DeviceSort): List<BleDevice> = when (sort) {
         DeviceSort.NEAREST -> devices.sortedByDescending { it.smoothedRssi }
         DeviceSort.NAME -> devices.sortedWith(
-            compareBy<BleDevice> { !it.hasName }.thenBy(String.CASE_INSENSITIVE_ORDER) { it.name.orEmpty() },
+            compareBy<BleDevice> { !it.hasName && it.modelName == null }
+                .thenBy(String.CASE_INSENSITIVE_ORDER) { it.modelName ?: it.name.orEmpty() },
         )
         DeviceSort.RECENT -> devices.sortedByDescending { it.firstSeen }
     }

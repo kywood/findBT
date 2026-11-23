@@ -7,6 +7,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.gamenuri.btscanner24.core.ble.BleDependencies
 import com.gamenuri.btscanner24.core.ble.BleScanner
+import com.gamenuri.btscanner24.core.ble.BondedDevices
 import com.gamenuri.btscanner24.core.ble.DeviceRepository
 import com.gamenuri.btscanner24.core.ble.ScanEvent
 import com.gamenuri.btscanner24.core.ble.ScanFailure
@@ -14,6 +15,7 @@ import com.gamenuri.btscanner24.core.data.DataDependenciesProvider
 import com.gamenuri.btscanner24.core.data.ListPreferencesRepository
 import com.gamenuri.btscanner24.core.model.BleDevice
 import com.gamenuri.btscanner24.core.model.CategoryGroup
+import com.gamenuri.btscanner24.core.model.DeviceNaming
 import com.gamenuri.btscanner24.core.model.DeviceSort
 import com.gamenuri.btscanner24.core.model.ListPreferences
 import kotlinx.coroutines.Dispatchers
@@ -34,12 +36,16 @@ class ScanViewModel(
     private val scanner: BleScanner,
     private val repository: DeviceRepository,
     private val listPreferences: ListPreferencesRepository,
+    private val bondedDevices: BondedDevices? = null,
     private val clock: () -> Long = System::currentTimeMillis,
 ) : ViewModel() {
 
     private val status = MutableStateFlow<ScanStatus>(ScanStatus.Idle)
     private val query = MutableStateFlow("")
     private val reorderRequests = MutableStateFlow(0)
+
+    /** Paired address -> the phone's name for it, re-read whenever the screen starts (#46). */
+    private val pairedAliases = MutableStateFlow<Map<String, String>>(emptyMap())
 
     private val preferences: StateFlow<ListPreferences> = listPreferences.preferences
         .stateIn(viewModelScope, SharingStarted.Eagerly, ListPreferences())
@@ -65,12 +71,14 @@ class ScanViewModel(
         }
     }
 
-    private val listInputs = combine(preferences, query, reorderRequests) { prefs, q, token -> Triple(prefs, q, token) }
+    private val listInputs = combine(preferences, query, reorderRequests, pairedAliases) { prefs, q, token, aliases ->
+        ListInputs(prefs, q, token, aliases)
+    }
 
     val uiState: StateFlow<ScanUiState> =
-        combine(status, throttledDevices, listInputs, ticker) { status, devices, (prefs, q, token), _ ->
+        combine(status, throttledDevices, listInputs, ticker) { status, devices, (prefs, q, token, aliases), _ ->
             val now = clock()
-            val (items, reorderAvailable) = ordering.update(devices.values, prefs, q, token, now)
+            val (items, reorderAvailable) = ordering.update(devices.values, prefs, q, token, now, aliases)
             ScanUiState(
                 status = status,
                 items = items,
@@ -117,10 +125,18 @@ class ScanViewModel(
     }
 
     fun onScreenStarted() {
+        refreshPaired()
         if (resumeOnStart) {
             resumeOnStart = false
             startScan()
         }
+    }
+
+    private fun refreshPaired() {
+        val bonded = bondedDevices ?: return
+        pairedAliases.value = bonded.list()
+            .mapNotNull { paired -> paired.name?.takeIf { it.isNotBlank() }?.let { paired.address to it } }
+            .toMap()
     }
 
     fun dismissError() {
@@ -167,11 +183,18 @@ class ScanViewModel(
                 val app = this[APPLICATION_KEY]
                 val ble = (app as BleDependencies.Provider).bleDependencies
                 val data = app as DataDependenciesProvider
-                ScanViewModel(ble.scanner, ble.repository, data.listPreferences)
+                ScanViewModel(ble.scanner, ble.repository, data.listPreferences, ble.bondedDevices)
             }
         }
     }
 }
+
+private data class ListInputs(
+    val prefs: ListPreferences,
+    val query: String,
+    val token: Int,
+    val aliases: Map<String, String>,
+)
 
 /**
  * Remembers what is on screen between emissions. A full sort happens on the first list, when
@@ -193,6 +216,7 @@ internal class OrderingState {
         query: String,
         token: Int,
         now: Long,
+        pairedAliases: Map<String, String> = emptyMap(),
     ): Pair<List<DeviceListItem>, Boolean> {
         val filtered = DeviceListOrdering.filter(devices, prefs, query, now)
         val sorted = DeviceListOrdering.sort(filtered, prefs.sort)
@@ -207,12 +231,17 @@ internal class OrderingState {
         if (fullSort) sortedAddresses = sorted.mapTo(HashSet()) { it.address }
         displayedOrder = ordered.map { it.address }
 
-        val items = ordered.map { device ->
+        val labels = ordered.map { DeviceNaming.label(it, pairedAlias = pairedAliases[it.address]) }
+        val duplicates = DeviceNaming.duplicateNames(labels)
+        val items = ordered.mapIndexed { index, device ->
             DeviceListItem(
                 device = device,
                 isNew = device.address !in sortedAddresses,
                 isGone = DeviceListOrdering.isGone(device, now),
                 distanceMeters = device.distanceMeters,
+                label = labels[index],
+                showSuffix = DeviceNaming.isDuplicate(labels[index], duplicates),
+                isPaired = device.address in pairedAliases,
             )
         }
         val reorderAvailable = !fullSort && sorted.map { it.address } != displayedOrder

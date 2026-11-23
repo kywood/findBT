@@ -1,10 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="device_unnamed">Unnamed device</string>
     <string name="signal_strong">Strong</string>
     <string name="signal_medium">Medium</string>
     <string name="signal_weak">Weak</string>
-    <string name="manufacturer_unknown">Unknown maker</string>
     <string name="category_earbuds">Earbuds</string>
     <string name="category_headphones">Headphones</string>
     <string name="category_hearing_aid">Hearing aid</string>
@@ -30,4 +28,11 @@
     <string name="device_gone">Just now</string>
     <string name="device_maker_type">%1$s · %2$s</string>
     <string name="device_distance">~%1$s m</string>
+    <!-- Device naming (#46): suffix is the last 4 hex digits of the address. -->
+    <string name="device_name_with_suffix">%1$s · %2$s</string>
+    <string name="device_generic_maker_type">%1$s %2$s · %3$s</string>
+    <string name="device_generic_maker">%1$s device · %2$s</string>
+    <string name="device_generic_type">%1$s · %2$s</string>
+    <string name="device_generic">Bluetooth device · %1$s</string>
+    <string name="badge_paired">Mine</string>
 </resources>

@@ -51,6 +51,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.gamenuri.btscanner24.core.ble.proximity.ProximityBand
 import com.gamenuri.btscanner24.core.ble.proximity.ProximityTrend
 import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
+import com.gamenuri.btscanner24.core.model.DeviceLabel
+import com.gamenuri.btscanner24.core.model.NameSource
+import com.gamenuri.btscanner24.core.ui.text
 import java.util.Locale
 import kotlin.math.roundToInt
 
@@ -106,7 +109,7 @@ fun FinderContent(state: FinderUiState, actions: FinderActions, modifier: Modifi
         modifier = modifier,
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text(state.deviceName, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                title = { Text(state.deviceLabel.text(), maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 navigationIcon = {
                     IconButton(onClick = actions.onClose) {
                         Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.finder_close))
@@ -131,6 +134,16 @@ fun FinderContent(state: FinderUiState, actions: FinderActions, modifier: Modifi
             val canRespin = state.stage == FinderStage.WALK || state.stage == FinderStage.TURN_AROUND
             if (canRespin) {
                 TextButton(onClick = actions.onSpinAgain) { Text(stringResource(R.string.finder_spin_again)) }
+            }
+            if (state.stage != FinderStage.WAITING && state.stage != FinderStage.SIGNAL_LOST) {
+                // Names can be vague ("hiot0"); being able to confirm by touch matters more than the name (#46).
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = stringResource(R.string.finder_confirm_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                )
             }
             Spacer(Modifier.height(24.dp))
             Row(
@@ -282,7 +295,7 @@ private fun FinderWalkPreview() {
     NearoTheme {
         FinderContent(
             state = FinderUiState(
-                deviceName = "Galaxy Buds2 Pro",
+                deviceLabel = PREVIEW_LABEL,
                 stage = FinderStage.WALK,
                 arrowDegrees = 30f,
                 confidence = ArrowConfidence.MEDIUM,
@@ -301,8 +314,10 @@ private fun FinderWalkPreview() {
 private fun FinderSpinPreview() {
     NearoTheme {
         FinderContent(
-            state = FinderUiState(deviceName = "Galaxy Buds2 Pro", stage = FinderStage.SPIN, sweepProgress = 0.35f),
+            state = FinderUiState(deviceLabel = PREVIEW_LABEL, stage = FinderStage.SPIN, sweepProgress = 0.35f),
             actions = FinderActions(),
         )
     }
 }
+
+private val PREVIEW_LABEL = DeviceLabel.Named("Galaxy Buds2 Pro", NameSource.ADVERTISED, suffix = "3F2A")

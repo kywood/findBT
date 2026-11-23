@@ -37,4 +37,5 @@
     <string name="finder_trend_steady">Steady</string>
 
     <string name="finder_advanced_values">MAC %1$s · RSSI %2$s dBm (smoothed %3$s) · heading %4$s° · bearing %5$s° · MAC changes %6$d · %7$d s</string>
+    <string name="finder_confirm_hint">Not sure it\'s this one? Hold your phone right next to it. If the distance drops to about 0.5 m, you\'ve found it.</string>
 </resources>

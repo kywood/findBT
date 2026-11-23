@@ -2,6 +2,8 @@ package com.gamenuri.btscanner24.feature.finder
 
 import com.gamenuri.btscanner24.core.ble.proximity.ProximityBand
 import com.gamenuri.btscanner24.core.ble.proximity.ProximityTrend
+import com.gamenuri.btscanner24.core.model.DeviceCategory
+import com.gamenuri.btscanner24.core.model.DeviceLabel
 
 /** What the find screen is asking the user to do. Mirrors the states in design find-screen v3.3. */
 enum class FinderStage {
@@ -36,7 +38,7 @@ enum class FinderStage {
 enum class ArrowConfidence { HIGH, MEDIUM, NONE }
 
 data class FinderUiState(
-    val deviceName: String = "",
+    val deviceLabel: DeviceLabel = DeviceLabel.Generic(maker = null, category = DeviceCategory.UNKNOWN, suffix = ""),
     val stage: FinderStage = FinderStage.WAITING,
     /** Arrow angle relative to the top of the phone, clockwise. Null hides the arrow. */
     val arrowDegrees: Float? = null,
