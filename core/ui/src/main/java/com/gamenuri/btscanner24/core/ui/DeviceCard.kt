@@ -24,12 +24,14 @@ import androidx.compose.ui.unit.dp
 import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
 import com.gamenuri.btscanner24.core.model.BleDevice
 import com.gamenuri.btscanner24.core.model.DeviceCategory
+import com.gamenuri.btscanner24.core.model.DeviceLabel
+import com.gamenuri.btscanner24.core.model.DeviceNaming
 import com.gamenuri.btscanner24.core.model.SignalLevel
 import java.util.Locale
 import kotlin.math.roundToInt
 
 /**
- * One row of the device list (design home-v3): type icon, name with NEW badge, "Maker · Type",
+ * One row of the device list (design home-v3): type icon, name with Mine/NEW badges, "Maker · Type",
  * and on the right signal bars with the approximate distance. Gone devices stay in place, dimmed.
  * The MAC address and raw RSSI live on the detail and Advanced screens, not here.
  */
@@ -37,6 +39,9 @@ import kotlin.math.roundToInt
 fun DeviceCard(
     device: BleDevice,
     modifier: Modifier = Modifier,
+    label: DeviceLabel = DeviceNaming.label(device),
+    showSuffix: Boolean = false,
+    isPaired: Boolean = false,
     isNew: Boolean = false,
     isGone: Boolean = false,
     distanceMeters: Double? = null,
@@ -49,7 +54,6 @@ fun DeviceCard(
             SignalLevel.WEAK -> R.string.signal_weak
         },
     )
-    val maker = device.manufacturer ?: stringResource(R.string.manufacturer_unknown)
     val cardModifier = modifier.fillMaxWidth().alpha(if (isGone) 0.45f else 1f)
     val colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
     val content: @Composable ColumnScope.() -> Unit = {
@@ -62,18 +66,30 @@ fun DeviceCard(
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = device.name?.takeIf { device.hasName } ?: stringResource(R.string.device_unnamed),
+                        text = label.text(withSuffix = showSuffix),
                         style = MaterialTheme.typography.titleMedium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f, fill = false),
                     )
+                    if (isPaired) {
+                        Badge(
+                            modifier = Modifier.padding(start = 6.dp),
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                        ) { Text(stringResource(R.string.badge_paired)) }
+                    }
                     if (isNew) {
                         Badge(modifier = Modifier.padding(start = 6.dp)) { Text(stringResource(R.string.badge_new)) }
                     }
                 }
                 Text(
-                    text = stringResource(R.string.device_maker_type, maker, device.category.label()),
+                    // No "Unknown maker": without a company the line is just the type.
+                    text =
+                    device.manufacturer?.let {
+                        stringResource(R.string.device_maker_type, it, device.category.label())
+                    }
+                        ?: device.category.label(),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,

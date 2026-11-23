@@ -56,6 +56,7 @@ import com.gamenuri.btscanner24.core.designsystem.component.StatusBanner
 import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
 import com.gamenuri.btscanner24.core.model.BleDevice
 import com.gamenuri.btscanner24.core.model.DeviceCategory
+import com.gamenuri.btscanner24.core.model.DeviceNaming
 import com.gamenuri.btscanner24.core.model.PairedDevice
 import com.gamenuri.btscanner24.core.model.SignalLevel
 import com.gamenuri.btscanner24.core.ui.DeviceIcon
@@ -187,7 +188,12 @@ private fun PairedRow(item: MyDeviceItem, now: Long, onClick: (MyDeviceItem) -> 
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = item.paired.name ?: stringResource(UiR.string.device_unnamed),
+                    text = item.paired.name?.takeIf { it.isNotBlank() }
+                        ?: stringResource(
+                            UiR.string.device_generic_type,
+                            item.paired.category.label(),
+                            DeviceNaming.addressSuffix(item.paired.address),
+                        ),
                     style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -237,8 +243,10 @@ private fun subtitle(item: MyDeviceItem, now: Long): String {
     val sighting = item.sighting
     return when {
         item.isNearby -> {
-            val maker = sighting?.manufacturer ?: stringResource(UiR.string.manufacturer_unknown)
-            stringResource(UiR.string.device_maker_type, maker, item.paired.category.label())
+            sighting?.manufacturer?.let {
+                stringResource(UiR.string.device_maker_type, it, item.paired.category.label())
+            }
+                ?: item.paired.category.label()
         }
         sighting == null -> stringResource(R.string.devices_not_seen)
         else -> {

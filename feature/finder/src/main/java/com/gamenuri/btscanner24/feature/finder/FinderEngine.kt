@@ -6,6 +6,8 @@ import com.gamenuri.btscanner24.core.ble.proximity.ProximityEstimator
 import com.gamenuri.btscanner24.core.ble.proximity.ProximityReading
 import com.gamenuri.btscanner24.core.ble.proximity.ProximityTrend
 import com.gamenuri.btscanner24.core.model.BleDevice
+import com.gamenuri.btscanner24.core.model.DeviceLabel
+import com.gamenuri.btscanner24.core.model.DeviceNaming
 import com.gamenuri.btscanner24.core.sensors.Angles
 import com.gamenuri.btscanner24.core.sensors.BearingEstimator
 import com.gamenuri.btscanner24.core.sensors.BearingEstimator.Confidence
@@ -22,12 +24,14 @@ import kotlin.math.abs
 internal class FinderEngine(
     target: BleDevice,
     private val startMs: Long,
+    /** The phone's name for a paired device; wins over anything advertised (#46). */
+    private val pairedAlias: String? = null,
     private val hasCompass: Boolean,
     private val proximity: ProximityEstimator = ProximityEstimator(),
     private val bearing: BearingEstimator = BearingEstimator(),
 ) {
     private val tracker = TargetTracker(target)
-    private var name: String = target.name?.takeIf { target.hasName } ?: target.address
+    private var label: DeviceLabel = DeviceNaming.label(target, pairedAlias)
     private var reading: ProximityReading? = null
     private var lastSightingMs: Long? = null
     private var heading: Double? = null
@@ -38,7 +42,9 @@ internal class FinderEngine(
     /** @return true when the sighting belonged to the target. */
     fun onSighting(device: BleDevice, nowMs: Long): Boolean {
         if (!tracker.isTarget(device, nowMs)) return false
-        if (device.hasName) name = device.name!!
+        // Keep a real name once seen; a later packet without one must not turn it back into a generic label.
+        val next = DeviceNaming.label(device, pairedAlias)
+        if (next is DeviceLabel.Named || label is DeviceLabel.Generic) label = next
         val newReading = proximity.add(device.rssi, nowMs, device.txPower)
         reading = newReading
         lastSightingMs = nowMs
@@ -82,7 +88,7 @@ internal class FinderEngine(
         val stage = stageFor(nowMs, current, est, relative)
         val showArrow = stage == FinderStage.WALK || stage == FinderStage.LOCKED || stage == FinderStage.TURN_AROUND
         return FinderUiState(
-            deviceName = name,
+            deviceLabel = label,
             stage = stage,
             arrowDegrees = relative?.takeIf { showArrow }?.toFloat(),
             confidence = if (showArrow) confidenceFor(est, current) else ArrowConfidence.NONE,

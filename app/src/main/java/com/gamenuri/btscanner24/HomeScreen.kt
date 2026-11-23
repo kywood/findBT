@@ -22,7 +22,7 @@ import com.gamenuri.btscanner24.core.ui.R as UiR
 import com.gamenuri.btscanner24.feature.devices.DevicesScreen
 import com.gamenuri.btscanner24.feature.scan.ScanScreen
 
-private enum class HomeTab(@StringRes val label: Int) {
+private enum class HomeTab(@param:StringRes val label: Int) {
     NEARBY(R.string.tab_nearby),
     MY_DEVICES(R.string.tab_my_devices),
 }

@@ -32,6 +32,7 @@ class FinderViewModel(
     private val scanner: BleScanner,
     private val repository: DeviceRepository,
     private val motion: MotionSensor,
+    pairedAlias: String? = null,
     private val clock: () -> Long = System::currentTimeMillis,
 ) : ViewModel() {
 
@@ -40,7 +41,12 @@ class FinderViewModel(
         // After process death the device may no longer be in memory; start from its address only.
         val target = repository.devices.value[address]
             ?: BleDevice(address = address, name = null, rssi = -100, firstSeen = now, lastSeen = now)
-        FinderEngine(target, startMs = now, hasCompass = motion.source != MotionSensor.Source.NONE)
+        FinderEngine(
+            target,
+            startMs = now,
+            pairedAlias = pairedAlias,
+            hasCompass = motion.source != MotionSensor.Source.NONE,
+        )
     }
 
     private val vibrationOn = MutableStateFlow(true)
@@ -108,7 +114,8 @@ class FinderViewModel(
             initializer {
                 val app = checkNotNull(this[APPLICATION_KEY])
                 val ble = (app as BleDependencies.Provider).bleDependencies
-                FinderViewModel(address, ble.scanner, ble.repository, MotionSensor(app))
+                val alias = ble.bondedDevices.list().firstOrNull { it.address == address }?.name
+                FinderViewModel(address, ble.scanner, ble.repository, MotionSensor(app), pairedAlias = alias)
             }
         }
     }

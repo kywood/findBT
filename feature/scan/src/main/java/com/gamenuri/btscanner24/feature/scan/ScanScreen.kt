@@ -263,6 +263,9 @@ fun ScanContent(
                 items(state.items, key = { it.device.address }) { item ->
                     DeviceCard(
                         device = item.device,
+                        label = item.label,
+                        showSuffix = item.showSuffix,
+                        isPaired = item.isPaired,
                         isNew = item.isNew,
                         isGone = item.isGone,
                         distanceMeters = item.distanceMeters,

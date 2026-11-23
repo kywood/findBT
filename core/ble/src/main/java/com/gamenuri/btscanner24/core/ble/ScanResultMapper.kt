@@ -27,6 +27,7 @@ object ScanResultMapper {
         val next = BleDevice(
             address = result.device.address,
             name = name,
+            modelName = parsed.modelName,
             rssi = result.rssi,
             // Replaced by the repository's per-device Kalman filter; keep the last estimate meanwhile.
             smoothedRssi = previous?.smoothedRssi ?: result.rssi.toDouble(),
@@ -59,6 +60,7 @@ object ScanResultMapper {
         if (previous == null) return next
         return next.copy(
             name = next.name?.takeIf { it.isNotBlank() } ?: previous.name,
+            modelName = next.modelName ?: previous.modelName,
             manufacturer = next.manufacturer ?: previous.manufacturer,
             companyId = next.companyId ?: previous.companyId,
             category = next.category.takeIf { it != DeviceCategory.UNKNOWN } ?: previous.category,

@@ -2,6 +2,8 @@ package com.gamenuri.btscanner24.feature.scan
 
 import com.gamenuri.btscanner24.core.ble.ScanFailure
 import com.gamenuri.btscanner24.core.model.BleDevice
+import com.gamenuri.btscanner24.core.model.DeviceLabel
+import com.gamenuri.btscanner24.core.model.DeviceNaming
 import com.gamenuri.btscanner24.core.model.ListPreferences
 
 sealed interface ScanStatus {
@@ -19,6 +21,11 @@ data class DeviceListItem(
     val isGone: Boolean,
     /** Rough distance from the smoothed signal, shown as "~3 m". */
     val distanceMeters: Double? = null,
+    val label: DeviceLabel = DeviceNaming.label(device),
+    /** Another row has the same name: add the address suffix. */
+    val showSuffix: Boolean = false,
+    /** Paired with this phone; the name is the phone's alias for it. */
+    val isPaired: Boolean = false,
 )
 
 data class ScanUiState(

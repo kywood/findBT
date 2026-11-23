@@ -6,6 +6,8 @@ package com.gamenuri.btscanner24.core.model
 data class BleDevice(
     val address: String,
     val name: String?,
+    /** Model decoded from vendor advertising data (e.g. "AirPods Pro 2"); preferred over [name] for display. */
+    val modelName: String? = null,
     val rssi: Int,
     /**
      * Kalman-smoothed RSSI, the same filter find mode uses; drives "nearest" sorting, signal bars and
