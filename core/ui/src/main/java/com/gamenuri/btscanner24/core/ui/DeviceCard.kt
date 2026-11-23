@@ -40,7 +40,9 @@ fun DeviceCard(device: BleDevice, modifier: Modifier = Modifier) {
             )
             Text(device.address, style = MaterialTheme.typography.labelSmall)
             Text(
-                "${device.category.label()}  |  ${device.manufacturer ?: stringResource(R.string.manufacturer_unknown)}",
+                "${device.category.label()}  |  ${device.manufacturer ?: stringResource(
+                    R.string.manufacturer_unknown,
+                )}",
                 style = MaterialTheme.typography.labelSmall,
             )
             Text(
