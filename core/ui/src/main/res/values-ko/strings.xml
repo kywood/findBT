@@ -17,6 +17,7 @@
     <string name="category_mouse">마우스</string>
     <string name="category_gamepad">게임 컨트롤러</string>
     <string name="category_tv">TV</string>
+    <string name="category_car">자동차</string>
     <string name="category_health">건강 기기</string>
     <string name="category_sensor">센서</string>
     <string name="category_unknown">기타 기기</string>

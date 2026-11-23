@@ -16,6 +16,7 @@ enum class DeviceCategory(val filterGroup: CategoryGroup) {
     MOUSE(CategoryGroup.OTHER),
     GAMEPAD(CategoryGroup.OTHER),
     TV(CategoryGroup.OTHER),
+    CAR(CategoryGroup.OTHER),
     HEALTH(CategoryGroup.OTHER),
     SENSOR(CategoryGroup.OTHER),
     UNKNOWN(CategoryGroup.OTHER),
