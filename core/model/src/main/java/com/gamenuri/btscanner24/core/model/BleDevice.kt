@@ -9,7 +9,10 @@ data class BleDevice(
     val rssi: Int,
     val firstSeen: Long,
     val lastSeen: Long,
-    val manufacturer: String = Constants.UNKNOWN,
+    /** Company name from Bluetooth SIG data, null while unknown. */
+    val manufacturer: String? = null,
+    /** Raw SIG company ID from manufacturer data, shown in the Advanced section. */
+    val companyId: Int? = null,
     val deviceType: String = Constants.UNKNOWN,
     val uuids: List<String> = emptyList(),
     val txPower: Int? = null,
