@@ -36,7 +36,12 @@ class DeviceListOrderingTest {
     @Test
     fun `named only is off by default and drops unnamed devices when on`() {
         val devices = listOf(device("A", "Buds"), device("B"))
-        assertEquals(listOf("A", "B"), DeviceListOrdering.filter(devices, ListPreferences(), "", now).map { it.address })
+        assertEquals(
+            listOf("A", "B"),
+            DeviceListOrdering.filter(devices, ListPreferences(), "", now).map {
+                it.address
+            },
+        )
         val namedOnly = ListPreferences(namedOnly = true)
         assertEquals(listOf("A"), DeviceListOrdering.filter(devices, namedOnly, "", now).map { it.address })
     }
