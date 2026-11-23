@@ -106,7 +106,8 @@ internal class FinderEngine(
             heat = current?.heat ?: 0f,
             trend = current?.trend ?: ProximityTrend.STEADY,
             secondsSinceSeen = lastSightingMs?.let { ((nowMs - it) / 1000).toInt() } ?: 0,
-            showConfirmHint = stage != FinderStage.RIGHT_HERE && stage != FinderStage.SIGNAL_LOST &&
+            showConfirmHint = stage != FinderStage.RIGHT_HERE &&
+                stage != FinderStage.SIGNAL_LOST &&
                 veryCloseSinceMs?.let { nowMs - it >= CONFIRM_HINT_AFTER_MS } == true,
             vibrationOn = vibrationOn,
             advanced = AdvancedInfo(
