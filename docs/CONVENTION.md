@@ -16,12 +16,12 @@
 | 모듈 | 역할 | 의존 가능 |
 |---|---|---|
 | `:app` | Application, MainActivity, 내비게이션, DI 조립 | 모든 모듈 |
-| `:feature:<이름>` | 화면 하나의 UI와 ViewModel (`scan`, 이후 `finder`, `settings` 등) | `core:*`만 (다른 feature 금지) |
+| `:feature:<이름>` | 화면 하나의 UI와 ViewModel (`scan`, `finder`, 이후 `settings` 등) | `core:*`만 (다른 feature 금지) |
 | `:core:model` | 순수 데이터 모델 (`BleDevice` 등). 안드로이드 UI 의존 금지 | 없음 |
 | `:core:ble` | BLE 스캔, 광고 패킷 파싱, 기기 저장소. 앱 전체가 공유 | `core:model` |
 | `:core:designsystem` | 테마, 색, 타이포, 공통 컴포넌트 (`StatusBanner` 등) | 없음 |
 | `:core:ui` | 여러 화면이 쓰는 UI 조각 (`DeviceCard`, 권한 처리 `rememberBlePermissionState`) | `core:model`, `core:designsystem` |
-
+| `:core:sensors` | 방위(회전 벡터)·걷기 감지 센서와 방향 추정(`BearingEstimator`) | 없음 |
 | `:core:data` | 저장소: 설정(DataStore), 이후 내 기기(Room) | `core:model` |
 
 새로 추가할 예정인 공통 모듈: `core:analytics`, `core:testing`.

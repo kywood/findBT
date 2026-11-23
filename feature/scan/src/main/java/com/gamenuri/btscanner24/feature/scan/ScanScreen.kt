@@ -64,7 +64,11 @@ import com.gamenuri.btscanner24.core.ui.permission.rememberBlePermissionState
 
 /** Entry point: owns the ViewModel, permissions and system intents. Everything visual is in [ScanContent]. */
 @Composable
-fun ScanScreen(title: String, viewModel: ScanViewModel = viewModel(factory = ScanViewModel.Factory)) {
+fun ScanScreen(
+    title: String,
+    onDeviceClick: (BleDevice) -> Unit = {},
+    viewModel: ScanViewModel = viewModel(factory = ScanViewModel.Factory),
+) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     // Stop scanning whenever the screen is not visible; resume when it comes back.
@@ -111,6 +115,7 @@ fun ScanScreen(title: String, viewModel: ScanViewModel = viewModel(factory = Sca
             onToggleHideGone = viewModel::toggleHideGone,
             onToggleGroup = viewModel::toggleGroup,
             onRefreshOrder = viewModel::refreshOrder,
+            onDeviceClick = onDeviceClick,
         ),
     )
 }
@@ -131,6 +136,8 @@ data class ScanActions(
     val onToggleHideGone: () -> Unit = {},
     val onToggleGroup: (CategoryGroup) -> Unit = {},
     val onRefreshOrder: () -> Unit = {},
+    /** Opens find mode for the device. */
+    val onDeviceClick: (BleDevice) -> Unit = {},
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -246,6 +253,7 @@ fun ScanContent(
                         device = item.device,
                         isNew = item.isNew,
                         isGone = item.isGone,
+                        onClick = { actions.onDeviceClick(item.device) },
                         modifier = Modifier.animateItem(),
                     )
                 }
