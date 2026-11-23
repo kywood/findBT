@@ -8,9 +8,9 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.gamenuri.btscanner24.core.ble.BleDependencies
 import com.gamenuri.btscanner24.core.ble.BleScanner
 import com.gamenuri.btscanner24.core.ble.DeviceRepository
-import com.gamenuri.btscanner24.core.ble.proximity.ProximityEstimator
 import com.gamenuri.btscanner24.core.ble.ScanEvent
 import com.gamenuri.btscanner24.core.ble.ScanFailure
+import com.gamenuri.btscanner24.core.ble.proximity.ProximityEstimator
 import com.gamenuri.btscanner24.core.data.DataDependenciesProvider
 import com.gamenuri.btscanner24.core.data.ListPreferencesRepository
 import com.gamenuri.btscanner24.core.model.BleDevice
