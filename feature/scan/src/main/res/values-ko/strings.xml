@@ -40,5 +40,6 @@
     <string name="filter_reset">초기화</string>
     <string name="filter_done">완료</string>
     <string name="filter_active_description">필터, %1$d개 적용됨</string>
-    <string name="reorder_pill">↑ 순서 바뀜 · 눌러서 정렬</string>
+    <string name="home_reorder_chip">↑ 새 순서 · 정렬</string>
+    <string name="home_reorder_chip_description">목록 순서가 바뀌었어요. 눌러서 정렬</string>
 </resources>

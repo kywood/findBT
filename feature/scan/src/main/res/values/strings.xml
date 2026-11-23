@@ -40,5 +40,6 @@
     <string name="filter_reset">Reset</string>
     <string name="filter_done">Done</string>
     <string name="filter_active_description">Filter, %1$d applied</string>
-    <string name="reorder_pill">↑ Order changed · tap to sort</string>
+    <string name="home_reorder_chip">↑ New order · Sort</string>
+    <string name="home_reorder_chip_description">List order changed. Tap to sort.</string>
 </resources>

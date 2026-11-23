@@ -38,5 +38,6 @@
     <string name="filter_reset">リセット</string>
     <string name="filter_done">完了</string>
     <string name="filter_active_description">フィルタ、%1$d 件適用中</string>
-    <string name="reorder_pill">↑ 順番が変わりました · タップで並べ替え</string>
+    <string name="home_reorder_chip">↑ 新しい順 · 並べ替え</string>
+    <string name="home_reorder_chip_description">リストの順番が変わりました。タップで並べ替え</string>
 </resources>

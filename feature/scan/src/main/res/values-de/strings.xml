@@ -38,5 +38,6 @@
     <string name="filter_reset">Zurücksetzen</string>
     <string name="filter_done">Fertig</string>
     <string name="filter_active_description">Filter, %1$d aktiv</string>
-    <string name="reorder_pill">↑ Reihenfolge geändert · zum Sortieren tippen</string>
+    <string name="home_reorder_chip">↑ Neu sortieren</string>
+    <string name="home_reorder_chip_description">Die Reihenfolge der Liste hat sich geändert. Zum Sortieren tippen.</string>
 </resources>

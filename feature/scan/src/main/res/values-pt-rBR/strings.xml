@@ -38,5 +38,6 @@
     <string name="filter_reset">Redefinir</string>
     <string name="filter_done">Concluir</string>
     <string name="filter_active_description">Filtro, %1$d aplicados</string>
-    <string name="reorder_pill">↑ Ordem mudou · toque para ordenar</string>
+    <string name="home_reorder_chip">↑ Nova ordem</string>
+    <string name="home_reorder_chip_description">A ordem da lista mudou. Toque para ordenar.</string>
 </resources>
