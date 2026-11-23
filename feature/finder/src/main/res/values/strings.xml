@@ -15,7 +15,7 @@
     <string name="finder_spin_again_body">Spin slowly again</string>
     <string name="finder_walk_title">Now walk toward the arrow</string>
     <string name="finder_walk_body">Checking direction…</string>
-    <string name="finder_locked_title">Direction locked</string>
+    <string name="finder_locked_title">🔒 Direction locked</string>
     <string name="finder_locked_body">Keep going this way</string>
     <string name="finder_turn_around_title">Turn around</string>
     <string name="finder_turn_around_body">It is probably behind you</string>

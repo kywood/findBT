@@ -29,8 +29,8 @@ private enum class HomeTab(@param:StringRes val label: Int) {
 
 /** Home (design home-v3): bottom bar with Nearby and My devices. Either tab opens find mode on tap. */
 @Composable
-fun HomeScreen(onFind: (address: String) -> Unit) {
-    var tab by rememberSaveable { mutableStateOf(HomeTab.NEARBY) }
+fun HomeScreen(onFind: (address: String) -> Unit, startOnMyDevices: Boolean = false) {
+    var tab by rememberSaveable { mutableStateOf(if (startOnMyDevices) HomeTab.MY_DEVICES else HomeTab.NEARBY) }
     Scaffold(
         bottomBar = {
             NavigationBar {

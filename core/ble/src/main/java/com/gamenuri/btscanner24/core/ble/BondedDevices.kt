@@ -12,20 +12,20 @@ import androidx.core.content.ContextCompat
 import com.gamenuri.btscanner24.core.model.DeviceCategory
 import com.gamenuri.btscanner24.core.model.PairedDevice
 
-/** Reads the phone's paired Bluetooth devices for My Devices. */
-class BondedDevices(context: Context) {
+/** Reads the phone's paired Bluetooth devices for My Devices. Open for the debug demo mode (#47). */
+open class BondedDevices(context: Context) {
 
     private val appContext = context.applicationContext
     private val adapter = appContext.getSystemService(BluetoothManager::class.java)?.adapter
 
     /** Android 12+ needs BLUETOOTH_CONNECT to read paired devices; older versions only BLUETOOTH. */
-    fun hasPermission(): Boolean = Build.VERSION.SDK_INT < Build.VERSION_CODES.S ||
+    open fun hasPermission(): Boolean = Build.VERSION.SDK_INT < Build.VERSION_CODES.S ||
         ContextCompat.checkSelfPermission(appContext, Manifest.permission.BLUETOOTH_CONNECT) ==
         PackageManager.PERMISSION_GRANTED
 
     /** Empty when Bluetooth is off, unsupported or the permission is missing. */
     @SuppressLint("MissingPermission") // checked by hasPermission()
-    fun list(): List<PairedDevice> {
+    open fun list(): List<PairedDevice> {
         if (!hasPermission()) return emptyList()
         val bonded: Set<BluetoothDevice> = try {
             adapter?.bondedDevices.orEmpty()

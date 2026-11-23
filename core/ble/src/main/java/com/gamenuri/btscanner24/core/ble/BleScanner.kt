@@ -22,7 +22,8 @@ import kotlinx.coroutines.flow.callbackFlow
  * Wraps the platform BLE scanner as a cold [Flow]. Collecting starts a scan,
  * cancelling the collection stops it, so the scan lifetime always follows the collector.
  */
-class BleScanner(context: Context) {
+// Open so the debug demo mode (#47) can replace real scanning with fixed devices.
+open class BleScanner(context: Context) {
 
     private val appContext = context.applicationContext
     private val adapter: BluetoothAdapter? =
@@ -31,28 +32,28 @@ class BleScanner(context: Context) {
     /** Start timestamps (elapsedRealtime) used to stay under the platform's 5-starts-per-30s limit. */
     private val recentStarts = ArrayDeque<Long>()
 
-    val isSupported: Boolean
+    open val isSupported: Boolean
         get() = adapter != null &&
             appContext.packageManager.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)
 
-    val isEnabled: Boolean
+    open val isEnabled: Boolean
         get() = adapter?.isEnabled == true
 
     /**
      * Android 11 and below deliver no scan results while the system Location setting is off, even
      * with every permission granted (Android 12+ uses BLUETOOTH_SCAN with neverForLocation instead).
      */
-    val isLocationOffBlockingScan: Boolean
+    open val isLocationOffBlockingScan: Boolean
         get() = Build.VERSION.SDK_INT < Build.VERSION_CODES.S &&
             appContext.getSystemService(LocationManager::class.java)
                 ?.let { !LocationManagerCompat.isLocationEnabled(it) } == true
 
-    fun hasScanPermission(): Boolean = requiredPermissions().all {
+    open fun hasScanPermission(): Boolean = requiredPermissions().all {
         ContextCompat.checkSelfPermission(appContext, it) == PackageManager.PERMISSION_GRANTED
     }
 
     /** Milliseconds to wait before a new scan start is allowed, or 0 if it can start now. */
-    fun startCooldownMillis(now: Long = SystemClock.elapsedRealtime()): Long {
+    open fun startCooldownMillis(now: Long = SystemClock.elapsedRealtime()): Long {
         while (recentStarts.isNotEmpty() && now - recentStarts.first() > START_WINDOW_MS) {
             recentStarts.removeFirst()
         }
@@ -61,7 +62,7 @@ class BleScanner(context: Context) {
     }
 
     @SuppressLint("MissingPermission") // checked by hasScanPermission()
-    fun scan(): Flow<ScanEvent> = callbackFlow {
+    open fun scan(): Flow<ScanEvent> = callbackFlow {
         val failure = when {
             !isSupported -> ScanFailure.NOT_SUPPORTED
             !hasScanPermission() -> ScanFailure.PERMISSION_MISSING

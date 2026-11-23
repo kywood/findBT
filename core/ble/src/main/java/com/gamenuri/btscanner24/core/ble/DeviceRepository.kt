@@ -54,6 +54,14 @@ class DeviceRepository(
         return device.copy(smoothedRssi = reading.smoothedRssi, distanceMeters = reading.distanceMeters)
     }
 
+    /** Replaces everything with fixed devices: the debug demo mode (#47) and tests. */
+    fun replaceAll(devices: Collection<BleDevice>) {
+        synchronized(lock) {
+            estimators.clear()
+            _devices.value = devices.associateBy { it.address }
+        }
+    }
+
     fun clear() {
         synchronized(lock) {
             estimators.clear()
