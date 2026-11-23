@@ -5,30 +5,43 @@ import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -38,6 +51,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
@@ -50,10 +64,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.gamenuri.btscanner24.core.ble.proximity.ProximityBand
 import com.gamenuri.btscanner24.core.ble.proximity.ProximityTrend
+import com.gamenuri.btscanner24.core.designsystem.theme.FindStateColors
+import com.gamenuri.btscanner24.core.designsystem.theme.NearoTextStyles
 import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
 import com.gamenuri.btscanner24.core.model.DeviceLabel
 import com.gamenuri.btscanner24.core.model.NameSource
+import com.gamenuri.btscanner24.core.ui.distanceText
 import com.gamenuri.btscanner24.core.ui.text
+import kotlinx.coroutines.delay
 import java.util.Locale
 import kotlin.math.roundToInt
 
@@ -75,6 +93,12 @@ fun FinderScreen(
     val context = LocalContext.current
     LaunchedEffect(viewModel) {
         viewModel.events.collect { playHaptic(context, it) }
+    }
+    // Proximity rhythm (design v3): faster as you get closer, one long buzz when it is right here.
+    val rhythm = rhythmFor(state)
+    LaunchedEffect(rhythm, state.vibrationOn) {
+        if (!state.vibrationOn) return@LaunchedEffect
+        playRhythm(context, rhythm)
     }
 
     // People walk around looking at the arrow; don't let the screen time out.
@@ -105,10 +129,20 @@ data class FinderActions(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FinderContent(state: FinderUiState, actions: FinderActions, modifier: Modifier = Modifier) {
+    val palette = findColorsFor(state)
+    val background by animateColorAsState(palette.background, tween(COLOR_FADE_MS), label = "findBackground")
+    val content by animateColorAsState(palette.content, tween(COLOR_FADE_MS), label = "findContent")
     Scaffold(
         modifier = modifier,
+        containerColor = background,
+        contentColor = content,
         topBar = {
             CenterAlignedTopAppBar(
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = Color.Transparent,
+                    titleContentColor = content,
+                    navigationIconContentColor = content,
+                ),
                 title = { Text(state.deviceLabel.text(), maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 navigationIcon = {
                     IconButton(onClick = actions.onClose) {
@@ -133,7 +167,9 @@ fun FinderContent(state: FinderUiState, actions: FinderActions, modifier: Modifi
             DistanceBlock(state)
             val canRespin = state.stage == FinderStage.WALK || state.stage == FinderStage.TURN_AROUND
             if (canRespin) {
-                TextButton(onClick = actions.onSpinAgain) { Text(stringResource(R.string.finder_spin_again)) }
+                TextButton(onClick = actions.onSpinAgain) {
+                    Text(stringResource(R.string.finder_spin_again), color = content)
+                }
             }
             if (state.stage != FinderStage.WAITING && state.stage != FinderStage.SIGNAL_LOST) {
                 // Names can be vague ("hiot0"); being able to confirm by touch matters more than the name (#46).
@@ -141,7 +177,7 @@ fun FinderContent(state: FinderUiState, actions: FinderActions, modifier: Modifi
                 Text(
                     text = stringResource(R.string.finder_confirm_hint),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = LocalContentColor.current.copy(alpha = MUTED_ALPHA),
                     textAlign = TextAlign.Center,
                 )
             }
@@ -152,6 +188,18 @@ fun FinderContent(state: FinderUiState, actions: FinderActions, modifier: Modifi
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 FilterChip(
+                    colors = FilterChipDefaults.filterChipColors(
+                        labelColor = content,
+                        iconColor = content,
+                        selectedContainerColor = content.copy(alpha = 0.18f),
+                        selectedLabelColor = content,
+                        selectedLeadingIconColor = content,
+                    ),
+                    border = FilterChipDefaults.filterChipBorder(
+                        enabled = true,
+                        selected = state.vibrationOn,
+                        borderColor = content.copy(alpha = 0.5f),
+                    ),
                     selected = state.vibrationOn,
                     onClick = actions.onToggleVibration,
                     label = { Text(stringResource(R.string.finder_vibration)) },
@@ -161,7 +209,12 @@ fun FinderContent(state: FinderUiState, actions: FinderActions, modifier: Modifi
                         null
                     },
                 )
-                Button(onClick = actions.onFound, modifier = Modifier.weight(1f)) {
+                // Inverted colours keep the main button readable on every state background.
+                Button(
+                    onClick = actions.onFound,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(containerColor = content, contentColor = background),
+                ) {
                     Text(stringResource(R.string.finder_found))
                 }
             }
@@ -187,7 +240,7 @@ private fun StageText(state: FinderUiState) {
         Text(
             text = stringResource(R.string.finder_direction_label),
             style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = LocalContentColor.current.copy(alpha = MUTED_ALPHA),
         )
     }
     Text(stringResource(title), style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
@@ -198,7 +251,7 @@ private fun StageText(state: FinderUiState) {
             stringResource(body)
         },
         style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        color = LocalContentColor.current.copy(alpha = MUTED_ALPHA),
         textAlign = TextAlign.Center,
     )
 }
@@ -211,28 +264,82 @@ private fun DistanceBlock(state: FinderUiState) {
     if (state.stage != FinderStage.RIGHT_HERE) {
         state.band?.let { Text(stringResource(it.labelRes()), style = MaterialTheme.typography.titleMedium) }
     }
-    Text(
-        text = stringResource(R.string.finder_distance_value, formatMeters(meters)),
-        style = MaterialTheme.typography.displaySmall,
-    )
+    Text(text = distanceText(meters), style = NearoTextStyles.findDistance, maxLines = 1)
     Text(
         text = stringResource(R.string.finder_distance_label),
         style = MaterialTheme.typography.labelMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        color = LocalContentColor.current.copy(alpha = MUTED_ALPHA),
     )
-    Spacer(Modifier.height(12.dp))
-    // Hot-cold gauge: left is cold (far), right is hot (right here).
-    LinearProgressIndicator(
-        progress = { state.heat },
-        modifier = Modifier.fillMaxWidth(0.8f),
-    )
-    Spacer(Modifier.height(8.dp))
-    val trend = when (state.trend) {
+    Spacer(Modifier.height(16.dp))
+    HeatGauge(state.heat, Modifier.fillMaxWidth(0.8f))
+    if (state.stage != FinderStage.RIGHT_HERE) {
+        Spacer(Modifier.height(12.dp))
+        TrendChip(state.trend)
+    }
+}
+
+/**
+ * Hot-cold gauge: cold (far) on the left, hot (right here) on the right. The ❄/🔥 ends and the dot's
+ * position carry the meaning, so it does not depend on colour.
+ */
+@Composable
+private fun HeatGauge(heat: Float, modifier: Modifier = Modifier) {
+    val content = LocalContentColor.current
+    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
+        Text(stringResource(R.string.finder_gauge_cold), style = MaterialTheme.typography.titleMedium)
+        BoxWithConstraints(
+            modifier = Modifier.weight(1f).padding(horizontal = 8.dp).height(GAUGE_DOT),
+            contentAlignment = Alignment.CenterStart,
+        ) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(GAUGE_TRACK)
+                    .background(content.copy(alpha = 0.3f), RoundedCornerShape(GAUGE_TRACK)),
+            )
+            Box(
+                Modifier
+                    .offset(x = (maxWidth - GAUGE_DOT) * heat.coerceIn(0f, 1f))
+                    .size(GAUGE_DOT)
+                    .background(content, CircleShape),
+            )
+        }
+        Text(stringResource(R.string.finder_gauge_hot), style = MaterialTheme.typography.titleMedium)
+    }
+}
+
+@Composable
+private fun TrendChip(trend: ProximityTrend) {
+    val content = LocalContentColor.current
+    val text = when (trend) {
         ProximityTrend.CLOSER -> R.string.finder_trend_closer
         ProximityTrend.FARTHER -> R.string.finder_trend_farther
         ProximityTrend.STEADY -> R.string.finder_trend_steady
     }
-    Text(stringResource(trend), style = MaterialTheme.typography.labelLarge)
+    Surface(shape = RoundedCornerShape(50), color = content.copy(alpha = 0.16f), contentColor = content) {
+        Text(
+            text = stringResource(text),
+            style = MaterialTheme.typography.labelLarge,
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+        )
+    }
+}
+
+/** Background and text colour for the current state (design v3 state table). */
+@Composable
+private fun findColorsFor(state: FinderUiState): FindStateColors {
+    val colors = NearoTheme.colors
+    return when (state.stage) {
+        FinderStage.WAITING -> colors.findSearching
+        FinderStage.SIGNAL_LOST -> colors.findLost
+        FinderStage.RIGHT_HERE -> colors.findHere
+        else -> when (state.band) {
+            ProximityBand.FAR, null -> colors.findFar
+            ProximityBand.NEAR -> colors.findClose
+            // Under 0.5 m but not yet held for 2 s still reads "very close".
+            ProximityBand.VERY_CLOSE, ProximityBand.RIGHT_HERE -> colors.findVeryClose
+        }
+    }
 }
 
 /** Raw numbers for testers; collapsed by default. */
@@ -253,7 +360,7 @@ private fun AdvancedSection(info: AdvancedInfo) {
                 info.elapsedSeconds,
             ),
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = LocalContentColor.current.copy(alpha = MUTED_ALPHA),
         )
     }
 }
@@ -265,18 +372,8 @@ private fun ProximityBand.labelRes(): Int = when (this) {
     ProximityBand.FAR -> R.string.finder_band_far
 }
 
-/** One decimal under 2 m ("~0.8 m"), whole metres above ("~6 m"): more precision would be false. */
-private fun formatMeters(meters: Double): String =
-    if (meters < 2.0) String.format(Locale.getDefault(), "%.1f", meters) else meters.roundToInt().toString()
-
 private fun playHaptic(context: Context, event: FinderEvent) {
-    val vibrator: Vibrator? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        context.getSystemService(VibratorManager::class.java)?.defaultVibrator
-    } else {
-        @Suppress("DEPRECATION")
-        context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
-    }
-    if (vibrator?.hasVibrator() != true) return
+    val vibrator = vibrator(context) ?: return
     val effect = when (event) {
         FinderEvent.DIRECTION_FOUND, FinderEvent.DIRECTION_CHANGED ->
             VibrationEffect.createOneShot(HAPTIC_MS, VibrationEffect.DEFAULT_AMPLITUDE)
@@ -286,7 +383,62 @@ private fun playHaptic(context: Context, event: FinderEvent) {
     vibrator.vibrate(effect)
 }
 
+/** Vibration rhythm per proximity state (design v3): pulses per beat and the gap between beats. */
+internal enum class Rhythm(val pulses: Int, val periodMs: Long) {
+    NONE(0, 0),
+    FAR(1, 2_000),
+    CLOSE(1, 1_000),
+    VERY_CLOSE(2, 500),
+    RIGHT_HERE(1, 0),
+}
+
+private fun rhythmFor(state: FinderUiState): Rhythm = when (state.stage) {
+    FinderStage.WAITING, FinderStage.SIGNAL_LOST -> Rhythm.NONE
+    FinderStage.RIGHT_HERE -> Rhythm.RIGHT_HERE
+    else -> when (state.band) {
+        ProximityBand.FAR, null -> Rhythm.FAR
+        ProximityBand.NEAR -> Rhythm.CLOSE
+        ProximityBand.VERY_CLOSE, ProximityBand.RIGHT_HERE -> Rhythm.VERY_CLOSE
+    }
+}
+
+/** Runs until the rhythm changes (the caller's LaunchedEffect restarts it). */
+private suspend fun playRhythm(context: Context, rhythm: Rhythm) {
+    val vibrator = vibrator(context) ?: return
+    when (rhythm) {
+        Rhythm.NONE -> Unit
+        // One long buzz: "found it", then quiet so it does not nag while the user picks it up.
+        Rhythm.RIGHT_HERE -> vibrator.vibrate(
+            VibrationEffect.createOneShot(LONG_HAPTIC_MS, VibrationEffect.DEFAULT_AMPLITUDE),
+        )
+        else -> while (true) {
+            val effect = if (rhythm.pulses == 2) {
+                VibrationEffect.createWaveform(longArrayOf(0, HAPTIC_MS, 90, HAPTIC_MS), -1)
+            } else {
+                VibrationEffect.createOneShot(HAPTIC_MS, VibrationEffect.DEFAULT_AMPLITUDE)
+            }
+            vibrator.vibrate(effect)
+            delay(rhythm.periodMs)
+        }
+    }
+}
+
+private fun vibrator(context: Context): Vibrator? {
+    val vibrator: Vibrator? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        context.getSystemService(VibratorManager::class.java)?.defaultVibrator
+    } else {
+        @Suppress("DEPRECATION")
+        context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+    }
+    return vibrator?.takeIf { it.hasVibrator() }
+}
+
 private const val HAPTIC_MS = 40L
+private const val LONG_HAPTIC_MS = 400L
+private const val COLOR_FADE_MS = 400
+private const val MUTED_ALPHA = 0.78f
+private val GAUGE_TRACK = 6.dp
+private val GAUGE_DOT = 16.dp
 private const val NO_VALUE = "–"
 
 @Preview(name = "Walk")

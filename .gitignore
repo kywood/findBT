@@ -32,3 +32,6 @@ google-services.json
 
 # Android Profiling
 *.hprof
+
+# Screenshots copied for design review (not part of the app)
+.design-review/

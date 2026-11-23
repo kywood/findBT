@@ -38,6 +38,8 @@ internal class FinderEngine(
     private var estimate: BearingEstimator.Estimate? = null
     private var hadDirection = false
     private var rightHereSinceMs: Long? = null
+    private var shownDistance: Double? = null
+    private var shownAtMs: Long = Long.MIN_VALUE
 
     /** @return true when the sighting belonged to the target. */
     fun onSighting(device: BleDevice, nowMs: Long): Boolean {
@@ -93,7 +95,7 @@ internal class FinderEngine(
             arrowDegrees = relative?.takeIf { showArrow }?.toFloat(),
             confidence = if (showArrow) confidenceFor(est, current) else ArrowConfidence.NONE,
             sweepProgress = est?.sweepProgress ?: 0f,
-            distanceMeters = current?.distanceMeters,
+            distanceMeters = shownDistance(nowMs, current?.distanceMeters),
             band = current?.band,
             heat = current?.heat ?: 0f,
             trend = current?.trend ?: ProximityTrend.STEADY,
@@ -109,6 +111,16 @@ internal class FinderEngine(
                 elapsedSeconds = ((nowMs - startMs) / 1000).toInt(),
             ),
         )
+    }
+
+    /** The number changes at most once a second so it can be read while walking (design v3). */
+    private fun shownDistance(nowMs: Long, latest: Double?): Double? {
+        if (latest == null) return shownDistance
+        if (shownDistance == null || nowMs - shownAtMs >= DISTANCE_REFRESH_MS) {
+            shownDistance = latest
+            shownAtMs = nowMs
+        }
+        return shownDistance
     }
 
     private fun signalLost(nowMs: Long): Boolean = lastSightingMs?.let { nowMs - it > SIGNAL_LOST_MS } ?: false
@@ -143,6 +155,7 @@ internal class FinderEngine(
     private companion object {
         const val SIGNAL_LOST_MS = 8_000L
         const val RIGHT_HERE_HOLD_MS = 2_000L
+        const val DISTANCE_REFRESH_MS = 1_000L
         const val TURN_AROUND_DEGREES = 135.0
         const val FLIP_DEGREES = 90.0
     }
