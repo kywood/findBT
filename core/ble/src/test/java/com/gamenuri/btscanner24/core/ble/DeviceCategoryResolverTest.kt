@@ -44,4 +44,13 @@ class DeviceCategoryResolverTest {
         assertEquals(DeviceCategory.HEADPHONES, DeviceCategoryResolver.fromName("WH-1000XM5"))
         assertEquals(DeviceCategory.UNKNOWN, DeviceCategoryResolver.fromName(null))
     }
+
+    @Test
+    fun `car only matches the whole word`() {
+        assertEquals(DeviceCategory.CAR, DeviceCategoryResolver.fromName("My Car"))
+        assertEquals(DeviceCategory.CAR, DeviceCategoryResolver.fromName("CAR-1234"))
+        assertEquals(DeviceCategory.CAR, DeviceCategoryResolver.fromName("Uconnect 2F1A"))
+        assertEquals(DeviceCategory.UNKNOWN, DeviceCategoryResolver.fromName("Smart Card Reader"))
+        assertEquals(DeviceCategory.UNKNOWN, DeviceCategoryResolver.fromName("Oscar"))
+    }
 }

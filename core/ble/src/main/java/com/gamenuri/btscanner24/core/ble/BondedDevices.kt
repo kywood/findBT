@@ -60,7 +60,7 @@ open class BondedDevices(context: Context) {
                     BluetoothClass.Device.AUDIO_VIDEO_HIFI_AUDIO,
                     -> DeviceCategory.SPEAKER
                     BluetoothClass.Device.AUDIO_VIDEO_HEADPHONES -> DeviceCategory.HEADPHONES
-                    BluetoothClass.Device.AUDIO_VIDEO_CAR_AUDIO -> DeviceCategory.UNKNOWN
+                    BluetoothClass.Device.AUDIO_VIDEO_CAR_AUDIO -> DeviceCategory.CAR
                     BluetoothClass.Device.AUDIO_VIDEO_VIDEO_DISPLAY_AND_LOUDSPEAKER,
                     BluetoothClass.Device.AUDIO_VIDEO_VIDEO_MONITOR,
                     -> DeviceCategory.TV

@@ -72,6 +72,7 @@ object DeviceCategoryResolver {
             "controller" in n || "gamepad" in n -> DeviceCategory.GAMEPAD
             TV_NAMES.any { it in n } || TV_TOKEN.containsMatchIn(n) -> DeviceCategory.TV
             HEALTH_NAMES.any { it in n } -> DeviceCategory.HEALTH
+            CAR_NAMES.any { it in n } || CAR_TOKEN.containsMatchIn(n) -> DeviceCategory.CAR
             else -> DeviceCategory.UNKNOWN
         }
     }
@@ -102,6 +103,12 @@ object DeviceCategoryResolver {
 
     /** "MiKetv11", "LG_TV", "tv-box": "tv" at a word end or followed by digits. */
     private val TV_TOKEN = Regex("tv(\\d|$|[^a-z])")
+
+    /** Head units and car kits; paired cars usually report the car-audio class anyway. */
+    private val CAR_NAMES = listOf("carplay", "carkit", "car kit", "car multimedia", "uconnect", "mbux", "my bmw")
+
+    /** "My Car", "CAR-1234": "car" as a whole word, not inside "card" or "scarf". */
+    private val CAR_TOKEN = Regex("(^|[^a-z])car($|[^a-z])")
     private val HEALTH_NAMES = listOf(
         "scale", "mi_scale", "thermometer", "oximeter", "blood pressure", "glucose", "omron", "withings", "toothbrush",
     )
