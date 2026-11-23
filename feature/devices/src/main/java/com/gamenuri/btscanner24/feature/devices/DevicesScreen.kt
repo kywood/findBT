@@ -59,11 +59,11 @@ import com.gamenuri.btscanner24.core.model.DeviceCategory
 import com.gamenuri.btscanner24.core.model.PairedDevice
 import com.gamenuri.btscanner24.core.model.SignalLevel
 import com.gamenuri.btscanner24.core.ui.DeviceIcon
+import com.gamenuri.btscanner24.core.ui.R as UiR
 import com.gamenuri.btscanner24.core.ui.SignalBars
 import com.gamenuri.btscanner24.core.ui.formatMeters
 import com.gamenuri.btscanner24.core.ui.label
 import com.gamenuri.btscanner24.core.ui.permission.rememberBlePermissionState
-import com.gamenuri.btscanner24.core.ui.R as UiR
 
 /** Entry point of the My Devices tab: ViewModel, lifecycle and permission. Visuals in [DevicesContent]. */
 @Composable
@@ -172,12 +172,7 @@ private fun SectionHeader(text: String) {
 }
 
 @Composable
-private fun PairedRow(
-    item: MyDeviceItem,
-    now: Long,
-    onClick: (MyDeviceItem) -> Unit,
-    onHide: (MyDeviceItem) -> Unit,
-) {
+private fun PairedRow(item: MyDeviceItem, now: Long, onClick: (MyDeviceItem) -> Unit, onHide: (MyDeviceItem) -> Unit) {
     var menuOpen by remember { mutableStateOf(false) }
     Card(
         onClick = { onClick(item) },
