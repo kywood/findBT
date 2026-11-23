@@ -71,6 +71,7 @@ fun DevicesScreen(
     onDeviceClick: (String) -> Unit,
     modifier: Modifier = Modifier,
     onAddTracker: () -> Unit = {},
+    onOpenSettings: () -> Unit = {},
     viewModel: DevicesViewModel = viewModel(factory = DevicesViewModel.Factory),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -91,6 +92,7 @@ fun DevicesScreen(
         onRequestPermission = permission::request,
         onOpenBluetoothSettings = { context.startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS)) },
         onAddTracker = onAddTracker,
+        onOpenSettings = onOpenSettings,
     )
 }
 
@@ -104,11 +106,17 @@ fun DevicesContent(
     onOpenBluetoothSettings: () -> Unit,
     modifier: Modifier = Modifier,
     onAddTracker: () -> Unit = {},
+    onOpenSettings: () -> Unit = {},
     now: Long = System.currentTimeMillis(),
 ) {
     Scaffold(
         modifier = modifier,
-        topBar = { TopAppBar(title = { Text(stringResource(R.string.devices_title)) }) },
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.devices_title)) },
+                actions = { SettingsMenu(onOpenSettings) },
+            )
+        },
     ) { padding ->
         when {
             !state.hasPermission -> Column(Modifier.padding(padding).padding(horizontal = 16.dp)) {
@@ -325,5 +333,25 @@ private fun DevicesPreview() {
             onOpenBluetoothSettings = {},
             now = now,
         )
+    }
+}
+
+/** ⋮ on the My devices tab: Settings, the same as on Nearby (#56). */
+@Composable
+private fun SettingsMenu(onOpenSettings: () -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    Box {
+        IconButton(onClick = { expanded = true }) {
+            Icon(Icons.Default.MoreVert, contentDescription = stringResource(UiR.string.menu_more_options))
+        }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            DropdownMenuItem(
+                text = { Text(stringResource(UiR.string.menu_settings)) },
+                onClick = {
+                    expanded = false
+                    onOpenSettings()
+                },
+            )
+        }
     }
 }

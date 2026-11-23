@@ -49,4 +49,6 @@
     <string name="paywall_buy">Desbloquear Premium</string>
     <string name="paywall_price_note">Google Play muestra el precio en tu moneda local.</string>
     <string name="paywall_pending">Pago pendiente. Premium se activa cuando se complete.</string>
+    <string name="menu_settings">Ajustes</string>
+    <string name="menu_more_options">Más opciones</string>
 </resources>

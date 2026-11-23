@@ -49,4 +49,6 @@
     <string name="paywall_buy">プレミアムを解除</string>
     <string name="paywall_price_note">価格はGoogle Playが現地の通貨で表示します。</string>
     <string name="paywall_pending">支払い待ちです。完了するとプレミアムが有効になります。</string>
+    <string name="menu_settings">設定</string>
+    <string name="menu_more_options">その他のオプション</string>
 </resources>

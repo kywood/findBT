@@ -35,6 +35,7 @@ internal object DemoMode {
     fun request(intent: Intent): DemoRequest? {
         val screen = intent.getStringExtra(EXTRA_SCREEN) ?: return null
         active = true
+        premiumBought = screen == "settings_premium"
         return DemoRequest(
             screen = screen,
             findState = intent.getStringExtra(EXTRA_FIND),
@@ -63,10 +64,12 @@ internal object DemoMode {
     }
 
     /** Fixed "$4.99" so paywall and settings shots never depend on Play (#32). */
-    fun premium(): PremiumStore? = if (active) DemoPremiumStore else null
+    fun premium(): PremiumStore? = if (active) DemoPremiumStore(premiumBought) else null
 
     /** Set by MainActivity when a demo intent arrives. */
     var active: Boolean = false
+
+    private var premiumBought = false
 
     private const val EXTRA_SCREEN = "demo"
     private const val EXTRA_FIND = "demo_find"
@@ -87,8 +90,9 @@ private class DemoScanner(context: Context) : BleScanner(context) {
     override fun scan(): Flow<ScanEvent> = flow { awaitCancellation() }
 }
 
-private object DemoPremiumStore : PremiumStore {
-    override val state: StateFlow<PremiumState> = MutableStateFlow(PremiumState(formattedPrice = "$4.99"))
+private class DemoPremiumStore(isPremium: Boolean) : PremiumStore {
+    override val state: StateFlow<PremiumState> =
+        MutableStateFlow(PremiumState(isPremium = isPremium, formattedPrice = "$4.99"))
 
     override fun refresh() = Unit
 

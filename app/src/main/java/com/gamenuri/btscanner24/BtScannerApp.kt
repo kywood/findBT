@@ -1,9 +1,9 @@
 package com.gamenuri.btscanner24
 
 import android.app.Application
-import com.gamenuri.btscanner24.core.ble.BleDependencies
 import com.gamenuri.btscanner24.core.billing.PlayPremiumStore
 import com.gamenuri.btscanner24.core.billing.PremiumStore
+import com.gamenuri.btscanner24.core.ble.BleDependencies
 import com.gamenuri.btscanner24.core.ble.BleScanner
 import com.gamenuri.btscanner24.core.ble.BondedDevices
 import com.gamenuri.btscanner24.core.ble.CompanyDirectory

@@ -51,4 +51,6 @@
     <string name="paywall_buy">프리미엄 잠금 해제</string>
     <string name="paywall_price_note">가격은 Google Play가 현지 통화로 보여 줘요.</string>
     <string name="paywall_pending">결제 대기 중이에요. 결제가 끝나면 프리미엄이 켜져요.</string>
+    <string name="menu_settings">설정</string>
+    <string name="menu_more_options">더보기</string>
 </resources>
