@@ -16,6 +16,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -34,6 +35,7 @@ import java.util.Locale
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         // Debug demo launch (#47); always null in release builds.
@@ -144,6 +146,10 @@ private fun WithLocale(languageTag: String?, content: @Composable () -> Unit) {
     }
     // A wrapper (not createConfigurationContext alone) keeps the Activity reachable for permission launchers.
     val context = remember(languageTag) {
+        // Bottom sheets and dialogs are separate windows that read the Activity's own resources, so
+        // the language is set there too; otherwise the filter sheet stays in the phone's language (#89).
+        @Suppress("DEPRECATION")
+        base.resources.updateConfiguration(configuration, base.resources.displayMetrics)
         val localized = base.createConfigurationContext(configuration)
         object : ContextWrapper(base) {
             override fun getResources(): Resources = localized.resources

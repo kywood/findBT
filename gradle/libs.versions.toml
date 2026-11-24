@@ -14,6 +14,8 @@ accompanistPermissions = "0.37.0"
 materialIcons = "1.7.8"
 coroutines = "1.10.2"
 datastore = "1.1.7"
+splashscreen = "1.0.1"
+profileinstaller = "1.4.1"
 playBilling = "8.0.0"
 aboutLibraries = "14.1.0"
 spotless = "7.0.4"
@@ -44,6 +46,8 @@ androidx-compose-material-icons = { group = "androidx.compose.material", name = 
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
 
+androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "splashscreen" }
+androidx-profileinstaller = { group = "androidx.profileinstaller", name = "profileinstaller", version.ref = "profileinstaller" }
 play-billing = { group = "com.android.billingclient", name = "billing", version.ref = "playBilling" }
 aboutlibraries-compose-m3 = { group = "com.mikepenz", name = "aboutlibraries-compose-m3", version.ref = "aboutLibraries" }
 

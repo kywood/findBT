@@ -26,7 +26,8 @@
     <string name="empty_location_off_title">La ubicación está desactivada</string>
     <string name="scan_status_nearby">%1$d cerca</string>
     <string name="scan_status_paused">En pausa · %1$d</string>
-    <string name="scan_status_filtered">%1$d / %2$d</string>
+    <string name="scan_status_filtered">%1$d de %2$d</string>
+    <string name="scan_status_paused_filtered">En pausa · %1$d de %2$d</string>
     <string name="scan_searching">Buscando dispositivos cercanos…</string>
     <string name="action_pause_scan">Pausar búsqueda</string>
     <string name="action_resume_scan">Reanudar búsqueda</string>
@@ -38,5 +39,6 @@
     <string name="filter_reset">Restablecer</string>
     <string name="filter_done">Listo</string>
     <string name="filter_active_description">Filtro, %1$d aplicados</string>
-    <string name="reorder_pill">↑ Orden cambiado · toca para ordenar</string>
+    <string name="home_reorder_chip">↑ Nuevo orden</string>
+    <string name="home_reorder_chip_description">El orden de la lista cambió. Toca para ordenar.</string>
 </resources>
