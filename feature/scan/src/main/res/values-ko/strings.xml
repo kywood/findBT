@@ -6,7 +6,6 @@
     <string name="action_turn_on">켜기</string>
     <string name="action_open_settings">설정</string>
     <string name="search_hint">이름 또는 제조사로 검색</string>
-    <string name="filter_named_only">이름 있는 기기만</string>
     <string name="permission_rationale">주변 기기를 찾으려면 블루투스 권한이 필요합니다.</string>
     <string name="permission_denied_settings">블루투스 권한이 꺼져 있습니다. 설정에서 켜 주세요.</string>
     <string name="error_bluetooth_off">블루투스가 꺼져 있습니다.</string>
@@ -61,9 +60,7 @@
     <string name="action_clear_list">목록 지우기</string>
     <string name="filter_title">필터</string>
     <string name="filter_types">기기 종류</string>
-    <string name="filter_all">전체</string>
     <string name="filter_reset">초기화</string>
-    <string name="filter_done">완료</string>
     <string name="filter_active_description">필터, %1$d개 적용됨</string>
     <string name="home_reorder_chip">↑ 새 순서 · 정렬</string>
     <string name="home_reorder_chip_description">목록 순서가 바뀌었어요. 눌러서 정렬</string>

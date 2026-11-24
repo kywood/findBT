@@ -6,7 +6,6 @@
     <string name="action_turn_on">Einschalten</string>
     <string name="action_open_settings">Einstellungen</string>
     <string name="search_hint">Nach Name oder Hersteller suchen</string>
-    <string name="filter_named_only">Nur Geräte mit Namen</string>
     <string name="permission_rationale">Für die Suche nach Geräten in der Nähe ist die Bluetooth-Berechtigung nötig.</string>
     <string name="permission_denied_settings">Die Bluetooth-Berechtigung ist aus. Schalte sie in den Einstellungen ein, um zu scannen.</string>
     <string name="error_bluetooth_off">Bluetooth ist aus.</string>
@@ -61,9 +60,7 @@
     <string name="action_clear_list">Liste leeren</string>
     <string name="filter_title">Filter</string>
     <string name="filter_types">Gerätetyp</string>
-    <string name="filter_all">Alle</string>
     <string name="filter_reset">Zurücksetzen</string>
-    <string name="filter_done">Fertig</string>
     <string name="filter_active_description">Filter, %1$d aktiv</string>
     <string name="home_reorder_chip">↑ Neu sortieren</string>
     <string name="home_reorder_chip_description">Die Reihenfolge der Liste hat sich geändert. Zum Sortieren tippen.</string>

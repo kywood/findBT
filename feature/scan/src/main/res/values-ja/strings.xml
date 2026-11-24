@@ -6,7 +6,6 @@
     <string name="action_turn_on">オンにする</string>
     <string name="action_open_settings">設定</string>
     <string name="search_hint">名前またはメーカーで検索</string>
-    <string name="filter_named_only">名前のあるデバイスのみ</string>
     <string name="permission_rationale">周りのデバイスを探すにはBluetoothの権限が必要です。</string>
     <string name="permission_denied_settings">Bluetoothの権限がオフです。スキャンするには設定でオンにしてください。</string>
     <string name="error_bluetooth_off">Bluetoothがオフです。</string>
@@ -59,9 +58,7 @@
     <string name="action_clear_list">リストを消去</string>
     <string name="filter_title">フィルタ</string>
     <string name="filter_types">デバイスの種類</string>
-    <string name="filter_all">すべて</string>
     <string name="filter_reset">リセット</string>
-    <string name="filter_done">完了</string>
     <string name="filter_active_description">フィルタ、%1$d 件適用中</string>
     <string name="home_reorder_chip">↑ 新しい順 · 並べ替え</string>
     <string name="home_reorder_chip_description">リストの順番が変わりました。タップで並べ替え</string>

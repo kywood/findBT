@@ -6,7 +6,6 @@
     <string name="action_turn_on">Activar</string>
     <string name="action_open_settings">Ajustes</string>
     <string name="search_hint">Buscar por nombre o fabricante</string>
-    <string name="filter_named_only">Solo dispositivos con nombre</string>
     <string name="permission_rationale">Se necesita el permiso de Bluetooth para encontrar dispositivos cercanos.</string>
     <string name="permission_denied_settings">El permiso de Bluetooth está desactivado. Actívalo en Ajustes para buscar.</string>
     <string name="error_bluetooth_off">El Bluetooth está desactivado.</string>
@@ -61,9 +60,7 @@
     <string name="action_clear_list">Borrar lista</string>
     <string name="filter_title">Filtro</string>
     <string name="filter_types">Tipo de dispositivo</string>
-    <string name="filter_all">Todos</string>
     <string name="filter_reset">Restablecer</string>
-    <string name="filter_done">Listo</string>
     <string name="filter_active_description">Filtro, %1$d aplicados</string>
     <string name="home_reorder_chip">↑ Nuevo orden</string>
     <string name="home_reorder_chip_description">El orden de la lista cambió. Toca para ordenar.</string>
