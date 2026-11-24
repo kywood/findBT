@@ -5,7 +5,7 @@ package com.gamenuri.btscanner24
  * Release builds never produce one: their DemoMode always returns null.
  */
 internal data class DemoRequest(
-    /** "nearby", "devices", "find" or "onboarding". */
+    /** "nearby", "devices", "find", "onboarding", "settings", "settings_premium" or "paywall". */
     val screen: String,
     /** Find-screen state for screen "find", e.g. "spin", "locked", "here". */
     val findState: String? = null,
@@ -15,4 +15,9 @@ internal data class DemoRequest(
     val onboardingPage: String? = null,
 ) {
     val startOnMyDevices: Boolean get() = screen == "devices"
+
+    /** Settings for free users, with Premium already bought, or with the paywall sheet open (#56). */
+    val startOnSettings: Boolean get() = screen == "settings" || screen == "settings_premium" || screen == "paywall"
+
+    val openPaywall: Boolean get() = screen == "paywall"
 }

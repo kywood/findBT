@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_title">Ajustes</string>
+    <string name="settings_back">Atrás</string>
+    <string name="settings_premium_title">Nearo Premium</string>
+    <string name="settings_premium_body">Sin anuncios · más rastreadores · pago único</string>
+    <string name="settings_premium_buy">Obtener Premium · %1$s</string>
+    <string name="settings_premium_buy_no_price">Obtener Premium</string>
+    <string name="settings_premium_active">Premium activo</string>
+    <string name="settings_premium_active_body">¡Gracias! Los anuncios están desactivados.</string>
+    <string name="settings_restore">Restaurar compra</string>
+    <string name="settings_restore_ok">Premium restaurado</string>
+    <string name="settings_restore_none">No hay compras para restaurar</string>
+    <string name="settings_restore_failed">No se pudo conectar con Google Play. Inténtalo más tarde.</string>
+    <string name="settings_section_privacy">Privacidad</string>
+    <string name="settings_privacy_options">Opciones de privacidad</string>
+    <string name="settings_privacy_options_body">Consentimiento de anuncios</string>
+    <string name="settings_privacy_policy">Política de privacidad</string>
+    <string name="settings_section_about">Información</string>
+    <string name="settings_contact">Contáctanos</string>
+    <string name="settings_licenses">Licencias de código abierto</string>
+    <string name="settings_version">Versión</string>
+    <string name="settings_opens_outside">Se abre fuera de la app</string>
+</resources>

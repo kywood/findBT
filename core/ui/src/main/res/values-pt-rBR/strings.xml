@@ -38,4 +38,17 @@
     <string name="device_distance_within_1">a menos de 1 m</string>
     <string name="device_distance_5_to_10">~5–10 m</string>
     <string name="device_distance_over_10">mais de 10 m</string>
+    <string name="paywall_restore">Restaurar</string>
+    <string name="paywall_title">Nearo Premium</string>
+    <string name="paywall_benefit_devices">Salve dispositivos sem limite</string>
+    <string name="paywall_benefit_ads">Sem anúncios, nunca</string>
+    <string name="paywall_benefit_support">Apoie recursos futuros</string>
+    <string name="paywall_price">Vitalício · %1$s</string>
+    <string name="paywall_loading">Carregando preço…</string>
+    <string name="paywall_once">Pague uma vez. Sem assinatura.</string>
+    <string name="paywall_buy">Desbloquear Premium</string>
+    <string name="paywall_price_note">O Google Play mostra o preço na sua moeda local.</string>
+    <string name="paywall_pending">Pagamento pendente. O Premium é ativado quando for concluído.</string>
+    <string name="menu_settings">Configurações</string>
+    <string name="menu_more_options">Mais opções</string>
 </resources>

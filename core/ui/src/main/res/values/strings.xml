@@ -39,4 +39,21 @@
     <string name="device_distance_within_1">within 1 m</string>
     <string name="device_distance_5_to_10">~5–10 m</string>
     <string name="device_distance_over_10">10 m+</string>
+    <!-- Paywall (#32, design screens-rest-v3 §3) -->
+    <string name="paywall_glyph_devices" translatable="false">∞</string>
+    <string name="paywall_glyph_ads" translatable="false">⊘</string>
+    <string name="paywall_glyph_support" translatable="false">★</string>
+    <string name="paywall_restore">Restore</string>
+    <string name="paywall_title">Nearo Premium</string>
+    <string name="paywall_benefit_devices">Save unlimited devices</string>
+    <string name="paywall_benefit_ads">No ads, ever</string>
+    <string name="paywall_benefit_support">Support future features</string>
+    <string name="paywall_price">Lifetime · %1$s</string>
+    <string name="paywall_loading">Loading price…</string>
+    <string name="paywall_once">Pay once. No subscription.</string>
+    <string name="paywall_buy">Unlock Premium</string>
+    <string name="paywall_price_note">Price shown in your local currency by Google Play.</string>
+    <string name="paywall_pending">Payment pending. Premium turns on when it\'s complete.</string>
+    <string name="menu_settings">Settings</string>
+    <string name="menu_more_options">More options</string>
 </resources>

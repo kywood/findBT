@@ -91,6 +91,7 @@ import com.gamenuri.btscanner24.core.model.CategoryGroup
 import com.gamenuri.btscanner24.core.model.DeviceSort
 import com.gamenuri.btscanner24.core.model.ListPreferences
 import com.gamenuri.btscanner24.core.ui.DeviceCard
+import com.gamenuri.btscanner24.core.ui.R as UiR
 import com.gamenuri.btscanner24.core.ui.label
 import com.gamenuri.btscanner24.core.ui.permission.rememberBlePermissionState
 
@@ -100,6 +101,7 @@ fun ScanScreen(
     title: String,
     onDeviceClick: (BleDevice) -> Unit = {},
     modifier: Modifier = Modifier,
+    onOpenSettings: () -> Unit = {},
     viewModel: ScanViewModel = viewModel(factory = ScanViewModel.Factory),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -155,6 +157,7 @@ fun ScanScreen(
             onResetFilters = viewModel::resetFilters,
             onRefreshOrder = viewModel::refreshOrder,
             onDeviceClick = onDeviceClick,
+            onOpenSettings = onOpenSettings,
         ),
     )
 }
@@ -181,6 +184,7 @@ data class ScanActions(
     val onRefreshOrder: () -> Unit = {},
     /** Opens find mode for the device. */
     val onDeviceClick: (BleDevice) -> Unit = {},
+    val onOpenSettings: () -> Unit = {},
 )
 
 /**
@@ -295,13 +299,19 @@ private fun MoreMenu(actions: ScanActions) {
         IconButton(onClick = { expanded = true }) {
             Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.action_more))
         }
-        // Settings (#56) joins this menu later.
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.action_clear_list)) },
                 onClick = {
                     expanded = false
                     actions.onReset()
+                },
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(UiR.string.menu_settings)) },
+                onClick = {
+                    expanded = false
+                    actions.onOpenSettings()
                 },
             )
         }

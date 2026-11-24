@@ -1,6 +1,15 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    // Open-source licenses screen (#56): writes res/raw/aboutlibraries.json from the real dependencies.
+    alias(libs.plugins.aboutlibraries.android)
+}
+
+// Values kept out of git (#56, #31, #35). Missing keys fall back to empty, and the screens hide the row.
+val localProperties = Properties().apply {
+    rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
 }
 
 android {
@@ -19,6 +28,10 @@ android {
         versionName = "2.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "SUPPORT_EMAIL", "\"${localProperties.getProperty("nearo.supportEmail", "")}\"")
+        // GitHub Pages copy of docs/privacy (#57).
+        buildConfigField("String", "PRIVACY_POLICY_URL", "\"https://kywood.github.io/findBT/privacy/\"")
     }
 
     buildTypes {
@@ -45,11 +58,13 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
 dependencies {
     implementation(projects.core.ble)
+    implementation(projects.core.billing)
     implementation(projects.core.data)
     implementation(projects.core.designsystem)
     implementation(projects.core.ui)
@@ -57,6 +72,7 @@ dependencies {
     implementation(projects.feature.finder)
     implementation(projects.feature.onboarding)
     implementation(projects.feature.scan)
+    implementation(projects.feature.settings)
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
