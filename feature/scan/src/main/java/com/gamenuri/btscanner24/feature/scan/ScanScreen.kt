@@ -5,6 +5,7 @@ import android.content.Intent
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -27,7 +28,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -39,8 +42,9 @@ import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Badge
-import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
@@ -53,24 +57,29 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
@@ -94,6 +103,11 @@ import com.gamenuri.btscanner24.core.ui.DeviceCard
 import com.gamenuri.btscanner24.core.ui.R as UiR
 import com.gamenuri.btscanner24.core.ui.label
 import com.gamenuri.btscanner24.core.ui.permission.rememberBlePermissionState
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.launch
 
 /** Entry point: owns the ViewModel, permissions and system intents. Everything visual is in [ScanContent]. */
 @Composable
@@ -202,6 +216,13 @@ fun ScanContent(
 ) {
     var searchOpen by rememberSaveable { mutableStateOf(false) }
     var filtersOpen by rememberSaveable { mutableStateOf(false) }
+    val listState = rememberLazyListState()
+    val scope = rememberCoroutineScope()
+    val onSortNow: () -> Unit = {
+        actions.onRefreshOrder()
+        scope.launch { listState.animateScrollToItem(0) }
+    }
+    ReorderAutoSort(state.reorderAvailable, listState, actions.onRefreshOrder)
 
     Scaffold(
         modifier = modifier,
@@ -212,7 +233,7 @@ fun ScanContent(
                 .fillMaxSize()
                 .padding(innerPadding),
         ) {
-            ControlRow(state, actions, onOpenFilters = { filtersOpen = true })
+            ControlRow(state, actions, onSortNow, onOpenFilters = { filtersOpen = true })
 
             val error = (state.status as? ScanStatus.Error)?.reason
             // Nothing to show and the radio (or Location on Android 11) is off: a full empty state (#30).
@@ -220,16 +241,7 @@ fun ScanContent(
             if (error != null && radioOff && state.items.isEmpty()) {
                 RadioOffState(error, actions, Modifier.fillMaxWidth().weight(1f))
             } else {
-                Box(Modifier.fillMaxWidth().weight(1f)) {
-                    DeviceList(state, permissionBanner, error, actions)
-                    // Floats over the list so it never pushes rows down (#62).
-                    if (state.reorderAvailable) {
-                        ReorderPill(
-                            onClick = actions.onRefreshOrder,
-                            modifier = Modifier.align(Alignment.TopCenter).padding(top = 8.dp),
-                        )
-                    }
-                }
+                DeviceList(state, permissionBanner, error, actions, listState, Modifier.fillMaxWidth().weight(1f))
             }
         }
     }
@@ -320,7 +332,7 @@ private fun MoreMenu(actions: ScanActions) {
 
 /** Status dot and text on the left, sort and filter on the right; 40 dp tall. */
 @Composable
-private fun ControlRow(state: ScanUiState, actions: ScanActions, onOpenFilters: () -> Unit) {
+private fun ControlRow(state: ScanUiState, actions: ScanActions, onSortNow: () -> Unit, onOpenFilters: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -328,24 +340,79 @@ private fun ControlRow(state: ScanUiState, actions: ScanActions, onOpenFilters: 
             .padding(start = 16.dp, end = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        // A new order is offered in place of the status, so the list never moves for it (#87).
+        Crossfade(
+            targetState = state.reorderAvailable,
+            modifier = Modifier.weight(1f),
+            animationSpec = tween(CHIP_FADE_MS),
+            label = "statusOrReorder",
+        ) { reorder ->
+            Box(contentAlignment = Alignment.CenterStart) {
+                if (reorder) ReorderChip(onClick = onSortNow) else StatusText(state)
+            }
+        }
+        SortMenu(selected = state.preferences.sort, onSelect = actions.onSortChange)
+        FilterButton(count = state.activeFilterCount, onClick = onOpenFilters)
+    }
+}
+
+@Composable
+private fun StatusText(state: ScanUiState) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
         StatusDot(scanning = state.isScanning)
         Spacer(Modifier.width(8.dp))
         val shown = state.items.size
         val filtered = state.activeFilterCount > 0 || state.query.isNotBlank()
         Text(
             text = when {
+                filtered && state.isPaused ->
+                    stringResource(R.string.scan_status_paused_filtered, shown, state.totalCount)
                 filtered -> stringResource(R.string.scan_status_filtered, shown, state.totalCount)
                 state.isPaused -> stringResource(R.string.scan_status_paused, state.totalCount)
                 else -> stringResource(R.string.scan_status_nearby, state.totalCount)
             },
-            modifier = Modifier.weight(1f).semantics { liveRegion = LiveRegionMode.Polite },
+            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
-        SortMenu(selected = state.preferences.sort, onSelect = actions.onSortChange)
-        FilterButton(count = state.activeFilterCount, onClick = onOpenFilters)
+    }
+}
+
+@Composable
+private fun ReorderChip(onClick: () -> Unit) {
+    val description = stringResource(R.string.home_reorder_chip_description)
+    AssistChip(
+        onClick = onClick,
+        label = { Text(stringResource(R.string.home_reorder_chip), maxLines = 1, overflow = TextOverflow.Ellipsis) },
+        modifier = Modifier.height(28.dp).semantics { contentDescription = description },
+        colors = AssistChipDefaults.assistChipColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+            labelColor = MaterialTheme.colorScheme.onSecondaryContainer,
+        ),
+        border = null,
+    )
+}
+
+/**
+ * Without a tap the new order is applied after [REORDER_AUTO_MS], or as soon as the user scrolls back to
+ * the top of the list, where rows moving is no surprise (#87).
+ */
+@Composable
+private fun ReorderAutoSort(available: Boolean, listState: LazyListState, onSort: () -> Unit) {
+    val currentOnSort by rememberUpdatedState(onSort)
+    LaunchedEffect(available) {
+        if (!available) return@LaunchedEffect
+        launch {
+            delay(REORDER_AUTO_MS)
+            currentOnSort()
+        }
+        snapshotFlow { listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0 }
+            .distinctUntilChanged()
+            .drop(1)
+            .filter { it }
+            .collect { currentOnSort() }
     }
 }
 
@@ -380,9 +447,17 @@ private fun FilterButton(count: Int, onClick: () -> Unit) {
         stringResource(R.string.filter_title)
     }
     if (count > 0) {
-        BadgedBox(badge = { Badge { Text(count.toString()) } }) {
-            FilledTonalIconButton(onClick = onClick, modifier = Modifier.size(40.dp)) {
+        // The count sits inside the button in primary colours; red would read as an error (#89).
+        Box(Modifier.size(FILTER_BUTTON)) {
+            FilledTonalIconButton(onClick = onClick, modifier = Modifier.fillMaxSize()) {
                 Icon(Icons.Default.Tune, contentDescription = description)
+            }
+            Badge(
+                modifier = Modifier.align(Alignment.TopEnd).padding(top = 2.dp, end = 2.dp).size(15.dp),
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+            ) {
+                Text(count.toString(), style = MaterialTheme.typography.labelSmall)
             }
         }
     } else {
@@ -392,92 +467,11 @@ private fun FilterButton(count: Int, onClick: () -> Unit) {
     }
 }
 
-@Composable
-private fun DeviceList(
-    state: ScanUiState,
-    permissionBanner: PermissionBanner?,
-    error: ScanFailure?,
-    actions: ScanActions,
-) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 16.dp),
-    ) {
-        // Permission and error banners stay the first list item (design home-header-v4 §6).
-        permissionBanner?.let { banner ->
-            item(key = "permission") {
-                StatusBanner(
-                    message = stringResource(
-                        when (banner) {
-                            PermissionBanner.OPEN_SETTINGS -> R.string.permission_denied_settings
-                            PermissionBanner.ASK_AGAIN -> R.string.permission_rationale
-                        },
-                    ),
-                    actionLabel = stringResource(
-                        when (banner) {
-                            PermissionBanner.OPEN_SETTINGS -> R.string.action_open_settings
-                            PermissionBanner.ASK_AGAIN -> R.string.action_allow
-                        },
-                    ),
-                    onAction = actions.onPermissionAction,
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                )
-            }
-        }
-        error?.let { reason ->
-            item(key = "error") { ScanErrorBanner(reason, actions, Modifier.padding(horizontal = 16.dp)) }
-        }
-        if (state.items.isEmpty() && state.isScanning) {
-            item(key = "searching") {
-                Text(
-                    text = stringResource(R.string.scan_searching),
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 48.dp),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                )
-            }
-        }
-        // Stable keys keep each row attached to its device; rows only move on a full sort.
-        items(state.items, key = { it.device.address }) { item ->
-            DeviceCard(
-                device = item.device,
-                label = item.label,
-                showSuffix = item.showSuffix,
-                isPaired = item.isPaired,
-                isNew = item.isNew,
-                isGone = item.isGone,
-                distanceMeters = item.distanceMeters,
-                onClick = { actions.onDeviceClick(item.device) },
-                modifier = Modifier.animateItem(),
-            )
-        }
-    }
-}
-
-@Composable
-private fun ReorderPill(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Surface(
-        onClick = onClick,
-        modifier = modifier,
-        shape = CircleShape,
-        color = MaterialTheme.colorScheme.inverseSurface,
-        contentColor = MaterialTheme.colorScheme.inverseOnSurface,
-        shadowElevation = 3.dp,
-    ) {
-        Text(
-            text = stringResource(R.string.reorder_pill),
-            style = MaterialTheme.typography.labelLarge,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-        )
-    }
-}
-
 /** Type chips (multi-select, "All" clears them) and two switches; changes apply at once. */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 private fun FilterSheet(prefs: ListPreferences, actions: ScanActions, onDismiss: () -> Unit) {
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    ModalBottomSheet(onDismissRequest = onDismiss, scrimColor = Color.Black.copy(alpha = SCRIM_ALPHA)) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
             Text(stringResource(R.string.filter_title), style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(16.dp))
@@ -568,6 +562,10 @@ private fun DeviceSort.labelRes(): Int = when (this) {
 }
 
 private const val PULSE_MS = 1_000
+private const val CHIP_FADE_MS = 150
+private const val SCRIM_ALPHA = 0.32f
+private val FILTER_BUTTON = 34.dp
+private const val REORDER_AUTO_MS = 8_000L
 
 @Composable
 private fun RadioOffState(reason: ScanFailure, actions: ScanActions, modifier: Modifier = Modifier) {
