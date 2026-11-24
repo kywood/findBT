@@ -19,7 +19,9 @@ import com.gamenuri.btscanner24.core.ui.R
  * The thread draws only while the view is on screen; when GL cannot start, [onUnavailable] is
  * called once on the main thread so the caller can fall back to the Canvas arrow.
  */
-internal class SceneTextureView(context: Context) : TextureView(context), TextureView.SurfaceTextureListener {
+internal class SceneTextureView(context: Context) :
+    TextureView(context),
+    TextureView.SurfaceTextureListener {
 
     val state = SceneState()
     var onUnavailable: (() -> Unit)? = null
@@ -123,7 +125,7 @@ internal class SceneTextureView(context: Context) : TextureView(context), Textur
                 check(eglSurface != EGL14.EGL_NO_SURFACE) { "EGL surface" }
                 check(EGL14.eglMakeCurrent(display, eglSurface, eglSurface, context)) { "EGL current" }
 
-                val renderer = SceneRenderer(mesh, state)
+                val renderer = SceneRenderer(mesh, this@SceneTextureView.state)
                 renderer.onSurfaceCreated()
                 var last = System.nanoTime()
                 while (running) {
