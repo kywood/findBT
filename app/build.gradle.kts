@@ -60,6 +60,14 @@ android {
             versionNameSuffix = "-benchmark"
         }
     }
+    sourceSets {
+        // The benchmark build runs the debug demo (release code, R8), so motion is recorded and measured
+        // as users get it, with demo devices only (#101).
+        getByName("benchmark") {
+            // AGP 9 built-in Kotlin compiles from the kotlin source set, not java.
+            kotlin.directories.add("src/debug/java")
+        }
+    }
     androidResources {
         // Per-app language picker on Android 13+ (#29); locales come from the values-* folders.
         generateLocaleConfig = true
