@@ -53,6 +53,7 @@
     <string name="scan_status_nearby">주변 %1$d개</string>
     <string name="scan_status_paused">일시정지 · %1$d개</string>
     <string name="scan_status_filtered">%1$d / %2$d개</string>
+    <string name="scan_status_paused_filtered">일시정지 · %1$d / %2$d개</string>
     <string name="scan_searching">주변에서 찾는 중…</string>
     <string name="action_pause_scan">스캔 일시정지</string>
     <string name="action_resume_scan">스캔 다시 시작</string>
@@ -64,5 +65,6 @@
     <string name="filter_reset">초기화</string>
     <string name="filter_done">완료</string>
     <string name="filter_active_description">필터, %1$d개 적용됨</string>
-    <string name="reorder_pill">↑ 순서 바뀜 · 눌러서 정렬</string>
+    <string name="home_reorder_chip">↑ 새 순서 · 정렬</string>
+    <string name="home_reorder_chip_description">목록 순서가 바뀌었어요. 눌러서 정렬</string>
 </resources>

@@ -45,6 +45,7 @@
     <string name="device_distance_5_to_10">約5〜10m</string>
     <string name="device_distance_over_10">10m以上</string>
     <string name="paywall_restore">復元</string>
+    <string name="paywall_close">閉じる</string>
     <string name="paywall_title">Nearo プレミアム</string>
     <string name="paywall_benefit_devices">デバイスを無制限に保存</string>
     <string name="paywall_benefit_ads">広告なし、ずっと</string>
@@ -52,9 +53,12 @@
     <string name="paywall_price">買い切り · %1$s</string>
     <string name="paywall_loading">価格を読み込み中…</string>
     <string name="paywall_once">1回払い。サブスクではありません。</string>
-    <string name="paywall_buy">プレミアムを解除</string>
+    <string name="paywall_buy">プレミアムを入手</string>
     <string name="paywall_price_note">価格はGoogle Playが現地の通貨で表示します。</string>
     <string name="paywall_pending">支払い待ちです。完了するとプレミアムが有効になります。</string>
     <string name="menu_settings">設定</string>
     <string name="menu_more_options">その他のオプション</string>
+    <string name="paywall_or">または</string>
+    <string name="paywall_reward">広告を見て24時間プレミアム</string>
+    <string name="paywall_reward_note">広告を1本（約30秒）最後まで見ると、24時間プレミアムを使えます</string>
 </resources>

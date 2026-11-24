@@ -45,6 +45,7 @@
     <string name="device_distance_5_to_10">~5–10 m</string>
     <string name="device_distance_over_10">über 10 m</string>
     <string name="paywall_restore">Wiederherstellen</string>
+    <string name="paywall_close">Schließen</string>
     <string name="paywall_title">Nearo Premium</string>
     <string name="paywall_benefit_devices">Unbegrenzt viele Geräte speichern</string>
     <string name="paywall_benefit_ads">Keine Werbung, nie</string>
@@ -52,9 +53,12 @@
     <string name="paywall_price">Lebenslang · %1$s</string>
     <string name="paywall_loading">Preis wird geladen…</string>
     <string name="paywall_once">Einmal zahlen. Kein Abo.</string>
-    <string name="paywall_buy">Premium freischalten</string>
+    <string name="paywall_buy">Premium holen</string>
     <string name="paywall_price_note">Preis in deiner Währung über Google Play.</string>
     <string name="paywall_pending">Zahlung ausstehend. Premium wird aktiv, sobald sie abgeschlossen ist.</string>
     <string name="menu_settings">Einstellungen</string>
     <string name="menu_more_options">Weitere Optionen</string>
+    <string name="paywall_or">oder</string>
+    <string name="paywall_reward">Werbung ansehen für 24 h Premium</string>
+    <string name="paywall_reward_note">Sieh dir eine Werbung (etwa 30 s) bis zum Ende an und nutze Premium 24 Stunden</string>
 </resources>

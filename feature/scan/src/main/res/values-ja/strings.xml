@@ -51,6 +51,7 @@
     <string name="scan_status_nearby">周り %1$d 件</string>
     <string name="scan_status_paused">一時停止中 · %1$d 件</string>
     <string name="scan_status_filtered">%1$d / %2$d 件</string>
+    <string name="scan_status_paused_filtered">一時停止中 · %1$d / %2$d 件</string>
     <string name="scan_searching">周りのデバイスを探しています…</string>
     <string name="action_pause_scan">スキャンを一時停止</string>
     <string name="action_resume_scan">スキャンを再開</string>
@@ -62,5 +63,6 @@
     <string name="filter_reset">リセット</string>
     <string name="filter_done">完了</string>
     <string name="filter_active_description">フィルタ、%1$d 件適用中</string>
-    <string name="reorder_pill">↑ 順番が変わりました · タップで並べ替え</string>
+    <string name="home_reorder_chip">↑ 新しい順 · 並べ替え</string>
+    <string name="home_reorder_chip_description">リストの順番が変わりました。タップで並べ替え</string>
 </resources>

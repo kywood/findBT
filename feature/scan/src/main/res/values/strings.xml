@@ -54,7 +54,8 @@
     <!-- Home header v4 (#62) -->
     <string name="scan_status_nearby">%1$d nearby</string>
     <string name="scan_status_paused">Paused · %1$d</string>
-    <string name="scan_status_filtered">%1$d / %2$d</string>
+    <string name="scan_status_filtered">%1$d of %2$d</string>
+    <string name="scan_status_paused_filtered">Paused · %1$d of %2$d</string>
     <string name="scan_searching">Looking for devices nearby…</string>
     <string name="action_pause_scan">Pause scan</string>
     <string name="action_resume_scan">Resume scan</string>
@@ -66,5 +67,6 @@
     <string name="filter_reset">Reset</string>
     <string name="filter_done">Done</string>
     <string name="filter_active_description">Filter, %1$d applied</string>
-    <string name="reorder_pill">↑ Order changed · tap to sort</string>
+    <string name="home_reorder_chip">↑ New order · Sort</string>
+    <string name="home_reorder_chip_description">List order changed. Tap to sort.</string>
 </resources>
