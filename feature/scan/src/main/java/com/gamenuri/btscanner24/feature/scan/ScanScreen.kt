@@ -364,12 +364,12 @@ private fun StatusText(state: ScanUiState) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         StatusDot(scanning = state.isScanning)
         Spacer(Modifier.width(8.dp))
-        // "N nearby" counts only devices people carry; other devices are extra (#82).
-        val shown = state.items.count { !it.isOther }
-        val total = state.census.personal
-        // Showing other devices adds rows, it doesn't narrow: it counts on the badge but keeps "N nearby".
-        val showOther = if (state.preferences.filter.showOther) 1 else 0
-        val filtered = state.activeFilterCount - showOther > 0 || state.query.isNotBlank()
+        // "N nearby" counts personal devices, plus other devices once they are listed (#82, #100).
+        val withOther = state.preferences.filter.showOther || state.items.any { it.isOther }
+        val shown = state.items.size
+        val total = state.census.personal + if (withOther) state.census.other else 0
+        // "N / M" only when something hides devices; showing other devices only adds rows.
+        val filtered = state.activeFilterCount > 0 || state.query.isNotBlank()
         Text(
             text = when {
                 filtered && state.isPaused ->

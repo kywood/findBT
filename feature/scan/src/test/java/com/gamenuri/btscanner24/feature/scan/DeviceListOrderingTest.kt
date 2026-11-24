@@ -86,13 +86,13 @@ class DeviceListOrderingTest {
             device("keyboard", "K380", category = DeviceCategory.KEYBOARD),
         )
         val hidden = DeviceListOrdering.filter(devices, noFilter, "", now)
-        assertEquals(listOf("buds"), hidden.personal.map { it.address })
+        assertEquals(listOf("buds", "keyboard"), hidden.personal.map { it.address })
         assertTrue(hidden.other.isEmpty())
-        assertEquals(3, hidden.hiddenOther)
+        assertEquals(2, hidden.hiddenOther)
 
         val shown = DeviceListOrdering.filter(devices, noFilter.copy(showOther = true), "", now)
-        assertEquals(listOf("buds"), shown.personal.map { it.address })
-        assertEquals(listOf("tv", "beacon", "keyboard"), shown.other.map { it.address })
+        assertEquals(listOf("buds", "keyboard"), shown.personal.map { it.address })
+        assertEquals(listOf("tv", "beacon"), shown.other.map { it.address })
         assertEquals(0, shown.hiddenOther)
     }
 
@@ -140,7 +140,7 @@ class DeviceListOrderingTest {
     }
 
     @Test
-    fun `badge counts switches off their default and chip groups in use`() {
+    fun `badge counts settings that hide devices, not showing other devices`() {
         assertEquals(0, noFilter.activeCount)
         val filter = noFilter.copy(
             showOther = true,
@@ -148,7 +148,8 @@ class DeviceListOrderingTest {
             types = setOf(CategoryGroup.EARBUDS, CategoryGroup.WATCH),
             distances = setOf(DistanceBucket.WITHIN_5_M),
         )
-        assertEquals(4, filter.activeCount)
+        assertEquals(3, filter.activeCount)
+        assertEquals(0, noFilter.copy(showOther = true).activeCount)
     }
 
     @Test

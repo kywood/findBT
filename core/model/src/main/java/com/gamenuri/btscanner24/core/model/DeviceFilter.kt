@@ -17,7 +17,7 @@ enum class DistanceBucket(val upToMeters: Double) {
  * defaults show every personal device and hide the rest ("Other devices").
  */
 data class DeviceFilter(
-    /** Beacons, TVs, sensors, PC accessories, unknown types (#82). Off by default. */
+    /** Beacons, TVs, sensors, unknown types (#82). Off by default. */
     val showOther: Boolean = false,
     /** On by default: unnamed trackers are often the very thing people look for (#62, #46 naming). */
     val showUnnamed: Boolean = true,
@@ -28,12 +28,14 @@ data class DeviceFilter(
     /** Company names as shown in the list (Bluetooth SIG names). */
     val manufacturers: Set<String> = emptySet(),
 ) {
-    /** Badge on the filter button: each switch off its default counts 1, each chip group in use counts 1. */
+    /**
+     * Badge on the filter button: settings that hide devices. Each switch off its default counts 1, each
+     * chip group in use counts 1. "Show other devices" adds rows, so it never counts (#100).
+     */
     val activeCount: Int
         get() {
             val defaults = DeviceFilter()
             return listOf(
-                showOther != defaults.showOther,
                 showUnnamed != defaults.showUnnamed,
                 hideGone != defaults.hideGone,
                 types.isNotEmpty(),
@@ -58,6 +60,9 @@ object DeviceRelevanceRules {
         DeviceCategory.FITNESS_BAND,
         DeviceCategory.TRACKER,
         DeviceCategory.GAMEPAD,
+        // Keyboards and mice are carried around with laptops and tablets (#100).
+        DeviceCategory.KEYBOARD,
+        DeviceCategory.MOUSE,
     )
 
     /**
@@ -68,7 +73,7 @@ object DeviceRelevanceRules {
 
     /**
      * Anything paired with this phone is personal, whatever its type. Beacons, TV, sensors, health
-     * meters, cars, keyboards, mice and unknown types are "other".
+     * meters, cars and unknown types are "other".
      */
     fun of(device: BleDevice, isPaired: Boolean = false): DeviceRelevance {
         val personal = isPaired ||
