@@ -18,20 +18,26 @@ import kotlin.math.log10
 /** Fixed demo content. Names are generic on purpose: no brands, no real people's devices. */
 internal object DemoData {
 
-    private class Fake(val name: String?, val category: DeviceCategory, val meters: Double)
+    /** Makers are made up as well, so the filter's maker section has something to show (#100). */
+    private class Fake(
+        val name: String?,
+        val category: DeviceCategory,
+        val meters: Double,
+        val maker: String? = null,
+    )
 
     private val fakes = listOf(
-        Fake("My Earbuds", DeviceCategory.EARBUDS, 0.7),
-        Fake("Running Watch", DeviceCategory.WATCH, 2.2),
-        Fake("Office Keyboard", DeviceCategory.KEYBOARD, 1.4),
-        Fake("Bike Sensor", DeviceCategory.FITNESS_BAND, 3.1),
-        Fake("Keys Tag", DeviceCategory.TRACKER, 4.0),
-        Fake(null, DeviceCategory.TRACKER, 6.5),
-        Fake("Studio Headphones", DeviceCategory.HEADPHONES, 7.5),
-        Fake("Living Room Speaker", DeviceCategory.SPEAKER, 12.0),
+        Fake("My Earbuds", DeviceCategory.EARBUDS, 0.7, "Lumen Audio"),
+        Fake("Running Watch", DeviceCategory.WATCH, 2.2, "Orbit Wear"),
+        Fake("Office Keyboard", DeviceCategory.KEYBOARD, 1.4, "Keyline"),
+        Fake("Bike Sensor", DeviceCategory.FITNESS_BAND, 3.1, "Orbit Wear"),
+        Fake("Keys Tag", DeviceCategory.TRACKER, 4.0, "Tagly"),
+        Fake(null, DeviceCategory.TRACKER, 6.5, "Tagly"),
+        Fake("Studio Headphones", DeviceCategory.HEADPHONES, 7.5, "Lumen Audio"),
+        Fake("Living Room Speaker", DeviceCategory.SPEAKER, 12.0, "Lumen Audio"),
         // "Other devices" (#82): hidden by default, behind "N other devices hidden · Show".
         Fake(null, DeviceCategory.UNKNOWN, 4.2),
-        Fake("Living Room TV", DeviceCategory.TV, 7.0),
+        Fake("Living Room TV", DeviceCategory.TV, 7.0, "Vista"),
         Fake("Bathroom Scale", DeviceCategory.HEALTH, 11.0),
         Fake(null, DeviceCategory.SENSOR, 13.0),
     )
@@ -51,6 +57,7 @@ internal object DemoData {
             // Far in the future so rows never turn "gone" while screenshots are taken.
             lastSeen = now + DAY_MS,
             category = fake.category,
+            manufacturer = fake.maker,
         )
     }
 

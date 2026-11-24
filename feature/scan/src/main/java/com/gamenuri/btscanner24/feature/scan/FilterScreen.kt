@@ -12,14 +12,17 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -104,7 +107,7 @@ internal fun FilterContent(
                     }
                 },
                 actions = {
-                    TextButton(onClick = { onChange(DeviceFilter()) }, enabled = draft.activeCount > 0) {
+                    TextButton(onClick = { onChange(DeviceFilter()) }, enabled = draft != DeviceFilter()) {
                         Text(stringResource(R.string.filter_reset))
                     }
                 },
@@ -148,7 +151,8 @@ internal fun FilterContent(
             Section(R.string.filter_signal)
             SignalChips(draft.signals) { onChange(draft.copy(signals = it)) }
 
-            if (census.makers.isNotEmpty()) {
+            // With a single maker the section can't narrow anything (#100).
+            if (census.makers.size >= MIN_MAKERS) {
                 Section(R.string.filter_maker)
                 MakerChips(census.makers, draft.manufacturers) { onChange(draft.copy(manufacturers = it)) }
             }
@@ -223,10 +227,10 @@ private fun <T> ChipGroup(
 ) {
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         options.forEach { option ->
-            FilterChip(
+            SelectChip(
                 selected = option in selected,
                 onClick = { onChange(if (option in selected) selected - option else selected + option) },
-                label = { Text(label(option)) },
+                label = label(option),
             )
         }
     }
@@ -238,16 +242,49 @@ private fun SignalChips(selected: Set<SignalLevel>, onChange: (Set<SignalLevel>)
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         SignalLevel.entries.forEach { level ->
             val text = stringResource(level.labelRes())
+            val isSelected = level in selected
             FilterChip(
-                selected = level in selected,
-                onClick = { onChange(if (level in selected) selected - level else selected + level) },
+                selected = isSelected,
+                onClick = { onChange(if (isSelected) selected - level else selected + level) },
                 label = { Text(text) },
-                // The chip text already says the level, so the bars stay silent for TalkBack.
-                leadingIcon = { SignalBars(level = level, label = "") },
+                // A tick when chosen, like the other chips; the bars otherwise. The chip text already says
+                // the level, so the bars stay silent for TalkBack.
+                leadingIcon = {
+                    if (isSelected) CheckIcon() else SignalBars(level = level, label = "")
+                },
+                colors = selectChipColors(),
             )
         }
     }
 }
+
+/** M3 selected filter chip: secondary container and a leading tick, so a choice never reads as disabled (#100). */
+@Composable
+private fun SelectChip(selected: Boolean, onClick: () -> Unit, label: String) {
+    FilterChip(
+        selected = selected,
+        onClick = onClick,
+        label = { Text(label) },
+        leadingIcon = if (selected) {
+            { CheckIcon() }
+        } else {
+            null
+        },
+        colors = selectChipColors(),
+    )
+}
+
+@Composable
+private fun CheckIcon() {
+    Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(FilterChipDefaults.IconSize))
+}
+
+@Composable
+private fun selectChipColors() = FilterChipDefaults.filterChipColors(
+    selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+    selectedLabelColor = MaterialTheme.colorScheme.onSecondaryContainer,
+    selectedLeadingIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+)
 
 /** The most common makers in the scan with their counts; the rest behind "+ N more" (#85). */
 @OptIn(ExperimentalLayoutApi::class)
@@ -258,12 +295,12 @@ private fun MakerChips(makers: List<MakerCount>, selected: Set<String>, onChange
     val shown = if (expanded) makers else makers.filterIndexed { i, m -> i < MAKERS_SHOWN || m.name in selected }
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         shown.forEach { maker ->
-            FilterChip(
+            SelectChip(
                 selected = maker.name in selected,
                 onClick = {
                     onChange(if (maker.name in selected) selected - maker.name else selected + maker.name)
                 },
-                label = { Text(stringResource(R.string.filter_maker_count, maker.name, maker.count)) },
+                label = stringResource(R.string.filter_maker_count, maker.name, maker.count),
             )
         }
         val hidden = makers.size - shown.size
@@ -286,6 +323,7 @@ private fun SignalLevel.labelRes(): Int = when (this) {
 }
 
 private const val MAKERS_SHOWN = 5
+private const val MIN_MAKERS = 2
 
 @Preview(showBackground = true, heightDp = 900)
 @Composable
