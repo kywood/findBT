@@ -14,7 +14,7 @@
     <string name="finder_spin_again_body">もう一度ゆっくり回ってください</string>
     <string name="finder_walk_title">矢印の方へ歩いて</string>
     <string name="finder_walk_body">方向を確認中…</string>
-    <string name="finder_locked_title">🔒 方向をキャッチ</string>
+    <string name="finder_locked_title">方向をキャッチ</string>
     <string name="finder_locked_body">この方向に進んで</string>
     <string name="finder_turn_around_title">後ろを向いて</string>
     <string name="finder_turn_around_body">後ろにある可能性が高いです</string>
@@ -33,7 +33,7 @@
     <string name="finder_trend_farther">▼ 離れている</string>
     <string name="finder_trend_steady">そのまま進んで</string>
     <string name="finder_advanced_values">MAC %1$s · RSSI %2$s dBm（平滑化 %3$s）· 方位 %4$s° · 推定方向 %5$s° · MAC変更 %6$d回 · %7$d秒</string>
-    <string name="finder_confirm_hint">これで合っているか分からないときは、スマホをすぐそばに近づけてください。「ここです」と出たら見つかりました。</string>
+    <string name="finder_confirm_hint">これで合っているか分からないときは、スマホをすぐそばに近⁠づ⁠け⁠てください。「ここです」と出たら見つかりました。</string>
     <string name="found_title">見つかりました！</string>
     <string name="found_summary">%1$s · %2$sで発見</string>
     <string name="found_minutes_seconds">%1$d分%2$d秒</string>
@@ -48,4 +48,5 @@
     <string name="finder_sound_connecting">接続中…</string>
     <string name="finder_sound_retry">もう一度試す</string>
     <string name="finder_sound_failed">音を鳴らせませんでした。もう少し近づいてもう一度お試しください。</string>
+    <string name="finder_sound_not_supported">このデバイスは音を鳴らせません。</string>
 </resources>

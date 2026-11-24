@@ -15,7 +15,7 @@
     <string name="finder_spin_again_body">Spin slowly again</string>
     <string name="finder_walk_title">Now walk toward the arrow</string>
     <string name="finder_walk_body">Checking direction…</string>
-    <string name="finder_locked_title">🔒 Direction locked</string>
+    <string name="finder_locked_title">Direction locked</string>
     <string name="finder_locked_body">Keep going this way</string>
     <string name="finder_turn_around_title">Turn around</string>
     <string name="finder_turn_around_body">It is probably behind you</string>
@@ -37,10 +37,7 @@
 
     <string name="finder_advanced_values">MAC %1$s · RSSI %2$s dBm (smoothed %3$s) · heading %4$s° · bearing %5$s° · MAC changes %6$d · %7$d s</string>
     <string name="finder_confirm_hint">Not sure it\'s this one? Hold your phone right next to it. If it says \"Right here\", you\'ve found it.</string>
-    <string name="finder_gauge_cold" translatable="false">❄</string>
-    <string name="finder_gauge_hot" translatable="false">🔥</string>
     <!-- Found it screen (#53) -->
-    <string name="found_emoji" translatable="false">🎉</string>
     <string name="found_title">Found it!</string>
     <string name="found_summary">%1$s · found in %2$s</string>
     <string name="found_minutes_seconds">%1$d min %2$d s</string>
@@ -57,4 +54,5 @@
     <string name="finder_sound_connecting">Connecting…</string>
     <string name="finder_sound_retry">Try again</string>
     <string name="finder_sound_failed">Couldn\'t play a sound. Move closer and try again.</string>
+    <string name="finder_sound_not_supported">This device can\'t play a sound.</string>
 </resources>

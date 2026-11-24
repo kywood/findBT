@@ -1,6 +1,8 @@
 package com.gamenuri.btscanner24
 
 import android.app.Application
+import com.gamenuri.btscanner24.core.billing.PlayPremiumStore
+import com.gamenuri.btscanner24.core.billing.PremiumStore
 import com.gamenuri.btscanner24.core.ble.BleDependencies
 import com.gamenuri.btscanner24.core.ble.BleScanner
 import com.gamenuri.btscanner24.core.ble.BondedDevices
@@ -17,7 +19,8 @@ import kotlin.concurrent.thread
 class BtScannerApp :
     Application(),
     BleDependencies.Provider,
-    DataDependenciesProvider {
+    DataDependenciesProvider,
+    PremiumStore.Provider {
 
     private val companies by lazy { CompanyDirectory(this) }
 
@@ -45,4 +48,7 @@ class BtScannerApp :
     override val hiddenDevices: HiddenDevicesRepository by lazy { HiddenDevicesRepository(this) }
 
     val appState: AppStateRepository by lazy { AppStateRepository(this) }
+
+    // Connects to Google Play only when a screen first asks (Settings, paywall), not at start-up (#34).
+    override val premium: PremiumStore by lazy { DemoMode.premium() ?: PlayPremiumStore(this) }
 }

@@ -27,9 +27,9 @@ private enum class HomeTab(@param:StringRes val label: Int) {
     MY_DEVICES(R.string.tab_my_devices),
 }
 
-/** Home (design home-v3): bottom bar with Nearby and My devices. Either tab opens find mode on tap. */
+/** Home (design home-v3): bottom bar with Nearby and My devices. A tap opens find mode; ⋮ opens Settings. */
 @Composable
-fun HomeScreen(onFind: (address: String) -> Unit, startOnMyDevices: Boolean = false) {
+fun HomeScreen(onFind: (address: String) -> Unit, onOpenSettings: () -> Unit, startOnMyDevices: Boolean = false) {
     var tab by rememberSaveable { mutableStateOf(if (startOnMyDevices) HomeTab.MY_DEVICES else HomeTab.NEARBY) }
     Scaffold(
         bottomBar = {
@@ -57,10 +57,16 @@ fun HomeScreen(onFind: (address: String) -> Unit, startOnMyDevices: Boolean = fa
                 title = stringResource(R.string.app_name),
                 onDeviceClick = { onFind(it.address) },
                 modifier = content,
+                onOpenSettings = onOpenSettings,
             )
             // Saving unpaired trackers comes with device storage; until then "Add a tracker" opens Nearby.
             HomeTab.MY_DEVICES ->
-                DevicesScreen(onDeviceClick = onFind, modifier = content, onAddTracker = { tab = HomeTab.NEARBY })
+                DevicesScreen(
+                    onDeviceClick = onFind,
+                    modifier = content,
+                    onAddTracker = { tab = HomeTab.NEARBY },
+                    onOpenSettings = onOpenSettings,
+                )
         }
     }
 }

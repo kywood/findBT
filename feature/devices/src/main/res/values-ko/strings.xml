@@ -7,7 +7,7 @@
     <string name="devices_last_seen_now">방금 확인됨</string>
     <string name="devices_last_seen_minutes">마지막 확인: %1$d분 전</string>
     <string name="devices_not_seen">페어링됨 · 아직 안 보임</string>
-    <string name="devices_more">더보기</string>
+    <string name="devices_more_for">%1$s 더보기</string>
     <string name="devices_hide">목록에서 숨기기</string>
     <string name="devices_empty_title">페어링된 기기가 없어요</string>
     <string name="devices_empty_body">이 폰에 페어링된 기기가 여기에 자동으로 나타나요.</string>

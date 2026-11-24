@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_title">設定</string>
+    <string name="settings_back">戻る</string>
+    <string name="settings_premium_title">Nearo プレミアム</string>
+    <string name="settings_premium_body">広告なし · トラッカーを追加 · 買い切り</string>
+    <string name="settings_premium_buy">プレミアムを入手 · %1$s</string>
+    <string name="settings_premium_buy_no_price">プレミアムを入手</string>
+    <string name="settings_premium_active">プレミアム有効</string>
+    <string name="settings_premium_active_body">ありがとうございます！広告はオフです。</string>
+    <string name="settings_restore">購入を復元</string>
+    <string name="settings_restore_ok">プレミアムを復元しました</string>
+    <string name="settings_restore_none">復元できる購入はありません</string>
+    <string name="settings_restore_failed">Google Play に接続できませんでした。しばらくしてからもう一度お試しください。</string>
+    <string name="settings_section_privacy">プライバシー</string>
+    <string name="settings_privacy_options">プライバシー設定</string>
+    <string name="settings_privacy_options_body">広告の同意</string>
+    <string name="settings_privacy_policy">プライバシーポリシー</string>
+    <string name="settings_section_about">このアプリについて</string>
+    <string name="settings_contact">お問い合わせ</string>
+    <string name="settings_licenses">オープンソースライセンス</string>
+    <string name="settings_version">バージョン</string>
+    <string name="settings_opens_outside">アプリの外で開きます</string>
+</resources>

@@ -14,7 +14,7 @@
     <string name="finder_spin_again_body">Gira despacio otra vez</string>
     <string name="finder_walk_title">Ahora camina hacia la flecha</string>
     <string name="finder_walk_body">Comprobando la dirección…</string>
-    <string name="finder_locked_title">🔒 Dirección fijada</string>
+    <string name="finder_locked_title">Dirección fijada</string>
     <string name="finder_locked_body">Sigue en esta dirección</string>
     <string name="finder_turn_around_title">Date la vuelta</string>
     <string name="finder_turn_around_body">Probablemente está detrás de ti</string>
@@ -49,4 +49,5 @@
     <string name="finder_sound_connecting">Conectando…</string>
     <string name="finder_sound_retry">Reintentar</string>
     <string name="finder_sound_failed">No se pudo reproducir el sonido. Acércate y vuelve a intentarlo.</string>
+    <string name="finder_sound_not_supported">Este dispositivo no puede reproducir sonido.</string>
 </resources>
