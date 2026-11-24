@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="onboarding_intro_title">잃어버린 이어폰, 워치, 트래커를 찾아요</string>
-    <string name="onboarding_intro_body">Nearo가 블루투스 신호를 따라가며 가까워지면 알려 줘요.</string>
+    <string name="onboarding_intro_body">화살표를 따라 걸으면 Nearo가 가까워지는지 알려줘요.</string>
     <string name="onboarding_get_started">시작하기</string>
     <string name="onboarding_permission_title">근처 기기 권한을 허용해 주세요</string>
     <string name="onboarding_permission_body">주변 블루투스 기기를 보려면 필요해요.</string>
     <string name="onboarding_permission_title_legacy">위치 권한을 허용해 주세요</string>
     <string name="onboarding_permission_body_legacy">Android 11 이하에서는 블루투스 기기를 보려면 위치 권한이 필요해요. Nearo는 위치를 사용하지 않아요.</string>
     <string name="onboarding_check_location">위치를 추적하지 않아요</string>
-    <string name="onboarding_check_local">어떤 정보도 폰 밖으로 나가지 않아요</string>
+    <string name="onboarding_check_local">스캔한 기기 정보는 폰 밖으로 나가지 않아요</string>
     <string name="onboarding_check_stops">앱을 나가면 스캔이 멈춰요</string>
     <string name="onboarding_continue">계속</string>
     <string name="onboarding_denied_title">권한이 필요해요</string>
@@ -16,4 +16,6 @@
     <string name="onboarding_denied_body_legacy">위치 권한이 없으면 이 Android 버전에서는 Nearo가 블루투스 기기를 볼 수 없어요. 설정에서 켤 수 있어요.</string>
     <string name="onboarding_open_settings">설정 열기</string>
     <string name="onboarding_try_again">다시 시도</string>
+    <string name="onboarding_hero_device">내 이어폰</string>
+    <string name="onboarding_hero_distance_label">가까움 · 대략적인 거리</string>
 </resources>

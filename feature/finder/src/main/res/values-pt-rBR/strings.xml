@@ -14,7 +14,7 @@
     <string name="finder_spin_again_body">Gire devagar de novo</string>
     <string name="finder_walk_title">Agora ande na direção da seta</string>
     <string name="finder_walk_body">Verificando a direção…</string>
-    <string name="finder_locked_title">🔒 Direção travada</string>
+    <string name="finder_locked_title">Direção travada</string>
     <string name="finder_locked_body">Continue nesta direção</string>
     <string name="finder_turn_around_title">Vire-se</string>
     <string name="finder_turn_around_body">Provavelmente está atrás de você</string>

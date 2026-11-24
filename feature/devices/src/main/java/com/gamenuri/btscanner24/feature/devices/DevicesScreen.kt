@@ -204,10 +204,11 @@ private fun PairedRow(item: MyDeviceItem, now: Long, onClick: (MyDeviceItem) -> 
     ) {
         DeviceIcon(item.paired.category)
         Spacer(Modifier.width(12.dp))
+        // A paired device with no name is rare; its type is enough here (no address suffix in My devices).
+        val title = item.paired.name?.takeIf { it.isNotBlank() } ?: item.paired.category.label()
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                // A paired device with no name is rare; its type is enough here (no address suffix in My devices).
-                text = item.paired.name?.takeIf { it.isNotBlank() } ?: item.paired.category.label(),
+                text = title,
                 style = MaterialTheme.typography.titleMedium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -236,7 +237,7 @@ private fun PairedRow(item: MyDeviceItem, now: Long, onClick: (MyDeviceItem) -> 
         }
         Box {
             IconButton(onClick = { menuOpen = true }) {
-                Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.devices_more))
+                Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.devices_more_for, title))
             }
             DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                 DropdownMenuItem(
