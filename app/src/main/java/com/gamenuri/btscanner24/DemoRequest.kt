@@ -13,6 +13,8 @@ internal data class DemoRequest(
     val locale: String? = null,
     /** Onboarding page for screen "onboarding": intro, permission, denied (+ "_legacy" for Android 11 copy). */
     val onboardingPage: String? = null,
+    /** Keeps (test) ads on in a demo launch, for ad placement shots (`--ez demo_ads true`). Off otherwise. */
+    val showAds: Boolean = false,
 ) {
     val startOnMyDevices: Boolean get() = screen == "devices"
 

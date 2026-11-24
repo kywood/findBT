@@ -60,9 +60,9 @@ class BtScannerApp :
         DemoMode.premium() ?: DayPassPremiumStore(this, PlayPremiumStore(this))
     }
 
-    /** No ads in the debug demo mode: screenshots stay clean and repeatable. */
+    /** No ads in the debug demo mode unless asked for: screenshots stay clean and repeatable. */
     override val ads: NearoAds? by lazy {
-        if (demo != null) return@lazy null
+        if (demo?.showAds == false) return@lazy null
         val prefs = getSharedPreferences("ads", MODE_PRIVATE)
         val installedAt = packageManager.getPackageInfo(packageName, 0).firstInstallTime
         NearoAds(
