@@ -148,8 +148,7 @@ class NearoAds(
         _rewardedReady.value = false
         ad.fullScreenContentCallback = object : FullScreenContentCallback() {
             override fun onAdDismissedFullScreenContent() = loadRewarded()
-            override fun onAdFailedToShowFullScreenContent(error: com.google.android.gms.ads.AdError) =
-                loadRewarded()
+            override fun onAdFailedToShowFullScreenContent(error: com.google.android.gms.ads.AdError) = loadRewarded()
         }
         ad.show(activity) { premium.grantDayPass()?.let(onDayPass) }
     }

@@ -47,19 +47,19 @@ fun HomeScreen(onFind: (address: String) -> Unit, onOpenSettings: () -> Unit, st
                 // Anchored banner right above the tabs; no height until an ad may show (#81 ①).
                 AdBanner()
                 NavigationBar {
-                HomeTab.entries.forEach { item ->
-                    NavigationBarItem(
-                        selected = tab == item,
-                        onClick = { tab = item },
-                        icon = {
-                            when (item) {
-                                HomeTab.NEARBY -> Icon(painterResource(UiR.drawable.ic_device_beacon), null)
-                                HomeTab.MY_DEVICES -> Icon(Icons.Filled.Star, null)
-                            }
-                        },
-                        label = { Text(stringResource(item.label)) },
-                    )
-                }
+                    HomeTab.entries.forEach { item ->
+                        NavigationBarItem(
+                            selected = tab == item,
+                            onClick = { tab = item },
+                            icon = {
+                                when (item) {
+                                    HomeTab.NEARBY -> Icon(painterResource(UiR.drawable.ic_device_beacon), null)
+                                    HomeTab.MY_DEVICES -> Icon(Icons.Filled.Star, null)
+                                }
+                            },
+                            label = { Text(stringResource(item.label)) },
+                        )
+                    }
                 }
             }
         },

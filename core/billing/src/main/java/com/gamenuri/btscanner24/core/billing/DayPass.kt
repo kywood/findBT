@@ -9,10 +9,7 @@ import java.time.ZoneId
  * The rewarded ad's 24 h of Premium (#81): at most one a day, kept on the phone only. A day is the
  * phone's local calendar day, so the next pass can start the day after the last one was granted.
  */
-class DayPass(
-    private val storage: Storage,
-    private val zone: () -> ZoneId = ZoneId::systemDefault,
-) {
+class DayPass(private val storage: Storage, private val zone: () -> ZoneId = ZoneId::systemDefault) {
     /** Two numbers; [SharedPreferencesStorage] in the app, a map in tests. */
     interface Storage {
         var until: Long
