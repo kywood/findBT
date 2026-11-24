@@ -37,6 +37,7 @@ fun Modifier.waterRise(
     glint: Float = 1f,
     pressMs: Int = WATER_PRESS_MS,
 ): Modifier = drawWithContent {
+    val scope = this
     val t = ((progress() * (pressMs + WATER_RISE_MS) - pressMs) / WATER_RISE_MS).coerceIn(0f, 1f)
     when {
         t >= 1f -> drawContent()
@@ -51,7 +52,7 @@ fun Modifier.waterRise(
                 close()
             }
             clipPath(body) {
-                drawContent()
+                scope.drawContent()
                 val k = smoothstep(contentFrom, 1f, t)
                 if (cover != null && k < 1f) drawRect(cover, alpha = 1f - k)
                 // Soft lighter band just under the surface: two strokes, the outer half is clipped away.
