@@ -33,7 +33,7 @@
     <string name="finder_trend_farther">▼ Kälter</string>
     <string name="finder_trend_steady">Weiter so</string>
     <string name="finder_advanced_values">MAC %1$s · RSSI %2$s dBm (geglättet %3$s) · Kurs %4$s° · Peilung %5$s° · MAC-Wechsel %6$d · %7$d s</string>
-    <string name="finder_confirm_hint">Nicht sicher, ob es das richtige ist? Halte dein Handy direkt daneben. Steht dort \"Genau hier\", hast du es gefunden.</string>
+    <string name="finder_confirm_hint">Nicht sicher? Halte das Handy direkt daneben. Bei \"Genau hier\" hast du es.</string>
     <string name="found_title">Gefunden!</string>
     <string name="found_summary">%1$s · gefunden in %2$s</string>
     <string name="found_minutes_seconds">%1$d Min. %2$d Sek.</string>

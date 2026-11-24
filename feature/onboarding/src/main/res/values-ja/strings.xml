@@ -12,8 +12,8 @@
     <string name="onboarding_check_stops">アプリを離れるとスキャンは止まります</string>
     <string name="onboarding_continue">続ける</string>
     <string name="onboarding_denied_title">権限が必要です</string>
-    <string name="onboarding_denied_body">「付近のデ⁠バ⁠イ⁠ス」がない⁠と、NearoはBluetoothデ⁠バ⁠イ⁠スを見つけら⁠れ⁠ま⁠せ⁠ん。設定でオ⁠ンにできます。</string>
-    <string name="onboarding_denied_body_legacy">位置情報の権限がない⁠と、このAndroidバ⁠ー⁠ジ⁠ョ⁠ンではNearoがBluetoothデ⁠バ⁠イ⁠スを見つけら⁠れ⁠ま⁠せ⁠ん。設定でオ⁠ンにできます。</string>
+    <string name="onboarding_denied_body">「付近のデ⁠バ⁠イ⁠ス」が⁠な⁠い⁠と、NearoはBluetoothデ⁠バ⁠イ⁠スを見⁠つ⁠け⁠ら⁠れ⁠ま⁠せ⁠ん。設定でオ⁠ンにできます。</string>
+    <string name="onboarding_denied_body_legacy">位置情報の権限が⁠な⁠い⁠と、このAndroidバ⁠ー⁠ジ⁠ョ⁠ンではNearoがBluetoothデ⁠バ⁠イ⁠スを見⁠つ⁠け⁠ら⁠れ⁠ま⁠せ⁠ん。設定でオ⁠ンにできます。</string>
     <string name="onboarding_open_settings">設定を開く</string>
     <string name="onboarding_try_again">もう一度試す</string>
     <string name="onboarding_hero_device">マイイヤホン</string>
