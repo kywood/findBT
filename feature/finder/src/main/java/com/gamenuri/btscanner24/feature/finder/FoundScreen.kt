@@ -89,7 +89,13 @@ fun FoundContent(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {
-                CheckHero(colors, Modifier.graphicsLayer { scaleX = checkScale.value; scaleY = checkScale.value })
+                CheckHero(
+                    colors,
+                    Modifier.graphicsLayer {
+                        scaleX = checkScale.value
+                        scaleY = checkScale.value
+                    },
+                )
                 Spacer(Modifier.height(28.dp))
                 Text(
                     text = stringResource(R.string.found_title),
