@@ -25,11 +25,15 @@ internal class SceneState {
     @Volatile var locked: Boolean = false
 
     @Volatile var arrowColor: Int = 0xFFFFFFFF.toInt()
+
     @Volatile var floorColor: Int = 0xFFFFFFFF.toInt()
 
     @Volatile var hasPose: Boolean = false
+
     @Volatile var headingDegrees: Float = 0f
+
     @Volatile var elevationDegrees: Float = DEFAULT_ELEVATION
+
     @Volatile var rollDegrees: Float = 0f
 
     companion object {
