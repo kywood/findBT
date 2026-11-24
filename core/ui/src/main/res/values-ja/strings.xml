@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="signal_strong">強い</string>
+    <string name="signal_medium">普通</string>
+    <string name="signal_weak">弱い</string>
+    <string name="category_earbuds">イヤホン</string>
+    <string name="category_headphones">ヘッドホン</string>
+    <string name="category_hearing_aid">補聴器</string>
+    <string name="category_speaker">スピーカー</string>
+    <string name="category_watch">スマートウォッチ</string>
+    <string name="category_fitness_band">フィットネスバンド</string>
+    <string name="category_tracker">トラッカー</string>
+    <string name="category_phone">スマートフォン</string>
+    <string name="category_tablet">タブレット</string>
+    <string name="category_computer">パソコン</string>
+    <string name="category_keyboard">キーボード</string>
+    <string name="category_mouse">マウス</string>
+    <string name="category_gamepad">ゲームコントローラー</string>
+    <string name="category_tv">テレビ</string>
+    <string name="category_car">車</string>
+    <string name="category_health">ヘルスケア機器</string>
+    <string name="category_sensor">センサー</string>
+    <string name="category_unknown">その他のデバイス</string>
+    <string name="category_group_earbuds">イヤホン</string>
+    <string name="category_group_watch">ウォッチ</string>
+    <string name="category_group_tracker">トラッカー</string>
+    <string name="category_group_other">その他</string>
+    <string name="badge_new">NEW</string>
+    <string name="device_gone">たった今</string>
+    <string name="device_maker_type">%1$s · %2$s</string>
+    <string name="device_distance">約%1$s m</string>
+    <string name="device_name_with_suffix">%1$s · %2$s</string>
+    <string name="device_generic_maker_type">%1$s %2$s</string>
+    <string name="device_generic_maker">%1$s のデバイス</string>
+    <string name="device_generic">Bluetoothデバイス</string>
+    <string name="badge_paired">マイ</string>
+    <string name="device_no_name_suffix">名前なし · …%1$s</string>
+    <string name="device_distance_within_1">1m以内</string>
+    <string name="device_distance_5_to_10">約5〜10m</string>
+    <string name="device_distance_over_10">10m以上</string>
+</resources>

@@ -58,10 +58,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -182,29 +184,38 @@ fun FinderContent(state: FinderUiState, actions: FinderActions, modifier: Modifi
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             StageText(state)
-            // The dial takes what is left and shrinks on short screens (Flip3 cover, small phones).
-            Box(
-                modifier = Modifier.weight(1f).fillMaxWidth().padding(vertical = 12.dp),
-                contentAlignment = Alignment.Center,
+            // The dial takes what is left and shrinks on short screens (Flip3 cover, small phones). The
+            // confirm hint borrows its height from here too, so the distance below never moves (#60).
+            Column(
+                modifier = Modifier.weight(1f).fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                DirectionDial(state, Modifier.heightIn(min = DIAL_MIN))
-            }
-            DistanceBlock(state)
-            val canRespin = state.stage == FinderStage.WALK || state.stage == FinderStage.TURN_AROUND
-            if (canRespin) {
-                TextButton(onClick = actions.onSpinAgain) {
-                    Text(stringResource(R.string.finder_spin_again), color = content)
+                Box(
+                    modifier = Modifier.weight(1f).fillMaxWidth().padding(vertical = 12.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    DirectionDial(state, Modifier.heightIn(min = DIAL_MIN))
+                }
+                if (state.showConfirmHint) {
+                    // Names can be vague ("hiot0"); confirming by touch matters more than the name (#46).
+                    Text(
+                        text = stringResource(R.string.finder_confirm_hint),
+                        modifier = Modifier.padding(bottom = 12.dp),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = LocalContentColor.current.copy(alpha = MUTED_ALPHA),
+                        textAlign = TextAlign.Center,
+                    )
                 }
             }
-            if (state.showConfirmHint) {
-                // Names can be vague ("hiot0"); confirming by touch matters more than the name (#46).
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    text = stringResource(R.string.finder_confirm_hint),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = LocalContentColor.current.copy(alpha = MUTED_ALPHA),
-                    textAlign = TextAlign.Center,
-                )
+            DistanceBlock(state)
+            // Always takes its space; hidden by alpha so the rows above keep their place (#60).
+            val canRespin = state.stage == FinderStage.WALK || state.stage == FinderStage.TURN_AROUND
+            TextButton(
+                onClick = actions.onSpinAgain,
+                enabled = canRespin,
+                modifier = Modifier.slot(visible = canRespin),
+            ) {
+                Text(stringResource(R.string.finder_spin_again), color = content)
             }
         }
     }
@@ -228,12 +239,22 @@ private fun ActionRow(state: FinderUiState, actions: FinderActions, content: Col
 private val FinderUiState.showSoundButton: Boolean
     get() = when (sound) {
         SoundState.UNAVAILABLE -> false
-        SoundState.CONNECTING, SoundState.PLAYING -> true
+        SoundState.CONNECTING, SoundState.PLAYING, SoundState.NOT_SUPPORTED -> true
         SoundState.READY, SoundState.FAILED -> stage != FinderStage.WAITING && stage != FinderStage.SIGNAL_LOST
     }
 
 @Composable
 private fun SoundButton(sound: SoundState, onClick: () -> Unit, content: Color) {
+    if (sound == SoundState.NOT_SUPPORTED) {
+        Text(
+            text = stringResource(R.string.finder_sound_not_supported),
+            modifier = Modifier.fillMaxWidth(),
+            style = MaterialTheme.typography.bodySmall,
+            color = content.copy(alpha = MUTED_ALPHA),
+            textAlign = TextAlign.Center,
+        )
+        return
+    }
     if (sound == SoundState.FAILED) {
         Text(
             text = stringResource(R.string.finder_sound_failed),
@@ -331,13 +352,12 @@ private fun StageText(state: FinderUiState) {
         FinderStage.SIGNAL_LOST -> R.string.finder_signal_lost_title to R.string.finder_signal_lost_body
         FinderStage.NO_COMPASS -> R.string.finder_no_compass_title to R.string.finder_no_compass_body
     }
-    if (state.arrowDegrees != null) {
-        Text(
-            text = stringResource(R.string.finder_direction_label),
-            style = MaterialTheme.typography.labelLarge,
-            color = LocalContentColor.current.copy(alpha = MUTED_ALPHA),
-        )
-    }
+    Text(
+        text = stringResource(R.string.finder_direction_label),
+        modifier = Modifier.slot(visible = state.arrowDegrees != null),
+        style = MaterialTheme.typography.labelLarge,
+        color = LocalContentColor.current.copy(alpha = MUTED_ALPHA),
+    )
     Text(stringResource(title), style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
     Text(
         text = if (state.stage == FinderStage.SIGNAL_LOST) {
@@ -356,9 +376,13 @@ private fun DistanceBlock(state: FinderUiState) {
     val meters = state.distanceMeters ?: return
     if (state.stage == FinderStage.SIGNAL_LOST || state.stage == FinderStage.WAITING) return
 
-    if (state.stage != FinderStage.RIGHT_HERE) {
-        state.band?.let { Text(stringResource(it.labelRes()), style = MaterialTheme.typography.titleMedium) }
-    }
+    // Fixed slots (band line, trend chip): only alpha changes, so the number keeps its y (#60).
+    val showBand = state.stage != FinderStage.RIGHT_HERE && state.band != null
+    Text(
+        text = state.band?.let { stringResource(it.labelRes()) }.orEmpty(),
+        modifier = Modifier.slot(visible = showBand),
+        style = MaterialTheme.typography.titleMedium,
+    )
     Text(text = distanceText(meters), style = NearoTextStyles.findDistance, maxLines = 1)
     Text(
         text = stringResource(R.string.finder_distance_label),
@@ -369,10 +393,8 @@ private fun DistanceBlock(state: FinderUiState) {
     HeatGauge(state.heat, Modifier.fillMaxWidth(0.8f))
     // No "Keep going" while the user is asked to spin in place.
     val spinning = state.stage == FinderStage.SPIN || state.stage == FinderStage.SPIN_AGAIN
-    if (state.stage != FinderStage.RIGHT_HERE && !spinning) {
-        Spacer(Modifier.height(12.dp))
-        TrendChip(state.trend)
-    }
+    Spacer(Modifier.height(12.dp))
+    TrendChip(state.trend, Modifier.slot(visible = state.stage != FinderStage.RIGHT_HERE && !spinning))
 }
 
 /**
@@ -406,14 +428,19 @@ private fun HeatGauge(heat: Float, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun TrendChip(trend: ProximityTrend) {
+private fun TrendChip(trend: ProximityTrend, modifier: Modifier = Modifier) {
     val content = LocalContentColor.current
     val text = when (trend) {
         ProximityTrend.CLOSER -> R.string.finder_trend_closer
         ProximityTrend.FARTHER -> R.string.finder_trend_farther
         ProximityTrend.STEADY -> R.string.finder_trend_steady
     }
-    Surface(shape = RoundedCornerShape(50), color = content.copy(alpha = 0.16f), contentColor = content) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(50),
+        color = content.copy(alpha = 0.16f),
+        contentColor = content,
+    ) {
         Text(
             text = stringResource(text),
             style = MaterialTheme.typography.labelLarge,
@@ -421,6 +448,9 @@ private fun TrendChip(trend: ProximityTrend) {
         )
     }
 }
+
+/** Keeps a row's space when it is hidden, so nothing below it moves; hidden rows are also silent to TalkBack. */
+private fun Modifier.slot(visible: Boolean): Modifier = if (visible) this else alpha(0f).clearAndSetSemantics {}
 
 /** Background and text colour for the current state (design v3 state table). */
 @Composable

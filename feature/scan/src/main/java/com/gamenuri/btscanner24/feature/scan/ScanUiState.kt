@@ -33,8 +33,16 @@ data class ScanUiState(
     val items: List<DeviceListItem> = emptyList(),
     val preferences: ListPreferences = ListPreferences(),
     val query: String = "",
-    /** The sorted order differs from what is on screen; show the "Refresh order" button. */
+    /** The sorted order differs from what is on screen; show the floating "Order changed" pill. */
     val reorderAvailable: Boolean = false,
+    /** The user paused the automatic scan; lasts until they leave the tab (#62). */
+    val isPaused: Boolean = false,
+    /** Devices seen before filters and search, for "2 / 15". */
+    val totalCount: Int = 0,
 ) {
     val isScanning: Boolean get() = status == ScanStatus.Scanning
+
+    /** Filters in use, for the badge on the filter button. Search is not counted. */
+    val activeFilterCount: Int
+        get() = preferences.groups.size + (if (preferences.namedOnly) 1 else 0) + (if (preferences.hideGone) 1 else 0)
 }

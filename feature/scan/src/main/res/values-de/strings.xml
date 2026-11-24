@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="action_retry">Erneut versuchen</string>
+    <string name="action_ok">OK</string>
+    <string name="action_allow">Erlauben</string>
+    <string name="action_turn_on">Einschalten</string>
+    <string name="action_open_settings">Einstellungen</string>
+    <string name="search_hint">Nach Name oder Hersteller suchen</string>
+    <string name="filter_named_only">Nur Geräte mit Namen</string>
+    <string name="permission_rationale">Für die Suche nach Geräten in der Nähe ist die Bluetooth-Berechtigung nötig.</string>
+    <string name="permission_denied_settings">Die Bluetooth-Berechtigung ist aus. Schalte sie in den Einstellungen ein, um zu scannen.</string>
+    <string name="error_bluetooth_off">Bluetooth ist aus.</string>
+    <string name="error_not_supported">Dieses Gerät unterstützt kein Bluetooth Low Energy.</string>
+    <string name="error_too_frequent">Der Scan wurde zu oft neu gestartet. Warte ein paar Sekunden und versuche es erneut.</string>
+    <string name="error_location_off">Der Standort ist aus. Auf dieser Android-Version braucht der Bluetooth-Scan den Standort.</string>
+    <string name="error_scan_failed">Der Scan konnte nicht gestartet werden.</string>
+    <string name="action_search">Suchen</string>
+    <string name="action_close_search">Suche schließen</string>
+    <string name="sort_menu">Sortieren</string>
+    <string name="sort_nearest">Am nächsten</string>
+    <string name="sort_name">Name</string>
+    <string name="sort_recent">Zuletzt gefunden</string>
+    <string name="filter_hide_gone">Verschwundene ausblenden</string>
+    <string name="empty_bluetooth_off_title">Bluetooth ist aus</string>
+    <string name="empty_bluetooth_off_body">Schalte Bluetooth ein, um Geräte in deiner Nähe zu finden.</string>
+    <string name="empty_location_off_title">Standort ist aus</string>
+    <string name="scan_status_nearby">%1$d in der Nähe</string>
+    <string name="scan_status_paused">Pausiert · %1$d</string>
+    <string name="scan_status_filtered">%1$d / %2$d</string>
+    <string name="scan_searching">Suche nach Geräten in der Nähe…</string>
+    <string name="action_pause_scan">Scan pausieren</string>
+    <string name="action_resume_scan">Scan fortsetzen</string>
+    <string name="action_more">Weitere Optionen</string>
+    <string name="action_clear_list">Liste leeren</string>
+    <string name="filter_title">Filter</string>
+    <string name="filter_types">Gerätetyp</string>
+    <string name="filter_all">Alle</string>
+    <string name="filter_reset">Zurücksetzen</string>
+    <string name="filter_done">Fertig</string>
+    <string name="filter_active_description">Filter, %1$d aktiv</string>
+    <string name="reorder_pill">↑ Reihenfolge geändert · zum Sortieren tippen</string>
+</resources>

@@ -22,6 +22,7 @@ fun DeviceCategory.labelRes(): Int = when (this) {
     DeviceCategory.MOUSE -> R.string.category_mouse
     DeviceCategory.GAMEPAD -> R.string.category_gamepad
     DeviceCategory.TV -> R.string.category_tv
+    DeviceCategory.CAR -> R.string.category_car
     DeviceCategory.HEALTH -> R.string.category_health
     DeviceCategory.SENSOR -> R.string.category_sensor
     DeviceCategory.UNKNOWN -> R.string.category_unknown

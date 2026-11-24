@@ -36,7 +36,7 @@ class FinderViewModel(
     private val repository: DeviceRepository,
     private val motion: MotionSensor,
     private val alert: ImmediateAlert? = null,
-    pairedAlias: String? = null,
+    private val pairedAlias: String? = null,
     private val clock: () -> Long = System::currentTimeMillis,
 ) : ViewModel() {
 
@@ -125,7 +125,8 @@ class FinderViewModel(
             } finally {
                 if (result == RingResult.NOT_SUPPORTED) support = AlertSupport.NOT_SUPPORTED
                 sound.value = when (result) {
-                    RingResult.NOT_SUPPORTED -> SoundState.UNAVAILABLE
+                    // Only reached after a tap, so say why the button goes away.
+                    RingResult.NOT_SUPPORTED -> SoundState.NOT_SUPPORTED
                     // Stopped by the user or the screen, or the link dropped mid-ring: just offer it again.
                     RingResult.FAILED -> if (!isActive || sound.value == SoundState.PLAYING) {
                         SoundState.READY
@@ -135,6 +136,13 @@ class FinderViewModel(
                     RingResult.DONE -> SoundState.READY
                 }
                 publish()
+                if (sound.value == SoundState.NOT_SUPPORTED) {
+                    viewModelScope.launch {
+                        delay(NOTE_VISIBLE_MS)
+                        sound.value = SoundState.UNAVAILABLE
+                        publish()
+                    }
+                }
             }
         }
     }
@@ -152,6 +160,13 @@ class FinderViewModel(
             onSupport(AlertSupport.SUPPORTED)
             return
         }
+        if (pairedAlias == null) {
+            // Never connect to someone else's device on our own (#63): offer the button, and only a tap
+            // connects. If it turns out it can't ring, the screen says so.
+            onSupport(AlertSupport.SUPPORTED)
+            return
+        }
+        // The user's own (paired) device: a short check so the button only shows when it can ring.
         val now = clock()
         if (probeAttempts >= MAX_PROBES || now - lastProbeMs < PROBE_RETRY_MS) return
         probeAttempts++
@@ -192,6 +207,7 @@ class FinderViewModel(
         private const val SOUND_DURATION_MS = 20_000L
         private const val MAX_PROBES = 3
         private const val PROBE_RETRY_MS = 10_000L
+        private const val NOTE_VISIBLE_MS = 5_000L
 
         fun factory(address: String) = viewModelFactory {
             initializer {

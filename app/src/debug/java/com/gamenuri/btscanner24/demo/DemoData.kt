@@ -53,7 +53,7 @@ internal object DemoData {
         PairedDevice(address(0), "My Earbuds", DeviceCategory.EARBUDS),
         PairedDevice(address(1), "Running Watch", DeviceCategory.WATCH),
         // Car and computer go into the collapsed "Other paired devices" group (design home-v3).
-        PairedDevice("DE:00:00:00:00:F1", "My Car", DeviceCategory.UNKNOWN),
+        PairedDevice("DE:00:00:00:00:F1", "My Car", DeviceCategory.CAR),
         PairedDevice("DE:00:00:00:00:F2", "Work Laptop", DeviceCategory.COMPUTER),
         PairedDevice("DE:00:00:00:00:F3", "Gym Band", DeviceCategory.FITNESS_BAND),
     )
@@ -63,6 +63,8 @@ internal object DemoData {
         val base = FinderUiState(
             deviceLabel = DeviceLabel.Named("My Earbuds", NameSource.ADVERTISED, suffix = "0001"),
             advanced = AdvancedInfo(address = address(0)),
+            // The demo earbuds can ring, so every in-range state shows the same bottom bar (#28, #60).
+            sound = SoundState.READY,
         )
         return when (name) {
             "waiting" -> base
@@ -78,11 +80,10 @@ internal object DemoData {
                 arrowDegrees = 12f,
                 confidence = ArrowConfidence.HIGH,
                 trend = ProximityTrend.CLOSER,
-                sound = if (name == "sound") SoundState.PLAYING else SoundState.READY,
+                sound = if (name == "sound") SoundState.PLAYING else base.sound,
             ).distance(3.0, ProximityBand.NEAR)
             "locked" -> base.copy(
                 stage = FinderStage.LOCKED,
-                sound = SoundState.READY,
                 arrowDegrees = 0f,
                 confidence = ArrowConfidence.HIGH,
                 trend = ProximityTrend.CLOSER,

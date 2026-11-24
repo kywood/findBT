@@ -17,6 +17,7 @@
     <string name="category_mouse">Mouse</string>
     <string name="category_gamepad">Game controller</string>
     <string name="category_tv">TV</string>
+    <string name="category_car">Car</string>
     <string name="category_health">Health device</string>
     <string name="category_sensor">Sensor</string>
     <string name="category_unknown">Other device</string>

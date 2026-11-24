@@ -46,6 +46,10 @@ android {
             versionNameSuffix = "-benchmark"
         }
     }
+    androidResources {
+        // Per-app language picker on Android 13+ (#29); locales come from the values-* folders.
+        generateLocaleConfig = true
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -62,6 +66,7 @@ dependencies {
     implementation(projects.core.ui)
     implementation(projects.feature.devices)
     implementation(projects.feature.finder)
+    implementation(projects.feature.onboarding)
     implementation(projects.feature.scan)
 
     implementation(platform(libs.androidx.compose.bom))

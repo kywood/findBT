@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="signal_strong">Forte</string>
+    <string name="signal_medium">Média</string>
+    <string name="signal_weak">Fraca</string>
+    <string name="category_earbuds">Fones</string>
+    <string name="category_headphones">Headphone</string>
+    <string name="category_hearing_aid">Aparelho auditivo</string>
+    <string name="category_speaker">Caixa de som</string>
+    <string name="category_watch">Relógio</string>
+    <string name="category_fitness_band">Pulseira fitness</string>
+    <string name="category_tracker">Rastreador</string>
+    <string name="category_phone">Celular</string>
+    <string name="category_tablet">Tablet</string>
+    <string name="category_computer">Computador</string>
+    <string name="category_keyboard">Teclado</string>
+    <string name="category_mouse">Mouse</string>
+    <string name="category_gamepad">Controle de jogo</string>
+    <string name="category_tv">TV</string>
+    <string name="category_car">Carro</string>
+    <string name="category_health">Dispositivo de saúde</string>
+    <string name="category_sensor">Sensor</string>
+    <string name="category_unknown">Outro dispositivo</string>
+    <string name="category_group_earbuds">Fones</string>
+    <string name="category_group_watch">Relógios</string>
+    <string name="category_group_tracker">Rastreadores</string>
+    <string name="category_group_other">Outros</string>
+    <string name="badge_new">Novo</string>
+    <string name="device_gone">Agora mesmo</string>
+    <string name="device_maker_type">%1$s · %2$s</string>
+    <string name="device_distance">~%1$s m</string>
+    <string name="device_name_with_suffix">%1$s · %2$s</string>
+    <string name="device_generic_maker_type">%2$s %1$s</string>
+    <string name="device_generic_maker">Dispositivo %1$s</string>
+    <string name="device_generic">Dispositivo Bluetooth</string>
+    <string name="badge_paired">Meu</string>
+    <string name="device_no_name_suffix">Sem nome · …%1$s</string>
+    <string name="device_distance_within_1">a menos de 1 m</string>
+    <string name="device_distance_5_to_10">~5–10 m</string>
+    <string name="device_distance_over_10">mais de 10 m</string>
+</resources>

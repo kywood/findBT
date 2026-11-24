@@ -16,6 +16,7 @@ import com.gamenuri.btscanner24.core.model.PairedDevice
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -57,6 +58,10 @@ class DevicesViewModel(
         paired.value = bondedDevices.list()
         if (scanJob?.isActive == true || !scanner.hasScanPermission()) return
         scanJob = viewModelScope.launch(Dispatchers.Default) {
+            // Shares Android's 5-starts-per-30-s budget with the Nearby tab; quick tab switches would
+            // otherwise hit "scanning too frequently" (#62).
+            val cooldown = scanner.startCooldownMillis()
+            if (cooldown > 0) delay(cooldown)
             scanner.scan().collect { event ->
                 if (event is ScanEvent.Result) repository.onScanResult(event.result)
             }

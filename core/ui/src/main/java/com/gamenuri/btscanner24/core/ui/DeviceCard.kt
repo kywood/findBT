@@ -1,7 +1,7 @@
 package com.gamenuri.btscanner24.core.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -10,8 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Badge
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -31,7 +29,8 @@ import com.gamenuri.btscanner24.core.model.DeviceNaming
 import com.gamenuri.btscanner24.core.model.SignalLevel
 
 /**
- * One row of the device list (design home-v3): type icon, name with Mine/NEW badges, "Maker · Type",
+ * One row of the device list (design home-v3; plain rows since home-header-v4): type icon, name with Mine/NEW
+ * badges, "Maker · Type",
  * and on the right signal bars with the approximate distance. Gone devices stay in place, dimmed.
  * The MAC address and raw RSSI live on the detail and Advanced screens, not here.
  */
@@ -54,56 +53,52 @@ fun DeviceCard(
             SignalLevel.WEAK -> R.string.signal_weak
         },
     )
-    val cardModifier = modifier.fillMaxWidth().alpha(if (isGone) 0.45f else 1f)
-    val colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
-    val content: @Composable ColumnScope.() -> Unit = {
-        Row(
-            modifier = Modifier.heightIn(min = 64.dp).padding(horizontal = 12.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            DeviceIcon(device.category)
-            Spacer(Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = label.text(withSuffix = showSuffix),
-                        style = MaterialTheme.typography.titleMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false),
-                    )
-                    if (isPaired) PairedBadge(Modifier.padding(start = 6.dp))
-                    if (isNew) {
-                        Badge(modifier = Modifier.padding(start = 6.dp)) { Text(stringResource(R.string.badge_new)) }
-                    }
-                }
+    // Plain M3 list row, no card (design home-header-v4): 64 dp, about 1.5 more rows per screen.
+    val rowModifier = modifier
+        .fillMaxWidth()
+        .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+        .alpha(if (isGone) 0.45f else 1f)
+    Row(
+        modifier = rowModifier.heightIn(min = 64.dp).padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        DeviceIcon(device.category)
+        Spacer(Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = subtitle(device, label),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    text = label.text(withSuffix = showSuffix),
+                    style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false),
                 )
+                if (isPaired) PairedBadge(Modifier.padding(start = 6.dp))
+                if (isNew) {
+                    Badge(modifier = Modifier.padding(start = 6.dp)) { Text(stringResource(R.string.badge_new)) }
+                }
             }
-            Spacer(Modifier.width(8.dp))
-            Column(horizontalAlignment = Alignment.End) {
-                SignalBars(level = device.signalLevel, label = signal, inactive = isGone)
-                Text(
-                    text = when {
-                        isGone -> stringResource(R.string.device_gone)
-                        distanceMeters != null -> distanceText(distanceMeters)
-                        else -> signal
-                    },
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+            Text(
+                text = subtitle(device, label),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
-    }
-    if (onClick != null) {
-        Card(onClick = onClick, modifier = cardModifier, colors = colors, content = content)
-    } else {
-        Card(modifier = cardModifier, colors = colors, content = content)
+        Spacer(Modifier.width(8.dp))
+        Column(horizontalAlignment = Alignment.End) {
+            SignalBars(level = device.signalLevel, label = signal, inactive = isGone)
+            Text(
+                text = when {
+                    isGone -> stringResource(R.string.device_gone)
+                    distanceMeters != null -> distanceText(distanceMeters)
+                    else -> signal
+                },
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 

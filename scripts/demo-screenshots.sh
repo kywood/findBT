@@ -17,6 +17,7 @@ if [ "$#" -gt 0 ]; then LOCALES=("$@"); else LOCALES=(en ko); fi
 PKG="com.gamenuri.btscanner24.debug"
 ACTIVITY="$PKG/com.gamenuri.btscanner24.MainActivity"
 FIND_STATES=(spin walk locked close very_close here found sound lost turn_around far waiting)
+ONBOARDING_PAGES=(intro permission permission_legacy denied denied_legacy)
 WAIT_SECONDS="${WAIT_SECONDS:-3}"
 
 shot() { # shot <locale> <file-name> <am extras...>
@@ -31,6 +32,9 @@ shot() { # shot <locale> <file-name> <am extras...>
 
 for locale in "${LOCALES[@]}"; do
   mkdir -p "$OUT/$locale"
+  for page in "${ONBOARDING_PAGES[@]}"; do
+    shot "$locale" "onboarding-$page" --es demo onboarding --es demo_onboarding "$page"
+  done
   shot "$locale" nearby --es demo nearby
   shot "$locale" my-devices --es demo devices
   for state in "${FIND_STATES[@]}"; do

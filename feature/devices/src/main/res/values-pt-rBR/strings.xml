@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="devices_title">Meus dispositivos</string>
+    <string name="devices_section_nearby">Por perto agora</string>
+    <string name="devices_section_not_nearby">Fora de alcance</string>
+    <string name="devices_others">Outros dispositivos pareados (%1$d)</string>
+    <string name="devices_last_seen_now">Visto agora mesmo</string>
+    <string name="devices_last_seen_minutes">Visto pela última vez: há %1$d min</string>
+    <string name="devices_not_seen">Pareado · ainda não visto</string>
+    <string name="devices_more">Mais</string>
+    <string name="devices_hide">Ocultar da lista</string>
+    <string name="devices_empty_title">Nenhum dispositivo pareado</string>
+    <string name="devices_empty_body">Os dispositivos pareados com este celular aparecem aqui automaticamente.</string>
+    <string name="devices_open_bluetooth_settings">Parear nas configurações de Bluetooth</string>
+    <string name="devices_permission_body">Permita \"Dispositivos por perto\" para ver os dispositivos pareados com este celular.</string>
+    <string name="devices_permission_action">Permitir</string>
+    <string name="devices_add_tracker">Adicionar um rastreador</string>
+</resources>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="finder_close">Cerrar</string>
+    <string name="finder_found">Lo encontré</string>
+    <string name="finder_vibration">Vibración</string>
+    <string name="finder_spin_again">Girar otra vez</string>
+    <string name="finder_advanced">Avanzado</string>
+    <string name="finder_direction_label">Dirección aproximada</string>
+    <string name="finder_waiting_title">Buscando la señal…</string>
+    <string name="finder_waiting_body">Quédate cerca de donde lo tuviste por última vez</string>
+    <string name="finder_spin_title">Gira despacio en el sitio</string>
+    <string name="finder_spin_body">Como una brújula: da una vuelta completa con el teléfono frente a ti</string>
+    <string name="finder_spin_again_title">Dirección perdida</string>
+    <string name="finder_spin_again_body">Gira despacio otra vez</string>
+    <string name="finder_walk_title">Ahora camina hacia la flecha</string>
+    <string name="finder_walk_body">Comprobando la dirección…</string>
+    <string name="finder_locked_title">🔒 Dirección fijada</string>
+    <string name="finder_locked_body">Sigue en esta dirección</string>
+    <string name="finder_turn_around_title">Date la vuelta</string>
+    <string name="finder_turn_around_body">Probablemente está detrás de ti</string>
+    <string name="finder_right_here_title">Aquí mismo</string>
+    <string name="finder_right_here_body">Está a tu alcance. Mira a tu alrededor.</string>
+    <string name="finder_signal_lost_title">Señal perdida</string>
+    <string name="finder_signal_lost_body">Visto hace %1$d s · vuelve a donde la señal era más fuerte</string>
+    <string name="finder_no_compass_title">Sigue el frío y el calor</string>
+    <string name="finder_no_compass_body">Este teléfono no tiene sensor de dirección, así que no hay flecha</string>
+    <string name="finder_distance_label">distancia aproximada</string>
+    <string name="finder_band_right_here">Aquí mismo</string>
+    <string name="finder_band_very_close">Muy cerca</string>
+    <string name="finder_band_near">Cerca</string>
+    <string name="finder_band_far">Lejos</string>
+    <string name="finder_trend_closer">▲ Caliente</string>
+    <string name="finder_trend_farther">▼ Frío</string>
+    <string name="finder_trend_steady">Sigue</string>
+    <string name="finder_advanced_values">MAC %1$s · RSSI %2$s dBm (suavizado %3$s) · rumbo %4$s° · orientación %5$s° · cambios de MAC %6$d · %7$d s</string>
+    <string name="finder_confirm_hint">¿No sabes si es este? Acerca el teléfono justo a su lado. Si dice \"Aquí mismo\", lo encontraste.</string>
+    <string name="found_title">¡Lo encontraste!</string>
+    <string name="found_summary">%1$s · encontrado en %2$s</string>
+    <string name="found_minutes_seconds">%1$d min %2$d s</string>
+    <string name="found_done">Listo</string>
+    <plurals name="found_seconds">
+        <item quantity="one">%d s</item>
+        <item quantity="other">%d s</item>
+    </plurals>
+    <string name="finder_very_close_title">Muy cerca</string>
+    <string name="finder_very_close_body">Ve despacio y mira a tu alrededor</string>
+    <string name="finder_sound_play">Reproducir sonido</string>
+    <string name="finder_sound_stop">Detener sonido</string>
+    <string name="finder_sound_connecting">Conectando…</string>
+    <string name="finder_sound_retry">Reintentar</string>
+    <string name="finder_sound_failed">No se pudo reproducir el sonido. Acércate y vuelve a intentarlo.</string>
+    <string name="finder_sound_not_supported">Este dispositivo no puede reproducir sonido.</string>
+</resources>

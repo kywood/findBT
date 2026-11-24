@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="action_retry">Tentar de novo</string>
+    <string name="action_ok">OK</string>
+    <string name="action_allow">Permitir</string>
+    <string name="action_turn_on">Ativar</string>
+    <string name="action_open_settings">Configurações</string>
+    <string name="search_hint">Buscar por nome ou fabricante</string>
+    <string name="filter_named_only">Só dispositivos com nome</string>
+    <string name="permission_rationale">É necessária a permissão de Bluetooth para encontrar dispositivos por perto.</string>
+    <string name="permission_denied_settings">A permissão de Bluetooth está desativada. Ative-a nas Configurações para buscar.</string>
+    <string name="error_bluetooth_off">O Bluetooth está desligado.</string>
+    <string name="error_not_supported">Este aparelho não é compatível com Bluetooth Low Energy.</string>
+    <string name="error_too_frequent">A busca foi reiniciada vezes demais. Aguarde alguns segundos e tente de novo.</string>
+    <string name="error_location_off">A localização está desativada. Nesta versão do Android, a busca Bluetooth precisa da localização ativada.</string>
+    <string name="error_scan_failed">Não foi possível iniciar a busca.</string>
+    <string name="action_search">Buscar</string>
+    <string name="action_close_search">Fechar busca</string>
+    <string name="sort_menu">Ordenar</string>
+    <string name="sort_nearest">Mais perto</string>
+    <string name="sort_name">Nome</string>
+    <string name="sort_recent">Encontrados recentemente</string>
+    <string name="filter_hide_gone">Ocultar dispositivos ausentes</string>
+    <string name="empty_bluetooth_off_title">O Bluetooth está desligado</string>
+    <string name="empty_bluetooth_off_body">Ative o Bluetooth para encontrar dispositivos ao seu redor.</string>
+    <string name="empty_location_off_title">A localização está desativada</string>
+    <string name="scan_status_nearby">%1$d por perto</string>
+    <string name="scan_status_paused">Pausado · %1$d</string>
+    <string name="scan_status_filtered">%1$d / %2$d</string>
+    <string name="scan_searching">Procurando dispositivos por perto…</string>
+    <string name="action_pause_scan">Pausar busca</string>
+    <string name="action_resume_scan">Retomar busca</string>
+    <string name="action_more">Mais opções</string>
+    <string name="action_clear_list">Limpar lista</string>
+    <string name="filter_title">Filtro</string>
+    <string name="filter_types">Tipo de dispositivo</string>
+    <string name="filter_all">Todos</string>
+    <string name="filter_reset">Redefinir</string>
+    <string name="filter_done">Concluir</string>
+    <string name="filter_active_description">Filtro, %1$d aplicados</string>
+    <string name="reorder_pill">↑ Ordem mudou · toque para ordenar</string>
+</resources>

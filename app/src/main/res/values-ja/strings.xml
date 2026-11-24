@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tab_nearby">周りのデバイス</string>
+    <string name="tab_my_devices">マイデバイス</string>
+</resources>

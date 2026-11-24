@@ -32,6 +32,7 @@ internal object DemoMode {
             screen = screen,
             findState = intent.getStringExtra(EXTRA_FIND),
             locale = intent.getStringExtra(EXTRA_LOCALE),
+            onboardingPage = intent.getStringExtra(EXTRA_ONBOARDING),
         )
     }
 
@@ -57,6 +58,7 @@ internal object DemoMode {
     private const val EXTRA_SCREEN = "demo"
     private const val EXTRA_FIND = "demo_find"
     private const val EXTRA_LOCALE = "demo_locale"
+    private const val EXTRA_ONBOARDING = "demo_onboarding"
 }
 
 /** Looks like a running scan but never reports a real device. */
