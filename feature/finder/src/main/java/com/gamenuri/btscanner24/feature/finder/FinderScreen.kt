@@ -6,6 +6,8 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -62,12 +64,15 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
@@ -83,6 +88,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.gamenuri.btscanner24.core.ble.proximity.ProximityBand
 import com.gamenuri.btscanner24.core.ble.proximity.ProximityTrend
+import com.gamenuri.btscanner24.core.designsystem.component.WATER_RISE_MS
+import com.gamenuri.btscanner24.core.designsystem.component.waterRise
 import com.gamenuri.btscanner24.core.designsystem.theme.FindStateColors
 import com.gamenuri.btscanner24.core.designsystem.theme.NearoTextStyles
 import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
@@ -99,6 +106,8 @@ import kotlinx.coroutines.delay
 fun FinderScreen(
     address: String,
     onClose: () -> Unit,
+    /** Water level of the entry from Home (#90), 0..1 over the press and the rise; 1 shows it fully. */
+    entryProgress: () -> Float = { 1f },
     viewModel: FinderViewModel = viewModel(key = "finder-$address", factory = FinderViewModel.factory(address)),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -106,7 +115,7 @@ fun FinderScreen(
     // "I found it" swaps in the Found screen; leaving this branch stops the scan, sensors and haptics.
     var foundAfterSeconds by rememberSaveable { mutableStateOf<Int?>(null) }
     foundAfterSeconds?.let { seconds ->
-        FoundContent(label = state.deviceLabel, elapsedSeconds = seconds, onDone = onClose)
+        FoundRise(state, seconds, onDone = onClose)
         return
     }
 
@@ -136,6 +145,7 @@ fun FinderScreen(
 
     FinderContent(
         state = state,
+        entryProgress = entryProgress,
         actions = FinderActions(
             onClose = onClose,
             onFound = { foundAfterSeconds = state.advanced.elapsedSeconds },
@@ -154,16 +164,107 @@ data class FinderActions(
     val onToggleSound: () -> Unit = {},
 )
 
+/**
+ * Found it (#90 v2): the Found screen rises over a still picture of the find screen, its content fades
+ * in from 45 %, then the check pops once.
+ */
+@Composable
+private fun FoundRise(state: FinderUiState, seconds: Int, onDone: () -> Unit) {
+    val rise = remember { Animatable(0f) }
+    LaunchedEffect(Unit) { rise.animateTo(1f, tween(WATER_RISE_MS, easing = LinearEasing)) }
+    val colors = NearoTheme.colors.found
+    Box(Modifier.fillMaxSize()) {
+        if (rise.value < 1f) FinderContent(state, FinderActions())
+        FoundContent(
+            label = state.deviceLabel,
+            elapsedSeconds = seconds,
+            onDone = onDone,
+            popCheckAfterMs = WATER_RISE_MS,
+            modifier = Modifier.waterRise(
+                progress = { rise.value },
+                cover = Brush.verticalGradient(listOf(colors.backgroundTop, colors.backgroundBottom)),
+                contentFrom = FOUND_CONTENT_FROM,
+                pressMs = 0,
+            ),
+        )
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FinderContent(state: FinderUiState, actions: FinderActions, modifier: Modifier = Modifier) {
+fun FinderContent(
+    state: FinderUiState,
+    actions: FinderActions,
+    modifier: Modifier = Modifier,
+    entryProgress: () -> Float = { 1f },
+) {
     val palette = findColorsFor(state)
-    val background by animateColorAsState(palette.background, tween(COLOR_FADE_MS), label = "findBackground")
+    val background = palette.background
+    val stage = rememberStageRise(palette)
     val content by animateColorAsState(palette.content, tween(COLOR_FADE_MS), label = "findContent")
     val accent by animateColorAsState(palette.accent, tween(COLOR_FADE_MS), label = "findAccent")
+    // A new stage colour rises like water over the old one (#90); the content stays where it is.
+    Box(
+        modifier
+            .fillMaxSize()
+            .waterRise(progress = entryProgress, cover = palette.brush())
+            .background(stage.previous.brush()),
+    ) {
+        Box(
+            Modifier
+                .matchParentSize()
+                .waterRise(progress = { stage.progress.value }, glint = STAGE_GLINT, pressMs = 0)
+                .background(palette.brush()),
+        )
+        FinderScaffold(state, actions, content, accent, background)
+    }
+}
+
+private fun FindStateColors.brush(): Brush = Brush.verticalGradient(listOf(background, backgroundBottom))
+
+/** Background colour of the last stage and the rise of the new one; quick back-and-forth just snaps. */
+private class StageRise(initial: FindStateColors) {
+    var previous by mutableStateOf(initial)
+    val progress = Animatable(1f)
+}
+
+@Composable
+private fun rememberStageRise(target: FindStateColors): StageRise {
+    val rise = remember { StageRise(target) }
+    var shown by remember { mutableStateOf(target) }
+    var lastRiseAt by remember { mutableStateOf(0L) }
+    LaunchedEffect(target) {
+        // Only the background matters: a mint accent switching on is not a new water level.
+        if (target.background == shown.background && target.backgroundBottom == shown.backgroundBottom) {
+            shown = target
+            return@LaunchedEffect
+        }
+        val now = System.currentTimeMillis()
+        rise.previous = shown
+        shown = target
+        if (now - lastRiseAt < STAGE_RISE_GAP_MS) {
+            rise.progress.snapTo(1f)
+        } else {
+            lastRiseAt = now
+            rise.progress.snapTo(0f)
+            rise.progress.animateTo(1f, tween(WATER_RISE_MS, easing = LinearEasing))
+        }
+        rise.previous = target
+    }
+    return rise
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun FinderScaffold(
+    state: FinderUiState,
+    actions: FinderActions,
+    content: Color,
+    accent: Color,
+    background: Color,
+) {
     Scaffold(
-        modifier = modifier,
-        containerColor = background,
+        containerColor = Color.Transparent,
         contentColor = content,
         topBar = {
             CenterAlignedTopAppBar(
@@ -181,7 +282,7 @@ fun FinderContent(state: FinderUiState, actions: FinderActions, modifier: Modifi
                 },
                 // "⋯" opens the raw numbers (design v3: top-right is details/advanced), so nothing sits
                 // under the navigation bar at the bottom of a long screen.
-                actions = { AdvancedMenu(state.advanced, tint = content) },
+                actions = { AdvancedMenu(state.advanced, tint = content, background = background) },
             )
         },
         // The action row is pinned above the navigation bar and never scrolls away (design review #55).
@@ -504,15 +605,21 @@ private fun findColorsFor(state: FinderUiState): FindStateColors {
 
 /** Raw numbers for testers, behind the "⋯" button in the top bar. */
 @Composable
-private fun AdvancedMenu(info: AdvancedInfo, tint: Color) {
+private fun AdvancedMenu(info: AdvancedInfo, tint: Color, background: Color) {
     var expanded by rememberSaveable { mutableStateOf(false) }
     Box {
         IconButton(onClick = { expanded = true }) {
             Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.finder_advanced), tint = tint)
         }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+        // Surfaces on blue are a lighter blue, never a dark card (#97): white 14 % over the background.
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            containerColor = lerp(background, Color.White, MENU_WHITE),
+        ) {
             Text(
                 text = stringResource(R.string.finder_advanced),
+                color = tint,
                 style = MaterialTheme.typography.titleSmall,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             )
@@ -527,6 +634,7 @@ private fun AdvancedMenu(info: AdvancedInfo, tint: Color) {
                     info.addressSwitches,
                     info.elapsedSeconds,
                 ),
+                color = tint,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).widthIn(max = 280.dp),
             )
@@ -605,6 +713,10 @@ private fun vibrator(context: Context): Vibrator? {
 private const val HAPTIC_MS = 40L
 private const val LONG_HAPTIC_MS = 400L
 private const val COLOR_FADE_MS = 400
+private const val STAGE_RISE_GAP_MS = 1_500L
+private const val STAGE_GLINT = 0.8f
+private const val MENU_WHITE = 0.14f
+private const val FOUND_CONTENT_FROM = 0.45f
 
 private const val MUTED_ALPHA = 0.78f
 private const val HINT_ALPHA = 0.8f

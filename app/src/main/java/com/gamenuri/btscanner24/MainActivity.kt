@@ -10,17 +10,30 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.EnterExitState
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.core.ExperimentalTransitionApi
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.gamenuri.btscanner24.core.ble.BleScanner
+import com.gamenuri.btscanner24.core.designsystem.component.WATER_TOTAL_MS
 import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
 import com.gamenuri.btscanner24.demo.DemoMode
 import com.gamenuri.btscanner24.feature.finder.FinderScreen
@@ -91,6 +104,7 @@ private fun DemoOnboarding(name: String) {
     OnboardingContent(page = page, actions = OnboardingActions(), legacyLocation = name.endsWith("_legacy"))
 }
 
+@OptIn(ExperimentalAnimationApi::class, ExperimentalTransitionApi::class)
 @Composable
 private fun AppNavHost(start: String, startOnMyDevices: Boolean, openPaywall: Boolean, onOnboardingDone: () -> Unit) {
     val navController = rememberNavController()
@@ -103,7 +117,12 @@ private fun AppNavHost(start: String, startOnMyDevices: Boolean, openPaywall: Bo
                 },
             )
         }
-        composable(Routes.HOME) {
+        composable(
+            Routes.HOME,
+            // Home stays underneath while the find screen's water rises over it and drains away (#90, #97).
+            exitTransition = { if (targetState.isFinder()) holdOut(WATER_TOTAL_MS) else null },
+            popEnterTransition = { if (initialState.isFinder()) holdIn(WATER_DRAIN_MS) else null },
+        ) {
             HomeScreen(
                 onFind = { address -> navController.navigate(Routes.finder(address)) },
                 onOpenSettings = { navController.navigate(Routes.SETTINGS) },
@@ -121,10 +140,23 @@ private fun AppNavHost(start: String, startOnMyDevices: Boolean, openPaywall: Bo
         composable(Routes.LICENSES) {
             LicensesScreen(librariesRes = R.raw.aboutlibraries, onBack = { navController.popBackStack() })
         }
-        composable(Routes.FINDER) { entry ->
+        composable(
+            Routes.FINDER,
+            enterTransition = { holdIn(WATER_TOTAL_MS) },
+            popExitTransition = { holdOut(WATER_DRAIN_MS) },
+        ) { entry ->
+            // Rises in over [WATER_TOTAL_MS], drains out over [WATER_DRAIN_MS] when leaving.
+            val water by transition.animateFloat(
+                transitionSpec = {
+                    val ms = if (targetState == EnterExitState.Visible) WATER_TOTAL_MS else WATER_DRAIN_MS
+                    tween(ms, easing = LinearEasing)
+                },
+                label = "findWater",
+            ) { if (it == EnterExitState.Visible) 1f else 0f }
             FinderScreen(
                 address = entry.arguments?.getString(Routes.ADDRESS_ARG).orEmpty(),
                 onClose = { navController.popBackStack() },
+                entryProgress = { water },
             )
         }
     }
@@ -167,6 +199,20 @@ private val buildAppInfo = AppInfo(
     supportEmail = BuildConfig.SUPPORT_EMAIL,
     privacyPolicyUrl = BuildConfig.PRIVACY_POLICY_URL,
 )
+
+/**
+ * Keeps a screen on stage, unchanged, for [ms] so the other one can draw its own water transition
+ * (#90). Nearly-1 alpha because a transition needs something to animate.
+ */
+private fun holdIn(ms: Int): EnterTransition = fadeIn(tween(ms), initialAlpha = HOLD_ALPHA)
+
+private fun holdOut(ms: Int): ExitTransition = fadeOut(tween(ms), targetAlpha = HOLD_ALPHA)
+
+private fun NavBackStackEntry.isFinder(): Boolean = destination.route == Routes.FINDER
+
+/** Blue → dark drains faster than it rises (#97, color-modes-v1). */
+private const val WATER_DRAIN_MS = 500
+private const val HOLD_ALPHA = 0.999f
 
 /** Navigation routes. Each screen's back stack entry owns its ViewModel, so leaving find mode clears it. */
 private object Routes {
