@@ -7,7 +7,7 @@
     <string name="devices_last_seen_now">たった今検出</string>
     <string name="devices_last_seen_minutes">最終検出: %1$d分前</string>
     <string name="devices_not_seen">ペアリング済み · 未検出</string>
-    <string name="devices_more">その他</string>
+    <string name="devices_more_for">%1$sのその他</string>
     <string name="devices_hide">リストに表示しない</string>
     <string name="devices_empty_title">ペアリング済みのデバイスはありません</string>
     <string name="devices_empty_body">このスマートフォンとペアリングしたデバイスが自動的にここに表示されます。</string>

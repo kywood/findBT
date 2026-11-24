@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="onboarding_intro_title">Encontre fones, relógios e rastreadores perdidos</string>
-    <string name="onboarding_intro_body">O Nearo segue o sinal Bluetooth e avisa quando você está chegando perto.</string>
+    <string name="onboarding_intro_body">Ande para onde a seta aponta. O Nearo avisa quando você estiver chegando perto.</string>
     <string name="onboarding_get_started">Começar</string>
     <string name="onboarding_permission_title">Permita \"Dispositivos por perto\"</string>
     <string name="onboarding_permission_body">Necessário para ver os dispositivos Bluetooth ao seu redor.</string>
     <string name="onboarding_permission_title_legacy">Permita o acesso à localização</string>
     <string name="onboarding_permission_body_legacy">O Android 11 e versões anteriores pedem a localização para mostrar dispositivos Bluetooth. O Nearo não usa sua localização.</string>
     <string name="onboarding_check_location">Nunca rastreamos sua localização</string>
-    <string name="onboarding_check_local">Nada sai do seu celular</string>
+    <string name="onboarding_check_local">Os resultados da busca ficam no seu celular</string>
     <string name="onboarding_check_stops">A busca para quando você sai do app</string>
     <string name="onboarding_continue">Continuar</string>
     <string name="onboarding_denied_title">Permissão necessária</string>
@@ -16,4 +16,6 @@
     <string name="onboarding_denied_body_legacy">Sem a permissão de localização, o Nearo não consegue ver dispositivos Bluetooth nesta versão do Android. Você pode ativar nas Configurações.</string>
     <string name="onboarding_open_settings">Abrir Configurações</string>
     <string name="onboarding_try_again">Tentar de novo</string>
+    <string name="onboarding_hero_device">Meus fones</string>
+    <string name="onboarding_hero_distance_label">Perto · distância aproximada</string>
 </resources>

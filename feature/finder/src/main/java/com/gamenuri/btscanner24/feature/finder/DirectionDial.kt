@@ -24,17 +24,17 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
-import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.unit.dp
+import com.gamenuri.btscanner24.core.designsystem.component.FLOOR_TILT_DEGREES
+import com.gamenuri.btscanner24.core.designsystem.component.drawFloorArrow
+import com.gamenuri.btscanner24.core.designsystem.component.drawRoundedArrow
+import com.gamenuri.btscanner24.core.designsystem.component.nearoArrowPath
 import kotlin.math.abs
 
 /**
@@ -84,8 +84,6 @@ private fun FloorArrow(degrees: Float, confidence: ArrowConfidence, locked: Bool
     val sectorHalf by animateFloatAsState(if (wide) 45f else 25f, label = "sector")
 
     val color = LocalContentColor.current
-    val shade = lerp(color, Color.Black, 0.35f)
-    val highlight = lerp(color, Color.White, 0.25f)
 
     Box(
         modifier = Modifier
@@ -110,22 +108,7 @@ private fun FloorArrow(degrees: Float, confidence: ArrowConfidence, locked: Bool
                 sweepAngle = sectorHalf * 2,
                 useCenter = true,
             )
-            drawOval(
-                color = Color.Black.copy(alpha = 0.12f),
-                topLeft = Offset(size.width * 0.3f, size.height * 0.47f),
-                size = Size(size.width * 0.4f, size.height * 0.12f),
-            )
-            scale(scaleX = widthScale, scaleY = 1f, pivot = center) {
-                val path = arrowPath()
-                // Darker copy slightly below gives the arrow some thickness.
-                translate(top = size.minDimension * 0.025f) {
-                    drawRounded(path, Brush.linearGradient(listOf(shade, shade)))
-                }
-                drawRounded(
-                    path,
-                    Brush.verticalGradient(listOf(highlight, color), startY = 0f, endY = size.height),
-                )
-            }
+            scale(scaleX = widthScale, scaleY = 1f, pivot = center) { drawFloorArrow(color) }
         }
     }
 }
@@ -143,12 +126,12 @@ private fun SpinningNeedle(progress: Float) {
     val track = LocalContentColor.current.copy(alpha = 0.25f)
     Canvas(modifier = Modifier.fillMaxSize()) {
         progressRing(track, color, progress)
-        val path = arrowPath(scale = 0.75f)
+        val path = nearoArrowPath(scale = 0.75f)
         // Three fading ghosts behind the needle read as motion.
         for (ghost in GHOSTS downTo 0) {
             rotate(rotation - ghost * GHOST_SPACING_DEGREES) {
                 val ghostAlpha = if (ghost == 0) 1f else 0.12f * (GHOSTS + 1 - ghost)
-                drawRounded(path, Brush.linearGradient(listOf(color, color)), alpha = ghostAlpha)
+                drawRoundedArrow(path, Brush.linearGradient(listOf(color, color)), alpha = ghostAlpha)
             }
         }
     }
@@ -197,29 +180,6 @@ private fun DrawScope.progressRing(track: Color, color: Color, progress: Float) 
     )
 }
 
-/** Nearo's own round-ended arrow, pointing up from the centre. */
-private fun DrawScope.arrowPath(scale: Float = 1f): Path {
-    val s = size.minDimension * scale
-    val cx = center.x
-    val cy = center.y
-    return Path().apply {
-        moveTo(cx, cy - 0.40f * s)
-        lineTo(cx + 0.20f * s, cy - 0.08f * s)
-        lineTo(cx + 0.07f * s, cy - 0.11f * s)
-        lineTo(cx + 0.07f * s, cy + 0.28f * s)
-        lineTo(cx - 0.07f * s, cy + 0.28f * s)
-        lineTo(cx - 0.07f * s, cy - 0.11f * s)
-        lineTo(cx - 0.20f * s, cy - 0.08f * s)
-        close()
-    }
-}
-
-private fun DrawScope.drawRounded(path: Path, brush: Brush, alpha: Float = 1f) {
-    drawPath(path, brush, alpha = alpha)
-    // A round-joined stroke of the same paint rounds the corners.
-    drawPath(path, brush, alpha = alpha, style = Stroke(width = 6.dp.toPx(), join = StrokeJoin.Round))
-}
-
 /**
  * Keeps the angle continuous so the arrow turns the short way across north (350° → 10° is +20°,
  * not −340°), and ignores changes under 5° to stop jitter.
@@ -232,7 +192,6 @@ private fun rememberContinuousAngle(degrees: Float): Float {
     return holder[0]
 }
 
-private const val FLOOR_TILT_DEGREES = 58f
 private const val MIN_TURN_DEGREES = 5f
 private const val GHOSTS = 3
 private const val GHOST_SPACING_DEGREES = 12f
