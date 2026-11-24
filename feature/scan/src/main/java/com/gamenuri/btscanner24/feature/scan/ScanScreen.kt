@@ -467,6 +467,72 @@ private fun FilterButton(count: Int, onClick: () -> Unit) {
     }
 }
 
+@Composable
+private fun DeviceList(
+    state: ScanUiState,
+    permissionBanner: PermissionBanner?,
+    error: ScanFailure?,
+    actions: ScanActions,
+    listState: LazyListState,
+    modifier: Modifier = Modifier,
+) {
+    LazyColumn(
+        modifier = modifier,
+        state = listState,
+        contentPadding = PaddingValues(bottom = 16.dp),
+    ) {
+        // Permission and error banners stay the first list item (design home-header-v4 §6).
+        permissionBanner?.let { banner ->
+            item(key = "permission") {
+                StatusBanner(
+                    message = stringResource(
+                        when (banner) {
+                            PermissionBanner.OPEN_SETTINGS -> R.string.permission_denied_settings
+                            PermissionBanner.ASK_AGAIN -> R.string.permission_rationale
+                        },
+                    ),
+                    actionLabel = stringResource(
+                        when (banner) {
+                            PermissionBanner.OPEN_SETTINGS -> R.string.action_open_settings
+                            PermissionBanner.ASK_AGAIN -> R.string.action_allow
+                        },
+                    ),
+                    onAction = actions.onPermissionAction,
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                )
+            }
+        }
+        error?.let { reason ->
+            item(key = "error") { ScanErrorBanner(reason, actions, Modifier.padding(horizontal = 16.dp)) }
+        }
+        if (state.items.isEmpty() && state.isScanning) {
+            item(key = "searching") {
+                Text(
+                    text = stringResource(R.string.scan_searching),
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 48.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                )
+            }
+        }
+        // Stable keys keep each row attached to its device; rows only move on a full sort.
+        items(state.items, key = { it.device.address }) { item ->
+            DeviceCard(
+                device = item.device,
+                label = item.label,
+                showSuffix = item.showSuffix,
+                isPaired = item.isPaired,
+                isNew = item.isNew,
+                isGone = item.isGone,
+                distanceMeters = item.distanceMeters,
+                onClick = { actions.onDeviceClick(item.device) },
+                modifier = Modifier.animateItem(),
+            )
+        }
+    }
+}
+
 /** Type chips (multi-select, "All" clears them) and two switches; changes apply at once. */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
