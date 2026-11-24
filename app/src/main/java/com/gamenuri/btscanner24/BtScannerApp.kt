@@ -57,7 +57,13 @@ class BtScannerApp :
     // Connects to Google Play only when a screen first asks (Settings, paywall), not at start-up (#34).
     // The rewarded ad's 24 h day pass (#81) sits on top of the purchase.
     override val premium: PremiumStore by lazy {
-        DemoMode.premium() ?: DayPassPremiumStore(this, PlayPremiumStore(this))
+        val demoStore = DemoMode.premium()
+        when {
+            demoStore == null -> DayPassPremiumStore(this, PlayPremiumStore(this))
+            // Demo with test ads: the rewarded ad's day pass works there too.
+            demo?.showAds == true -> DayPassPremiumStore(this, demoStore)
+            else -> demoStore
+        }
     }
 
     /** No ads in the debug demo mode unless asked for: screenshots stay clean and repeatable. */
