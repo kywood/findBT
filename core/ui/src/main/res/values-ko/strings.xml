@@ -41,16 +41,20 @@
     <string name="device_distance_over_10">10m 이상</string>
     <!-- Paywall (#32, design screens-rest-v3 §3) -->
     <string name="paywall_restore">복원</string>
+    <string name="paywall_close">닫기</string>
     <string name="paywall_title">Nearo 프리미엄</string>
     <string name="paywall_benefit_devices">기기 무제한 저장</string>
-    <string name="paywall_benefit_ads">광고 없음, 영원히</string>
-    <string name="paywall_benefit_support">앞으로 나올 기능 응원</string>
+    <string name="paywall_benefit_ads">광고 없음</string>
+    <string name="paywall_benefit_support">앞으로 나올 기능 지원</string>
     <string name="paywall_price">평생 이용권 · %1$s</string>
     <string name="paywall_loading">가격 불러오는 중…</string>
-    <string name="paywall_once">한 번 결제. 구독 아님.</string>
-    <string name="paywall_buy">프리미엄 잠금 해제</string>
+    <string name="paywall_once">한 번만 결제, 구독 아님</string>
+    <string name="paywall_buy">프리미엄 열기</string>
     <string name="paywall_price_note">가격은 Google Play가 현지 통화로 보여 줘요.</string>
     <string name="paywall_pending">결제 대기 중이에요. 결제가 끝나면 프리미엄이 켜져요.</string>
     <string name="menu_settings">설정</string>
     <string name="menu_more_options">더보기</string>
+    <string name="paywall_or">또는</string>
+    <string name="paywall_reward">광고 보고 24시간 무료로 쓰기</string>
+    <string name="paywall_reward_note">광고 1개(약 30초)를 끝까지 보면 24시간 동안 프리미엄</string>
 </resources>

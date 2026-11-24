@@ -20,6 +20,8 @@ GLOSSARY = {
     'category_group_tracker': dict(ko='트래커', ja='トラッカー', es='Rastreadores', pt='Rastreadores', de='Tracker'),
     'badge_paired':      dict(ko='내 기기', ja='マイ', es='Mío', pt='Meu', de='Meins'),
     'device_generic':    dict(ko='블루투스 기기', ja='Bluetooth', es='Bluetooth', pt='Bluetooth', de='Bluetooth'),
+    'paywall_buy':       dict(ko='프리미엄 열기', ja='プレミアムを入手', es='Obtener Premium', pt='Obter Premium', de='Premium holen'),
+    'settings_premium_buy_no_price': dict(ko='프리미엄 열기', ja='プレミアムを入手', es='Obtener Premium', pt='Obter Premium', de='Premium holen'),
     'devices_others':    dict(ko='다른 페어링 기기', ja='ペアリング', es='vinculados', pt='pareados', de='gekoppelte'),
 }
 BANNED = {  # never show "Unknown" (#46), never promise precision
