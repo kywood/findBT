@@ -26,7 +26,8 @@
     <string name="empty_location_off_title">Standort ist aus</string>
     <string name="scan_status_nearby">%1$d in der Nähe</string>
     <string name="scan_status_paused">Pausiert · %1$d</string>
-    <string name="scan_status_filtered">%1$d / %2$d</string>
+    <string name="scan_status_filtered">%1$d von %2$d</string>
+    <string name="scan_status_paused_filtered">Pausiert · %1$d von %2$d</string>
     <string name="scan_searching">Suche nach Geräten in der Nähe…</string>
     <string name="action_pause_scan">Scan pausieren</string>
     <string name="action_resume_scan">Scan fortsetzen</string>
@@ -38,5 +39,6 @@
     <string name="filter_reset">Zurücksetzen</string>
     <string name="filter_done">Fertig</string>
     <string name="filter_active_description">Filter, %1$d aktiv</string>
-    <string name="reorder_pill">↑ Reihenfolge geändert · zum Sortieren tippen</string>
+    <string name="home_reorder_chip">↑ Neu sortieren</string>
+    <string name="home_reorder_chip_description">Die Reihenfolge der Liste hat sich geändert. Zum Sortieren tippen.</string>
 </resources>
