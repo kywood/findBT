@@ -12,12 +12,12 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.content.ContextCompat
+import java.util.UUID
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
-import java.util.UUID
 
 /** Whether a device has the Immediate Alert service (0x1802). */
 enum class AlertSupport { SUPPORTED, NOT_SUPPORTED, UNREACHABLE }

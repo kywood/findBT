@@ -254,12 +254,22 @@ private fun ActionRow(state: FinderUiState, actions: FinderActions, content: Col
 private val FinderUiState.showSoundButton: Boolean
     get() = when (sound) {
         SoundState.UNAVAILABLE -> false
-        SoundState.CONNECTING, SoundState.PLAYING -> true
+        SoundState.CONNECTING, SoundState.PLAYING, SoundState.NOT_SUPPORTED -> true
         SoundState.READY, SoundState.FAILED -> stage != FinderStage.WAITING && stage != FinderStage.SIGNAL_LOST
     }
 
 @Composable
 private fun SoundButton(sound: SoundState, onClick: () -> Unit, content: Color) {
+    if (sound == SoundState.NOT_SUPPORTED) {
+        Text(
+            text = stringResource(R.string.finder_sound_not_supported),
+            modifier = Modifier.fillMaxWidth(),
+            style = MaterialTheme.typography.bodySmall,
+            color = content.copy(alpha = MUTED_ALPHA),
+            textAlign = TextAlign.Center,
+        )
+        return
+    }
     if (sound == SoundState.FAILED) {
         Text(
             text = stringResource(R.string.finder_sound_failed),

@@ -48,4 +48,5 @@
     <string name="finder_sound_connecting">接続中…</string>
     <string name="finder_sound_retry">もう一度試す</string>
     <string name="finder_sound_failed">音を鳴らせませんでした。もう少し近づいてもう一度お試しください。</string>
+    <string name="finder_sound_not_supported">このデバイスは音を鳴らせません。</string>
 </resources>

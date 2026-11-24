@@ -12,12 +12,12 @@ import com.android.billingclient.api.ProductDetails
 import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.QueryProductDetailsParams
 import com.android.billingclient.api.QueryPurchasesParams
+import kotlin.coroutines.resume
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlin.coroutines.resume
 
 /**
  * Google Play Billing for one non-consumable in-app product (#32). Ownership is cached on the
@@ -96,7 +96,8 @@ class PlayPremiumStore(context: Context, private val productId: String = DEFAULT
             .build()
         client.queryProductDetailsAsync(params) { result, details ->
             if (result.responseCode != BillingClient.BillingResponseCode.OK) return@queryProductDetailsAsync
-            val found = details.productDetailsList.firstOrNull { it.productId == productId } ?: return@queryProductDetailsAsync
+            val found =
+                details.productDetailsList.firstOrNull { it.productId == productId } ?: return@queryProductDetailsAsync
             product = found
             @Suppress("DEPRECATION") // single offer; the list API adds nothing for one lifetime product
             val price = found.oneTimePurchaseOfferDetails?.formattedPrice
