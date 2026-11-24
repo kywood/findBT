@@ -39,18 +39,19 @@ fun DeviceCategory.iconRes(): Int = when (this) {
 
 /** Icon on a rounded tile (token shape deviceIcon = 12 dp). Decorative: the row text names the type. */
 @Composable
-fun DeviceIcon(category: DeviceCategory, modifier: Modifier = Modifier, size: Dp = 40.dp) {
+fun DeviceIcon(category: DeviceCategory, modifier: Modifier = Modifier, size: Dp = 40.dp, muted: Boolean = false) {
+    val colors = MaterialTheme.colorScheme
     Box(
         modifier = modifier
             .size(size)
             .clip(MaterialTheme.shapes.medium)
-            .background(MaterialTheme.colorScheme.primaryContainer),
+            .background(if (muted) colors.surfaceVariant else colors.primaryContainer),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
             painter = painterResource(category.iconRes()),
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+            tint = if (muted) colors.onSurfaceVariant else colors.onPrimaryContainer,
             modifier = Modifier.size(size * 0.55f),
         )
     }

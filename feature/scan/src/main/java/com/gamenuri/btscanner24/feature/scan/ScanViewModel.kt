@@ -13,7 +13,7 @@ import com.gamenuri.btscanner24.core.ble.ScanEvent
 import com.gamenuri.btscanner24.core.data.DataDependenciesProvider
 import com.gamenuri.btscanner24.core.data.ListPreferencesRepository
 import com.gamenuri.btscanner24.core.model.BleDevice
-import com.gamenuri.btscanner24.core.model.CategoryGroup
+import com.gamenuri.btscanner24.core.model.DeviceFilter
 import com.gamenuri.btscanner24.core.model.DeviceNaming
 import com.gamenuri.btscanner24.core.model.DeviceSort
 import com.gamenuri.btscanner24.core.model.ListPreferences
@@ -55,6 +55,9 @@ class ScanViewModel(
 
     private val ordering = OrderingState()
 
+    /** The devices behind the last list, for the filter screen's live count. */
+    @Volatile private var latest: Collection<BleDevice> = emptyList()
+
     @OptIn(FlowPreview::class)
     private val throttledDevices = repository.devices
         // Scan callbacks can arrive dozens of times per second; redraw at most twice a second.
@@ -79,15 +82,18 @@ class ScanViewModel(
         combine(scanState, throttledDevices, listInputs, ticker) { (status, paused), devices, inputs, _ ->
             val now = clock()
             val (prefs, q, token, aliases) = inputs
-            val (items, reorderAvailable) = ordering.update(devices.values, prefs, q, token, now, aliases)
+            val list = ordering.update(devices.values, prefs, q, token, now, aliases)
+            latest = devices.values
             ScanUiState(
                 status = status,
-                items = items,
+                items = list.items,
                 preferences = prefs,
                 query = q,
-                reorderAvailable = reorderAvailable,
+                reorderAvailable = list.reorderAvailable,
+                hiddenOtherCount = list.hiddenOther,
                 isPaused = paused,
                 totalCount = devices.size,
+                census = DeviceListOrdering.census(devices.values, aliases.keys),
             )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ScanUiState())
 
@@ -166,20 +172,23 @@ class ScanViewModel(
     }
 
     fun setSort(sort: DeviceSort) = updatePreferences { it.copy(sort = sort) }
-    fun toggleNamedOnly() = updatePreferences { it.copy(namedOnly = !it.namedOnly) }
-    fun toggleHideGone() = updatePreferences { it.copy(hideGone = !it.hideGone) }
 
-    /** Filter sheet "All": show every type again. */
-    fun clearGroups() = updatePreferences { it.copy(groups = emptySet()) }
+    /** "N other devices hidden · Show" at the end of the list (#82): same as turning the switch on. */
+    fun showOther() = updateFilter { it.copy(showOther = true) }
 
-    /** Filter sheet "Reset": types, names and gone devices back to the defaults; sort stays. */
-    fun resetFilters() = updatePreferences { ListPreferences(sort = it.sort) }
-    fun toggleGroup(group: CategoryGroup) = updatePreferences {
-        it.copy(groups = if (group in it.groups) it.groups - group else it.groups + group)
-    }
+    /** The filter screen's "Show N devices" (#85): applies the whole edited filter at once. */
+    fun applyFilter(filter: DeviceFilter) = updateFilter { filter }
+
+    /** How many rows [filter] would show right now, with the current search. */
+    fun resultCount(filter: DeviceFilter): Int =
+        DeviceListOrdering.count(latest, filter, query.value, clock(), pairedAliases.value.keys)
 
     private fun updatePreferences(transform: (ListPreferences) -> ListPreferences) {
         viewModelScope.launch { listPreferences.update(transform) }
+    }
+
+    private fun updateFilter(transform: (DeviceFilter) -> DeviceFilter) {
+        updatePreferences { it.copy(filter = transform(it.filter)) }
     }
 
     override fun onCleared() {
@@ -200,6 +209,8 @@ class ScanViewModel(
         }
     }
 }
+
+internal data class OrderedList(val items: List<DeviceListItem>, val reorderAvailable: Boolean, val hiddenOther: Int)
 
 private data class ListInputs(
     val prefs: ListPreferences,
@@ -229,9 +240,13 @@ internal class OrderingState {
         token: Int,
         now: Long,
         pairedAliases: Map<String, String> = emptyMap(),
-    ): Pair<List<DeviceListItem>, Boolean> {
-        val filtered = DeviceListOrdering.filter(devices, prefs, query, now)
-        val sorted = DeviceListOrdering.sort(filtered, prefs.sort)
+    ): OrderedList {
+        val split = DeviceListOrdering.filter(devices, prefs.filter, query, now, paired = pairedAliases.keys)
+        val filtered = split.all
+        // Personal devices first, then the "Other devices" section (#82), each in the chosen sort.
+        val sorted = DeviceListOrdering.sort(split.personal, prefs.sort) +
+            DeviceListOrdering.sort(split.other, prefs.sort)
+        val otherAddresses = split.other.mapTo(HashSet()) { it.address }
         val explicit = displayedOrder.isEmpty() || prefs != lastPrefs || query != lastQuery || token != lastToken
         if (explicit && filtered.isNotEmpty()) settleUntil = now + SETTLE_MS
         val fullSort = explicit || now < settleUntil
@@ -239,7 +254,9 @@ internal class OrderingState {
         lastQuery = query
         lastToken = token
 
-        val ordered = if (fullSort) sorted else DeviceListOrdering.keepOrder(displayedOrder, filtered)
+        val kept = if (fullSort) sorted else DeviceListOrdering.keepOrder(displayedOrder, filtered)
+        // Keep-order may interleave a device that switched section; the sections themselves stay apart.
+        val ordered = kept.filter { it.address !in otherAddresses } + kept.filter { it.address in otherAddresses }
         if (fullSort) sortedAddresses = sorted.mapTo(HashSet()) { it.address }
         displayedOrder = ordered.map { it.address }
 
@@ -254,10 +271,11 @@ internal class OrderingState {
                 label = labels[index],
                 showSuffix = DeviceNaming.isDuplicate(labels[index], duplicates),
                 isPaired = device.address in pairedAliases,
+                isOther = device.address in otherAddresses,
             )
         }
         val reorderAvailable = !fullSort && sorted.map { it.address } != displayedOrder
-        return items to reorderAvailable
+        return OrderedList(items, reorderAvailable, split.hiddenOther)
     }
 
     companion object {

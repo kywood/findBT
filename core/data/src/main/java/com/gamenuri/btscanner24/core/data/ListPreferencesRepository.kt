@@ -9,8 +9,11 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.gamenuri.btscanner24.core.model.CategoryGroup
+import com.gamenuri.btscanner24.core.model.DeviceFilter
 import com.gamenuri.btscanner24.core.model.DeviceSort
+import com.gamenuri.btscanner24.core.model.DistanceBucket
 import com.gamenuri.btscanner24.core.model.ListPreferences
+import com.gamenuri.btscanner24.core.model.SignalLevel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -26,22 +29,38 @@ class ListPreferencesRepository(private val store: DataStore<Preferences>) {
     suspend fun update(transform: (ListPreferences) -> ListPreferences) {
         store.edit { prefs ->
             val next = transform(prefs.toListPreferences())
+            val filter = next.filter
             prefs[SORT] = next.sort.name
-            prefs[NAMED_ONLY] = next.namedOnly
-            prefs[GROUPS] = next.groups.mapTo(HashSet()) { it.name }
-            prefs[HIDE_GONE] = next.hideGone
+            prefs[NAMED_ONLY] = !filter.showUnnamed
+            prefs[GROUPS] = filter.types.mapTo(HashSet()) { it.name }
+            prefs[HIDE_GONE] = filter.hideGone
+            prefs[SHOW_OTHER] = filter.showOther
+            prefs[DISTANCES] = filter.distances.mapTo(HashSet()) { it.name }
+            prefs[MANUFACTURERS] = filter.manufacturers
+            prefs[SIGNALS] = filter.signals.mapTo(HashSet()) { it.name }
         }
     }
 
+    // Keys from before #82 keep their names, so existing users keep their choices.
     private fun Preferences.toListPreferences(): ListPreferences {
-        val defaults = ListPreferences()
+        val defaults = DeviceFilter()
         return ListPreferences(
-            sort = this[SORT]?.let { name -> DeviceSort.entries.firstOrNull { it.name == name } } ?: defaults.sort,
-            namedOnly = this[NAMED_ONLY] ?: defaults.namedOnly,
-            groups = this[GROUPS]
-                ?.mapNotNullTo(HashSet()) { name -> CategoryGroup.entries.firstOrNull { it.name == name } }
-                ?: defaults.groups,
-            hideGone = this[HIDE_GONE] ?: defaults.hideGone,
+            sort = this[SORT]?.let { name -> DeviceSort.entries.firstOrNull { it.name == name } } ?: DeviceSort.NEAREST,
+            filter = DeviceFilter(
+                showOther = this[SHOW_OTHER] ?: defaults.showOther,
+                showUnnamed = this[NAMED_ONLY]?.not() ?: defaults.showUnnamed,
+                types = this[GROUPS]
+                    ?.mapNotNullTo(HashSet()) { name -> CategoryGroup.entries.firstOrNull { it.name == name } }
+                    ?: defaults.types,
+                distances = this[DISTANCES]
+                    ?.mapNotNullTo(HashSet()) { name -> DistanceBucket.entries.firstOrNull { it.name == name } }
+                    ?: defaults.distances,
+                signals = this[SIGNALS]
+                    ?.mapNotNullTo(HashSet()) { name -> SignalLevel.entries.firstOrNull { it.name == name } }
+                    ?: defaults.signals,
+                manufacturers = this[MANUFACTURERS] ?: defaults.manufacturers,
+                hideGone = this[HIDE_GONE] ?: defaults.hideGone,
+            ),
         )
     }
 
@@ -50,6 +69,10 @@ class ListPreferencesRepository(private val store: DataStore<Preferences>) {
         val NAMED_ONLY = booleanPreferencesKey("named_only")
         val GROUPS = stringSetPreferencesKey("groups")
         val HIDE_GONE = booleanPreferencesKey("hide_gone")
+        val SHOW_OTHER = booleanPreferencesKey("show_other")
+        val DISTANCES = stringSetPreferencesKey("distances")
+        val SIGNALS = stringSetPreferencesKey("signals")
+        val MANUFACTURERS = stringSetPreferencesKey("manufacturers")
     }
 }
 

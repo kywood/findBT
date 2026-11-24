@@ -12,11 +12,10 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -31,7 +30,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Sort
@@ -51,13 +49,11 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
-import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
@@ -75,13 +71,14 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -96,12 +93,10 @@ import com.gamenuri.btscanner24.core.designsystem.component.StatusBanner
 import com.gamenuri.btscanner24.core.designsystem.icon.NearoIcons
 import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
 import com.gamenuri.btscanner24.core.model.BleDevice
-import com.gamenuri.btscanner24.core.model.CategoryGroup
+import com.gamenuri.btscanner24.core.model.DeviceFilter
 import com.gamenuri.btscanner24.core.model.DeviceSort
-import com.gamenuri.btscanner24.core.model.ListPreferences
 import com.gamenuri.btscanner24.core.ui.DeviceCard
 import com.gamenuri.btscanner24.core.ui.R as UiR
-import com.gamenuri.btscanner24.core.ui.label
 import com.gamenuri.btscanner24.core.ui.permission.rememberBlePermissionState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -164,11 +159,9 @@ fun ScanScreen(
             onReset = viewModel::reset,
             onQueryChange = viewModel::setQuery,
             onSortChange = viewModel::setSort,
-            onToggleNamedOnly = viewModel::toggleNamedOnly,
-            onToggleHideGone = viewModel::toggleHideGone,
-            onToggleGroup = viewModel::toggleGroup,
-            onClearGroups = viewModel::clearGroups,
-            onResetFilters = viewModel::resetFilters,
+            onApplyFilter = viewModel::applyFilter,
+            onShowOther = viewModel::showOther,
+            countFor = viewModel::resultCount,
             onRefreshOrder = viewModel::refreshOrder,
             onDeviceClick = onDeviceClick,
             onOpenSettings = onOpenSettings,
@@ -190,11 +183,12 @@ data class ScanActions(
     val onReset: () -> Unit = {},
     val onQueryChange: (String) -> Unit = {},
     val onSortChange: (DeviceSort) -> Unit = {},
-    val onToggleNamedOnly: () -> Unit = {},
-    val onToggleHideGone: () -> Unit = {},
-    val onToggleGroup: (CategoryGroup) -> Unit = {},
-    val onClearGroups: () -> Unit = {},
-    val onResetFilters: () -> Unit = {},
+    /** The filter screen's "Show N devices" (#85). */
+    val onApplyFilter: (DeviceFilter) -> Unit = {},
+    /** "N other devices hidden · Show" at the end of the list (#82). */
+    val onShowOther: () -> Unit = {},
+    /** Live result count for an edited filter. */
+    val countFor: (DeviceFilter) -> Int = { 0 },
     val onRefreshOrder: () -> Unit = {},
     /** Opens find mode for the device. */
     val onDeviceClick: (BleDevice) -> Unit = {},
@@ -247,7 +241,16 @@ fun ScanContent(
     }
 
     if (filtersOpen) {
-        FilterSheet(state.preferences, actions, onDismiss = { filtersOpen = false })
+        FilterDialog(
+            current = state.preferences.filter,
+            census = state.census,
+            countFor = actions.countFor,
+            onApply = {
+                actions.onApplyFilter(it)
+                filtersOpen = false
+            },
+            onClose = { filtersOpen = false },
+        )
     }
 }
 
@@ -361,15 +364,19 @@ private fun StatusText(state: ScanUiState) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         StatusDot(scanning = state.isScanning)
         Spacer(Modifier.width(8.dp))
-        val shown = state.items.size
-        val filtered = state.activeFilterCount > 0 || state.query.isNotBlank()
+        // "N nearby" counts only devices people carry; other devices are extra (#82).
+        val shown = state.items.count { !it.isOther }
+        val total = state.census.personal
+        // Showing other devices adds rows, it doesn't narrow: it counts on the badge but keeps "N nearby".
+        val showOther = if (state.preferences.filter.showOther) 1 else 0
+        val filtered = state.activeFilterCount - showOther > 0 || state.query.isNotBlank()
         Text(
             text = when {
                 filtered && state.isPaused ->
-                    stringResource(R.string.scan_status_paused_filtered, shown, state.totalCount)
-                filtered -> stringResource(R.string.scan_status_filtered, shown, state.totalCount)
-                state.isPaused -> stringResource(R.string.scan_status_paused, state.totalCount)
-                else -> stringResource(R.string.scan_status_nearby, state.totalCount)
+                    stringResource(R.string.scan_status_paused_filtered, shown, total)
+                filtered -> stringResource(R.string.scan_status_filtered, shown, total)
+                state.isPaused -> stringResource(R.string.scan_status_paused, total)
+                else -> stringResource(R.string.scan_status_nearby, total)
             },
             modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
             style = MaterialTheme.typography.labelLarge,
@@ -505,7 +512,9 @@ private fun DeviceList(
         error?.let { reason ->
             item(key = "error") { ScanErrorBanner(reason, actions, Modifier.padding(horizontal = 16.dp)) }
         }
-        if (state.items.isEmpty() && state.isScanning) {
+        val personal = state.items.filter { !it.isOther }
+        val other = state.items.filter { it.isOther }
+        if (state.items.isEmpty() && state.isScanning && state.hiddenOtherCount == 0) {
             item(key = "searching") {
                 Text(
                     text = stringResource(R.string.scan_searching),
@@ -516,77 +525,85 @@ private fun DeviceList(
                 )
             }
         }
-        // Stable keys keep each row attached to its device; rows only move on a full sort.
-        items(state.items, key = { it.device.address }) { item ->
-            DeviceCard(
-                device = item.device,
-                label = item.label,
-                showSuffix = item.showSuffix,
-                isPaired = item.isPaired,
-                isNew = item.isNew,
-                isGone = item.isGone,
-                distanceMeters = item.distanceMeters,
-                onClick = { actions.onDeviceClick(item.device) },
-                modifier = Modifier.animateItem(),
-            )
-        }
-    }
-}
-
-/** Type chips (multi-select, "All" clears them) and two switches; changes apply at once. */
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
-@Composable
-private fun FilterSheet(prefs: ListPreferences, actions: ScanActions, onDismiss: () -> Unit) {
-    ModalBottomSheet(onDismissRequest = onDismiss, scrimColor = Color.Black.copy(alpha = SCRIM_ALPHA)) {
-        Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-            Text(stringResource(R.string.filter_title), style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(16.dp))
-            Text(
-                text = stringResource(R.string.filter_types),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(
-                    selected = prefs.groups.isEmpty(),
-                    onClick = actions.onClearGroups,
-                    label = { Text(stringResource(R.string.filter_all)) },
+        if (personal.isEmpty() && (other.isNotEmpty() || state.hiddenOtherCount > 0)) {
+            item(key = "empty-personal") {
+                Text(
+                    text = stringResource(R.string.nearby_empty_personal),
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp, horizontal = 16.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
                 )
-                CategoryGroup.entries.forEach { group ->
-                    FilterChip(
-                        selected = group in prefs.groups,
-                        onClick = { actions.onToggleGroup(group) },
-                        label = { Text(group.label()) },
-                    )
-                }
             }
-            Spacer(Modifier.height(8.dp))
-            SwitchRow(R.string.filter_named_only, prefs.namedOnly, actions.onToggleNamedOnly)
-            SwitchRow(R.string.filter_hide_gone, prefs.hideGone, actions.onToggleHideGone)
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                TextButton(onClick = actions.onResetFilters) { Text(stringResource(R.string.filter_reset)) }
-                Spacer(Modifier.width(8.dp))
-                Button(onClick = onDismiss) { Text(stringResource(R.string.filter_done)) }
+        }
+        // Stable keys keep each row attached to its device; rows only move on a full sort.
+        items(personal, key = { it.device.address }) { item -> DeviceRow(item, actions, Modifier.animateItem()) }
+        if (state.hiddenOtherCount > 0) {
+            item(key = "other-hidden") { HiddenOtherRow(state.hiddenOtherCount, actions.onShowOther) }
+        }
+        if (other.isNotEmpty()) {
+            item(key = "other-header") { OtherHeader(other.size) }
+            items(other, key = { it.device.address }) { item ->
+                DeviceRow(item, actions, Modifier.animateItem(), compact = true)
             }
         }
     }
 }
 
 @Composable
-private fun SwitchRow(text: Int, checked: Boolean, onToggle: () -> Unit) {
+private fun DeviceRow(item: DeviceListItem, actions: ScanActions, modifier: Modifier, compact: Boolean = false) {
+    DeviceCard(
+        device = item.device,
+        label = item.label,
+        showSuffix = item.showSuffix,
+        isPaired = item.isPaired,
+        isNew = item.isNew,
+        isGone = item.isGone,
+        distanceMeters = item.distanceMeters,
+        onClick = { actions.onDeviceClick(item.device) },
+        modifier = modifier,
+        compact = compact,
+    )
+}
+
+/** "23 other devices hidden · Show": one centred line, the whole row is the 48 dp touch target (#82). */
+@Composable
+private fun HiddenOtherRow(count: Int, onShow: () -> Unit) {
+    val show = stringResource(R.string.nearby_other_show)
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = 56.dp)
-            .toggleable(value = checked, role = Role.Switch, onValueChange = { onToggle() }),
+            .heightIn(min = 48.dp)
+            .clickable(role = Role.Button, onClick = onShow)
+            .padding(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(stringResource(text), modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
-        Switch(checked = checked, onCheckedChange = null)
+        Text(
+            text = pluralStringResource(R.plurals.nearby_other_hidden, count, count),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.width(4.dp))
+        Text(
+            text = show,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.Bold,
+        )
+    }
+}
+
+@Composable
+private fun OtherHeader(count: Int) {
+    Column(Modifier.fillMaxWidth()) {
+        HorizontalDivider(Modifier.padding(top = 8.dp))
+        Text(
+            text = stringResource(R.string.nearby_other_section, count),
+            modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 4.dp),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 
@@ -629,7 +646,6 @@ private fun DeviceSort.labelRes(): Int = when (this) {
 
 private const val PULSE_MS = 1_000
 private const val CHIP_FADE_MS = 150
-private const val SCRIM_ALPHA = 0.32f
 private val FILTER_BUTTON = 34.dp
 private const val REORDER_AUTO_MS = 8_000L
 
@@ -701,6 +717,8 @@ private fun ScanContentPreview() {
                 ),
                 reorderAvailable = true,
                 totalCount = 3,
+                census = ScanCensus(personal = 3, other = 23),
+                hiddenOtherCount = 23,
             ),
             permissionBanner = null,
             actions = ScanActions(),
