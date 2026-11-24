@@ -41,7 +41,7 @@ internal object DemoMode {
             findState = intent.getStringExtra(EXTRA_FIND),
             locale = intent.getStringExtra(EXTRA_LOCALE),
             onboardingPage = intent.getStringExtra(EXTRA_ONBOARDING),
-            arScene = intent.getBooleanExtra(EXTRA_AR, false),
+            arScene = intent.getBooleanExtra(EXTRA_AR, true),
         )
     }
 

@@ -13,8 +13,8 @@ internal data class DemoRequest(
     val locale: String? = null,
     /** Onboarding page for screen "onboarding": intro, permission, denied (+ "_legacy" for Android 11 copy). */
     val onboardingPage: String? = null,
-    /** Shows the 3D, AR-style find arrow (#76) while it waits for design approval (`--ez demo_ar true`). */
-    val arScene: Boolean = false,
+    /** The 3D, AR-style find arrow (#76); `--ez demo_ar false` shows the Canvas fallback instead. */
+    val arScene: Boolean = true,
 ) {
     val startOnMyDevices: Boolean get() = screen == "devices"
 

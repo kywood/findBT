@@ -12,8 +12,8 @@ import kotlin.math.sin
 import kotlin.math.sqrt
 
 /**
- * Draws the find arrow as a real 3D object on a floor (#76): the delivered mesh with Blinn-Phong
- * light and a blue rim, a planar shadow, a floor ring and the confidence sector, seen through a
+ * Draws the find arrow as a real 3D object on a floor (#76): the mesh with a matte two-tone light
+ * and a faint blue rim, a planar shadow, a floor ring and the confidence sector, seen through a
  * perspective camera that follows how the phone is held. OpenGL ES 2.0 only, so every test phone
  * (the Android 11 A50 too) runs the same shaders.
  *
@@ -79,12 +79,12 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         camera()
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT or GLES20.GL_DEPTH_BUFFER_BIT or GLES20.GL_STENCIL_BUFFER_BIT)
 
-        val hover = HOVER_HEIGHT + HOVER_BOB * sin(time * TAU / HOVER_PERIOD_SECONDS)
+        val bob = if (state.reduceMotion) 0f else HOVER_BOB * sin(time * TAU / HOVER_PERIOD_SECONDS)
+        val hover = HOVER_HEIGHT + bob
         Matrix.setIdentityM(model, 0)
         Matrix.translateM(model, 0, 0f, hover, 0f)
         Matrix.rotateM(model, 0, -yaw, 0f, 1f, 0f)
         Matrix.scaleM(model, 0, width * MESH_SCALE, MESH_SCALE, MESH_SCALE)
-        Matrix.translateM(model, 0, 0f, 0f, MESH_CENTER_Z)
 
         drawFloor(yaw)
         drawShadow()
@@ -177,6 +177,10 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         val ringVertices = (RING_SEGMENTS + 1) * 2
         flat(viewProjection, color, RING_ALPHA)
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, ringVertices)
+        // A second, fainter ring closer in gives the floor some depth.
+        Matrix.scaleM(mvp, 0, viewProjection, 0, INNER_RING, 1f, INNER_RING)
+        flat(mvp, color, INNER_RING_ALPHA)
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, ringVertices)
         if (state.spinning) {
             // Sweep progress, clockwise from straight ahead.
             val segments = (state.progress.coerceIn(0f, 1f) * RING_SEGMENTS).roundToInt()
@@ -185,11 +189,6 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
                 GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, (segments + 1) * 2)
             }
         } else {
-            // A second, fainter ring closer in gives the floor some depth.
-            Matrix.scaleM(mvp, 0, viewProjection, 0, INNER_RING, 1f, INNER_RING)
-            flat(mvp, color, RING_ALPHA / 2)
-            GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, ringVertices)
-
             // "Somewhere this way": the sector turns with the arrow and widens as confidence drops.
             GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, sectorBuffer)
             GLES20.glVertexAttribPointer(position, 3, GLES20.GL_FLOAT, false, 0, 0)
@@ -331,16 +330,17 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         const val FAR = 30f
         const val CAMERA_DISTANCE = 6.6f
         const val TARGET_HEIGHT = 0.12f
-        const val MIN_ELEVATION = 22f
-        const val MAX_ELEVATION = 78f
+        // Design #76: seen from 14° with the phone upright, from 82° with it lying flat.
+        const val MIN_ELEVATION = 14f
+        const val MAX_ELEVATION = 82f
         const val MAX_ROLL = 30f
         const val POSE_SMOOTH_SECONDS = 0.09f
 
         // Arrow.
-        // Design #76, in units of the ring radius R (RING_OUTER): length 1.5 R, hover 0.22 R ± 0.02 R.
-        const val MESH_CENTER_Z = 0.04f
-        const val MESH_SCALE = 1.0625f
-        const val HOVER_HEIGHT = 0.30f
+        // Design #76, in units of the ring radius R (RING_OUTER). [ArrowMesh] is in R already; its
+        // underside floats 0.22 R above the floor (centre 0.29 R), bobbing by ± 0.02 R.
+        const val MESH_SCALE = RING_OUTER
+        const val HOVER_HEIGHT = 0.29f * RING_OUTER
         const val HOVER_BOB = 0.027f
         const val HOVER_PERIOD_SECONDS = 2.4f
         const val WIDE_SCALE = 1.4f
@@ -348,16 +348,18 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         const val SPIN_DEGREES_PER_SECOND = 150f
         const val SPRING_OMEGA = 10f
         const val LOCKED_DAMPING = 0.45f
-        const val BASE_BRIGHTNESS = 0.96f
-        const val GLOSS = 0.35f
+        const val BASE_BRIGHTNESS = 1f
+        const val GLOSS = 0.10f
 
         // Floor.
         const val RING_SEGMENTS = 96
-        const val RING_INNER = 1.30f
+        // Outer ring about 2 dp wide at 35 %, inner ring at 0.62 R about 1 dp at 18 % (R = 108 dp).
         const val RING_OUTER = 1.36f
+        const val RING_INNER = RING_OUTER - 0.026f
         const val INNER_RING = 0.62f
-        const val RING_ALPHA = 0.25f
-        const val SECTOR_RADIUS = 1.30f
+        const val RING_ALPHA = 0.35f
+        const val INNER_RING_ALPHA = 0.18f
+        const val SECTOR_RADIUS = RING_INNER
         const val SECTOR_MAX_HALF = 45
         const val SECTOR_LOCKED = 12f
         const val SECTOR_NARROW = 20f
@@ -370,7 +372,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         const val SHADOW_BLUE = 0.541f
         const val SHADOW_LAYER_ALPHA = 0.10f
         const val SHADOW_OFFSET = 0.068f
-        val SHADOW_SCALES = floatArrayOf(0.98f, 1.04f, 1.10f)
+        val SHADOW_SCALES = floatArrayOf(1.00f, 1.06f, 1.12f)
 
         /** Towards the light: up, from the left, a little towards the viewer. */
         val LIGHT = normalized(-0.45f, 1f, 0.5f)
@@ -463,8 +465,8 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
             }
         """
 
-        // Blinn-Phong: unlit faces fall to a cool grey-blue (never black), a soft highlight, and a
-        // blue rim where the surface turns away from the viewer.
+        // Matte two-tone (design #76): the top face is the plain colour (#FFFFFF), the sides its cool
+        // shade (#C9D6F5 for white), bevels in between. Only a hint of highlight and rim.
         const val ARROW_FRAGMENT = """
             precision mediump float;
             uniform vec3 uBase;
@@ -478,10 +480,10 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
                 vec3 v = normalize(uCamera - vWorld);
                 float diffuse = max(dot(n, uLight), 0.0);
                 vec3 shade = vec3(0.79, 0.84, 0.96);
-                vec3 color = uBase * mix(shade, vec3(1.0), diffuse);
+                vec3 color = uBase * mix(shade, vec3(1.0), smoothstep(0.56, 0.80, diffuse));
                 float highlight = pow(max(dot(n, normalize(uLight + v)), 0.0), 48.0) * uGloss;
                 float rim = pow(1.0 - max(dot(n, v), 0.0), 3.0);
-                color += vec3(highlight) + vec3(0.40, 0.58, 1.0) * rim * 0.30;
+                color += vec3(highlight) + vec3(0.40, 0.58, 1.0) * rim * 0.12;
                 gl_FragColor = vec4(min(color, vec3(1.0)), 1.0);
             }
         """

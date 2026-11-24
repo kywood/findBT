@@ -77,7 +77,7 @@ class MainActivity : ComponentActivity() {
                 NearoTheme {
                     val findState = demo?.findState
                     val onboardingPage = demo?.onboardingPage
-                    CompositionLocalProvider(LocalArFindScene provides (demo?.arScene == true)) {
+                    CompositionLocalProvider(LocalArFindScene provides (demo?.arScene != false)) {
                         when {
                             findState != null -> DemoMode.FindScreen(findState, onClose = ::finish)
                             onboardingPage != null -> DemoOnboarding(onboardingPage)

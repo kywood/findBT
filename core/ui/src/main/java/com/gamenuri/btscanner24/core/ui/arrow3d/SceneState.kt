@@ -28,6 +28,9 @@ internal class SceneState {
 
     @Volatile var floorColor: Int = 0xFFFFFFFF.toInt()
 
+    /** The system's "remove animations" setting: the arrow stops bobbing. */
+    @Volatile var reduceMotion: Boolean = false
+
     @Volatile var hasPose: Boolean = false
 
     @Volatile var headingDegrees: Float = 0f

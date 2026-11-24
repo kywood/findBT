@@ -1,5 +1,6 @@
 package com.gamenuri.btscanner24.feature.finder
 
+import android.provider.Settings
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.Spring
@@ -46,11 +47,11 @@ import com.gamenuri.btscanner24.core.ui.arrow3d.PoseFeed
 import kotlin.math.abs
 
 /**
- * The round area in the middle of the find screen: spinning needle while sweeping, a 3D arrow lying
- * on the floor once a direction is known, rings when the device is right here.
+ * The round area in the middle of the find screen: the 3D arrow scene (#76) turning by itself while
+ * sweeping and pointing once a direction is known, rings when the device is right here.
  *
- * The 3D look is two nested layers, no 3D engine: the inner layer turns the arrow in the floor
- * plane (rotationZ), the outer layer tilts that floor away from the viewer (rotationX 58°).
+ * Where OpenGL is not usable the Canvas drawings stand in: two nested layers, the inner one turns
+ * the arrow in the floor plane (rotationZ), the outer one tilts that floor (rotationX 58°).
  */
 @Composable
 internal fun DirectionDial(state: FinderUiState, modifier: Modifier = Modifier) {
@@ -65,7 +66,7 @@ internal fun DirectionDial(state: FinderUiState, modifier: Modifier = Modifier) 
         val spinning = state.stage == FinderStage.SPIN ||
             state.stage == FinderStage.SPIN_AGAIN ||
             state.stage == FinderStage.WAITING
-        // The 3D scene (#76) is behind a flag until its look is approved; it also needs working GL.
+        // The 3D scene (#76) needs working GL; without it the Canvas arrow below is drawn.
         var sceneFailed by remember { mutableStateOf(false) }
         val scene3d = LocalArFindScene.current && !sceneFailed
         when {
@@ -80,10 +81,10 @@ internal fun DirectionDial(state: FinderUiState, modifier: Modifier = Modifier) 
 }
 
 /**
- * Turns on the 3D, AR-style arrow scene (#76) for everything below. Off by default until the look
- * is approved; debug builds switch it on with the `demo_ar` launch extra.
+ * The 3D, AR-style arrow scene (#76) for everything below. On by default; debug builds can show
+ * the Canvas fallback with the `--ez demo_ar false` launch extra.
  */
-val LocalArFindScene = staticCompositionLocalOf { false }
+val LocalArFindScene = staticCompositionLocalOf { true }
 
 /** The real 3D arrow on its floor; the camera follows how the phone is held. */
 @Composable
@@ -101,6 +102,9 @@ private fun ArrowScene(state: FinderUiState, spinning: Boolean, onUnavailable: (
             }
         }
     }
+    val reduceMotion = remember(context) {
+        Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
+    }
     val color = LocalContentColor.current
     FindScene3d(
         spec = FindSceneSpec(
@@ -112,6 +116,7 @@ private fun ArrowScene(state: FinderUiState, spinning: Boolean, onUnavailable: (
             locked = state.stage == FinderStage.LOCKED,
             arrowColor = color,
             floorColor = color,
+            reduceMotion = reduceMotion,
         ),
         modifier = Modifier.fillMaxSize(),
         poseFeed = poseFeed,
@@ -135,7 +140,14 @@ private fun FloorArrow(degrees: Float, confidence: ArrowConfidence, locked: Bool
     val wide = confidence != ArrowConfidence.HIGH
     val widthScale by animateFloatAsState(if (wide) 1.4f else 1f, label = "arrowWidth")
     val arrowAlpha by animateFloatAsState(if (wide) 0.75f else 1f, label = "arrowAlpha")
-    val sectorHalf by animateFloatAsState(if (wide) 45f else 25f, label = "sector")
+    val sectorHalf by animateFloatAsState(
+        targetValue = when {
+            locked -> 12f
+            wide -> 35f
+            else -> 20f
+        },
+        label = "sector",
+    )
 
     val color = LocalContentColor.current
 
@@ -155,12 +167,18 @@ private fun FloorArrow(degrees: Float, confidence: ArrowConfidence, locked: Bool
                     alpha = arrowAlpha
                 },
         ) {
+            // The same floor as the 3D scene: ring R, a fainter ring at 0.62 R, the sector inside R.
+            val ring = size.minDimension * FALLBACK_RING
+            drawCircle(color.copy(alpha = 0.35f), radius = ring, style = Stroke(2.dp.toPx()))
+            drawCircle(color.copy(alpha = 0.18f), radius = ring * 0.62f, style = Stroke(1.dp.toPx()))
             // "Somewhere this way": the sector widens as confidence drops.
             drawArc(
                 color = color.copy(alpha = 0.16f),
                 startAngle = -90f - sectorHalf,
                 sweepAngle = sectorHalf * 2,
                 useCenter = true,
+                topLeft = Offset(center.x - ring, center.y - ring),
+                size = Size(ring * 2, ring * 2),
             )
             scale(scaleX = widthScale, scaleY = 1f, pivot = center) { drawFloorArrow(color) }
         }
@@ -247,6 +265,7 @@ private fun rememberContinuousAngle(degrees: Float): Float {
 }
 
 private const val MIN_TURN_DEGREES = 5f
+private const val FALLBACK_RING = 0.385f
 private const val GHOSTS = 3
 private const val GHOST_SPACING_DEGREES = 12f
 private const val RINGS = 3

@@ -31,6 +31,8 @@ data class FindSceneSpec(
     val locked: Boolean = false,
     val arrowColor: Color = Color.White,
     val floorColor: Color = Color.White,
+    /** Animations are off in the system settings: no bobbing. */
+    val reduceMotion: Boolean = false,
 )
 
 /**
@@ -73,6 +75,7 @@ fun FindScene3d(
                 locked = spec.locked
                 arrowColor = spec.arrowColor.toArgb()
                 floorColor = spec.floorColor.toArgb()
+                reduceMotion = spec.reduceMotion
             }
         },
     )

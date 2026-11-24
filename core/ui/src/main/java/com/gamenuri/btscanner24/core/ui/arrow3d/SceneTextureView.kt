@@ -9,7 +9,6 @@ import android.opengl.EGLDisplay
 import android.opengl.EGLSurface
 import android.view.TextureView
 import android.view.View
-import com.gamenuri.btscanner24.core.ui.R
 
 /**
  * A see-through [TextureView] with its own OpenGL ES thread for the 3D find scene (#76). A
@@ -26,9 +25,7 @@ internal class SceneTextureView(context: Context) :
     val state = SceneState()
     var onUnavailable: (() -> Unit)? = null
 
-    private val mesh: FloatArray by lazy {
-        context.resources.openRawResource(R.raw.nearo_arrow_a).use(ObjMesh::parse)
-    }
+    private val mesh: FloatArray by lazy { ArrowMesh.build() }
     private var thread: RenderThread? = null
 
     init {

@@ -4,7 +4,8 @@ import java.io.InputStream
 
 /**
  * Triangles of a Wavefront OBJ file as interleaved position + normal floats (6 per vertex), ready
- * for glDrawArrays. Reads only what the Nearo meshes use: `v`, `vn` and triangular `f a//n` faces.
+ * for glDrawArrays. For modelled meshes such as the device map's (#86); the arrow is [ArrowMesh].
+ * Reads only what the Nearo meshes use: `v`, `vn` and triangular `f a//n` faces.
  */
 internal object ObjMesh {
     const val FLOATS_PER_VERTEX = 6

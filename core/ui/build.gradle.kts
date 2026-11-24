@@ -36,4 +36,5 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     implementation(libs.accompanist.permissions)
     implementation(libs.androidx.lifecycle.runtime.compose)
+    testImplementation(libs.junit)
 }
