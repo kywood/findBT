@@ -28,6 +28,9 @@ import com.gamenuri.btscanner24.feature.onboarding.OnboardingActions
 import com.gamenuri.btscanner24.feature.onboarding.OnboardingContent
 import com.gamenuri.btscanner24.feature.onboarding.OnboardingPage
 import com.gamenuri.btscanner24.feature.onboarding.OnboardingScreen
+import com.gamenuri.btscanner24.feature.settings.AppInfo
+import com.gamenuri.btscanner24.feature.settings.LicensesScreen
+import com.gamenuri.btscanner24.feature.settings.SettingsScreen
 import java.util.Locale
 
 class MainActivity : ComponentActivity() {
@@ -49,8 +52,13 @@ class MainActivity : ComponentActivity() {
                         findState != null -> DemoMode.FindScreen(findState, onClose = ::finish)
                         onboardingPage != null -> DemoOnboarding(onboardingPage)
                         else -> AppNavHost(
-                            startOnboarding = showOnboarding,
+                            start = when {
+                                showOnboarding -> Routes.ONBOARDING
+                                demo?.startOnSettings == true -> Routes.SETTINGS
+                                else -> Routes.HOME
+                            },
                             startOnMyDevices = demo?.startOnMyDevices == true,
+                            openPaywall = demo?.openPaywall == true,
                             onOnboardingDone = app.appState::setOnboardingDone,
                         )
                     }
@@ -83,9 +91,8 @@ private fun DemoOnboarding(name: String) {
 }
 
 @Composable
-private fun AppNavHost(startOnboarding: Boolean, startOnMyDevices: Boolean, onOnboardingDone: () -> Unit) {
+private fun AppNavHost(start: String, startOnMyDevices: Boolean, openPaywall: Boolean, onOnboardingDone: () -> Unit) {
     val navController = rememberNavController()
-    val start = if (startOnboarding) Routes.ONBOARDING else Routes.HOME
     NavHost(navController = navController, startDestination = start) {
         composable(Routes.ONBOARDING) {
             OnboardingScreen(
@@ -98,8 +105,20 @@ private fun AppNavHost(startOnboarding: Boolean, startOnMyDevices: Boolean, onOn
         composable(Routes.HOME) {
             HomeScreen(
                 onFind = { address -> navController.navigate(Routes.finder(address)) },
+                onOpenSettings = { navController.navigate(Routes.SETTINGS) },
                 startOnMyDevices = startOnMyDevices,
             )
+        }
+        composable(Routes.SETTINGS) {
+            SettingsScreen(
+                appInfo = buildAppInfo,
+                onBack = { if (!navController.popBackStack()) navController.navigate(Routes.HOME) },
+                onLicenses = { navController.navigate(Routes.LICENSES) },
+                openPaywall = openPaywall,
+            )
+        }
+        composable(Routes.LICENSES) {
+            LicensesScreen(librariesRes = R.raw.aboutlibraries, onBack = { navController.popBackStack() })
         }
         composable(Routes.FINDER) { entry ->
             FinderScreen(
@@ -136,10 +155,20 @@ private fun WithLocale(languageTag: String?, content: @Composable () -> Unit) {
     }
 }
 
+/** What Settings shows about this build; the support address comes from local.properties (#56). */
+private val buildAppInfo = AppInfo(
+    versionName = BuildConfig.VERSION_NAME,
+    versionCode = BuildConfig.VERSION_CODE.toLong(),
+    supportEmail = BuildConfig.SUPPORT_EMAIL,
+    privacyPolicyUrl = BuildConfig.PRIVACY_POLICY_URL,
+)
+
 /** Navigation routes. Each screen's back stack entry owns its ViewModel, so leaving find mode clears it. */
 private object Routes {
     const val ONBOARDING = "onboarding"
     const val HOME = "home"
+    const val SETTINGS = "settings"
+    const val LICENSES = "licenses"
     const val ADDRESS_ARG = "address"
     const val FINDER = "finder/{$ADDRESS_ARG}"
 

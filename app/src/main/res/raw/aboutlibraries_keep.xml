@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Resource shrinking (on by default with AGP 9) would drop the generated licenses list (#56). -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:keep="@raw/aboutlibraries" />

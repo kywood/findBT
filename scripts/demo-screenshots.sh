@@ -37,6 +37,9 @@ for locale in "${LOCALES[@]}"; do
   done
   shot "$locale" nearby --es demo nearby
   shot "$locale" my-devices --es demo devices
+  for screen in settings settings_premium paywall; do
+    shot "$locale" "$screen" --es demo "$screen"
+  done
   for state in "${FIND_STATES[@]}"; do
     shot "$locale" "find-$state" --es demo find --es demo_find "$state"
   done
