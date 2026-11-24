@@ -22,6 +22,31 @@
     <string name="sort_recent">Zuletzt gefunden</string>
     <string name="filter_hide_gone">Verschwundene ausblenden</string>
     <string name="filter_show_other">Andere Geräte anzeigen</string>
+    <!-- Filter screen and other devices (#85, #82) -->
+    <string name="filter_close">Schließen</string>
+    <string name="filter_section_show">Anzeigen</string>
+    <string name="filter_show_other_body">Beacons, TVs, Sensoren und mehr · %1$d</string>
+    <string name="filter_show_unnamed">Geräte ohne Namen anzeigen</string>
+    <string name="filter_distance">Entfernung</string>
+    <string name="filter_distance_within_5">Bis 5 m</string>
+    <string name="filter_distance_5_10">5–10 m</string>
+    <string name="filter_distance_over_10">Über 10 m</string>
+    <string name="filter_signal">Signal</string>
+    <string name="filter_maker">Hersteller</string>
+    <string name="filter_maker_count">%1$s %2$d</string>
+    <string name="filter_maker_more">+ %1$d weitere</string>
+    <string name="filter_no_results">Keine Ergebnisse</string>
+    <string name="nearby_other_show">Anzeigen</string>
+    <string name="nearby_other_section">Andere Geräte · %1$d</string>
+    <string name="nearby_empty_personal">Keine eigenen Geräte in der Nähe</string>
+    <plurals name="filter_show_results">
+        <item quantity="one">%1$d Gerät anzeigen</item>
+        <item quantity="other">%1$d Geräte anzeigen</item>
+    </plurals>
+    <plurals name="nearby_other_hidden">
+        <item quantity="one">%1$d anderes Gerät ausgeblendet ·</item>
+        <item quantity="other">%1$d andere Geräte ausgeblendet ·</item>
+    </plurals>
     <string name="empty_bluetooth_off_title">Bluetooth ist aus</string>
     <string name="empty_bluetooth_off_body">Schalte Bluetooth ein, um Geräte in deiner Nähe zu finden.</string>
     <string name="empty_location_off_title">Standort ist aus</string>

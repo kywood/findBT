@@ -39,10 +39,12 @@ data class ScanUiState(
     val reorderAvailable: Boolean = false,
     /** The user paused the automatic scan; lasts until they leave the tab (#62). */
     val isPaused: Boolean = false,
-    /** Devices seen before filters and search, for "2 / 15". */
+    /** Devices seen before filters and search. The status line counts only personal ones ([census]). */
     val totalCount: Int = 0,
     /** Other devices (#82) that match but are hidden while "Show other devices" is off. */
     val hiddenOtherCount: Int = 0,
+    /** Personal/other split and makers of the whole scan, before filters (#82, #85). */
+    val census: ScanCensus = ScanCensus(),
 ) {
     val isScanning: Boolean get() = status == ScanStatus.Scanning
 

@@ -22,6 +22,12 @@
     <string name="category_sensor">センサー</string>
     <string name="category_unknown">その他のデバイス</string>
     <string name="category_group_earbuds">イヤホン</string>
+    <string name="category_group_headphones">ヘッドホン</string>
+    <string name="category_group_band">バンド</string>
+    <string name="category_group_phone">スマートフォン</string>
+    <string name="category_group_tablet">タブレット</string>
+    <string name="category_group_speaker">スピーカー</string>
+    <string name="category_group_laptop">ノートパソコン</string>
     <string name="category_group_watch">ウォッチ</string>
     <string name="category_group_tracker">トラッカー</string>
     <string name="category_group_other">その他</string>

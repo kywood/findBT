@@ -31,8 +31,14 @@ fun DeviceCategory.labelRes(): Int = when (this) {
 @StringRes
 fun CategoryGroup.labelRes(): Int = when (this) {
     CategoryGroup.EARBUDS -> R.string.category_group_earbuds
+    CategoryGroup.HEADPHONES -> R.string.category_group_headphones
     CategoryGroup.WATCH -> R.string.category_group_watch
+    CategoryGroup.BAND -> R.string.category_group_band
     CategoryGroup.TRACKER -> R.string.category_group_tracker
+    CategoryGroup.PHONE -> R.string.category_group_phone
+    CategoryGroup.TABLET -> R.string.category_group_tablet
+    CategoryGroup.SPEAKER -> R.string.category_group_speaker
+    CategoryGroup.LAPTOP -> R.string.category_group_laptop
     CategoryGroup.OTHER -> R.string.category_group_other
 }
 

@@ -22,6 +22,29 @@
     <string name="sort_recent">最近見つかった順</string>
     <string name="filter_hide_gone">消えたデバイスを隠す</string>
     <string name="filter_show_other">その他のデバイスを表示</string>
+    <!-- Filter screen and other devices (#85, #82) -->
+    <string name="filter_close">閉じる</string>
+    <string name="filter_section_show">表示</string>
+    <string name="filter_show_other_body">ビーコン、テレビ、センサーなど %1$d 件</string>
+    <string name="filter_show_unnamed">名前のないデバイスを表示</string>
+    <string name="filter_distance">距離</string>
+    <string name="filter_distance_within_5">5 m以内</string>
+    <string name="filter_distance_5_10">5〜10 m</string>
+    <string name="filter_distance_over_10">10 m以上</string>
+    <string name="filter_signal">電波の強さ</string>
+    <string name="filter_maker">メーカー</string>
+    <string name="filter_maker_count">%1$s %2$d</string>
+    <string name="filter_maker_more">+ ほか %1$d 件</string>
+    <string name="filter_no_results">該当なし</string>
+    <string name="nearby_other_show">表示</string>
+    <string name="nearby_other_section">その他のデバイス · %1$d</string>
+    <string name="nearby_empty_personal">近くに持ち歩くデバイスはありません</string>
+    <plurals name="filter_show_results">
+        <item quantity="other">%1$d 件のデバイスを表示</item>
+    </plurals>
+    <plurals name="nearby_other_hidden">
+        <item quantity="other">その他のデバイス %1$d 件を非表示 ·</item>
+    </plurals>
     <string name="empty_bluetooth_off_title">Bluetoothがオフです</string>
     <string name="empty_bluetooth_off_body">Bluetoothをオンにすると、周りのデバイスを探せます。</string>
     <string name="empty_location_off_title">位置情報がオフです</string>

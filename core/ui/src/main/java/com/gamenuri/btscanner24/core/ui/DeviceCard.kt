@@ -45,6 +45,8 @@ fun DeviceCard(
     isGone: Boolean = false,
     distanceMeters: Double? = null,
     onClick: (() -> Unit)? = null,
+    /** The smaller row of the "Other devices" section (#82): 50 dp, grey 34 dp icon. */
+    compact: Boolean = false,
 ) {
     val signal = stringResource(
         when (device.signalLevel) {
@@ -59,16 +61,18 @@ fun DeviceCard(
         .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
         .alpha(if (isGone) 0.45f else 1f)
     Row(
-        modifier = rowModifier.heightIn(min = 64.dp).padding(horizontal = 16.dp, vertical = 8.dp),
+        modifier = rowModifier
+            .heightIn(min = if (compact) 50.dp else 64.dp)
+            .padding(horizontal = 16.dp, vertical = if (compact) 4.dp else 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        DeviceIcon(device.category)
+        if (compact) DeviceIcon(device.category, size = 34.dp, muted = true) else DeviceIcon(device.category)
         Spacer(Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = label.text(withSuffix = showSuffix),
-                    style = MaterialTheme.typography.titleMedium,
+                    style = if (compact) MaterialTheme.typography.titleSmall else MaterialTheme.typography.titleMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f, fill = false),

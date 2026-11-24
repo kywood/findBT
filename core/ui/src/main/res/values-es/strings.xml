@@ -22,6 +22,12 @@
     <string name="category_sensor">Sensor</string>
     <string name="category_unknown">Otro dispositivo</string>
     <string name="category_group_earbuds">Auriculares</string>
+    <string name="category_group_headphones">Auriculares de diadema</string>
+    <string name="category_group_band">Pulseras</string>
+    <string name="category_group_phone">Teléfonos</string>
+    <string name="category_group_tablet">Tabletas</string>
+    <string name="category_group_speaker">Altavoces</string>
+    <string name="category_group_laptop">Portátiles</string>
     <string name="category_group_watch">Relojes</string>
     <string name="category_group_tracker">Rastreadores</string>
     <string name="category_group_other">Otros</string>

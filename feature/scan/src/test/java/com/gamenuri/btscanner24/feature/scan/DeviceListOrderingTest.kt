@@ -66,7 +66,7 @@ class DeviceListOrderingTest {
             device("watch", category = DeviceCategory.FITNESS_BAND),
             device("tag", category = DeviceCategory.TRACKER),
         )
-        val filter = noFilter.copy(types = setOf(CategoryGroup.WATCH, CategoryGroup.TRACKER))
+        val filter = noFilter.copy(types = setOf(CategoryGroup.BAND, CategoryGroup.TRACKER))
         assertEquals(listOf("watch", "tag"), addresses(filter, *devices))
     }
 

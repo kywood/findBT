@@ -22,6 +22,12 @@
     <string name="category_sensor">센서</string>
     <string name="category_unknown">기타 기기</string>
     <string name="category_group_earbuds">이어폰</string>
+    <string name="category_group_headphones">헤드폰</string>
+    <string name="category_group_band">밴드</string>
+    <string name="category_group_phone">휴대폰</string>
+    <string name="category_group_tablet">태블릿</string>
+    <string name="category_group_speaker">스피커</string>
+    <string name="category_group_laptop">노트북</string>
     <string name="category_group_watch">워치</string>
     <string name="category_group_tracker">트래커</string>
     <string name="category_group_other">기타</string>

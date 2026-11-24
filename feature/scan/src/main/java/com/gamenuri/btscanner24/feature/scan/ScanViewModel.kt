@@ -13,7 +13,6 @@ import com.gamenuri.btscanner24.core.ble.ScanEvent
 import com.gamenuri.btscanner24.core.data.DataDependenciesProvider
 import com.gamenuri.btscanner24.core.data.ListPreferencesRepository
 import com.gamenuri.btscanner24.core.model.BleDevice
-import com.gamenuri.btscanner24.core.model.CategoryGroup
 import com.gamenuri.btscanner24.core.model.DeviceFilter
 import com.gamenuri.btscanner24.core.model.DeviceNaming
 import com.gamenuri.btscanner24.core.model.DeviceSort
@@ -56,6 +55,9 @@ class ScanViewModel(
 
     private val ordering = OrderingState()
 
+    /** The devices behind the last list, for the filter screen's live count. */
+    @Volatile private var latest: Collection<BleDevice> = emptyList()
+
     @OptIn(FlowPreview::class)
     private val throttledDevices = repository.devices
         // Scan callbacks can arrive dozens of times per second; redraw at most twice a second.
@@ -81,6 +83,7 @@ class ScanViewModel(
             val now = clock()
             val (prefs, q, token, aliases) = inputs
             val list = ordering.update(devices.values, prefs, q, token, now, aliases)
+            latest = devices.values
             ScanUiState(
                 status = status,
                 items = list.items,
@@ -90,6 +93,7 @@ class ScanViewModel(
                 hiddenOtherCount = list.hiddenOther,
                 isPaused = paused,
                 totalCount = devices.size,
+                census = DeviceListOrdering.census(devices.values, aliases.keys),
             )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ScanUiState())
 
@@ -168,19 +172,15 @@ class ScanViewModel(
     }
 
     fun setSort(sort: DeviceSort) = updatePreferences { it.copy(sort = sort) }
-    fun toggleNamedOnly() = updateFilter { it.copy(showUnnamed = !it.showUnnamed) }
-    fun toggleHideGone() = updateFilter { it.copy(hideGone = !it.hideGone) }
-    fun toggleShowOther() = updateFilter { it.copy(showOther = !it.showOther) }
+    /** "N other devices hidden · Show" at the end of the list (#82): same as turning the switch on. */
+    fun showOther() = updateFilter { it.copy(showOther = true) }
 
-    /** Filter sheet "All": show every type again. */
-    fun clearGroups() = updateFilter { it.copy(types = emptySet()) }
+    /** The filter screen's "Show N devices" (#85): applies the whole edited filter at once. */
+    fun applyFilter(filter: DeviceFilter) = updateFilter { filter }
 
-    /** Filter sheet "Reset": types, names and gone devices back to the defaults; sort stays. */
-    // "Show other devices" is a view choice, not a narrowing filter, so reset keeps it.
-    fun resetFilters() = updateFilter { DeviceFilter(showOther = it.showOther) }
-    fun toggleGroup(group: CategoryGroup) = updateFilter {
-        it.copy(types = if (group in it.types) it.types - group else it.types + group)
-    }
+    /** How many rows [filter] would show right now, with the current search. */
+    fun resultCount(filter: DeviceFilter): Int =
+        DeviceListOrdering.count(latest, filter, query.value, clock(), pairedAliases.value.keys)
 
     private fun updatePreferences(transform: (ListPreferences) -> ListPreferences) {
         viewModelScope.launch { listPreferences.update(transform) }

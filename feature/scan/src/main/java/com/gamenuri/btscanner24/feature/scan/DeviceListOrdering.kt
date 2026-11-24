@@ -18,6 +18,12 @@ data class FilteredDevices(
     val all: List<BleDevice> get() = personal + other
 }
 
+/** A maker chip of the filter screen: the company name and how many devices of it are in the scan. */
+data class MakerCount(val name: String, val count: Int)
+
+/** Counts over the whole scan, before filters: the status line, the "Other devices" body, maker chips. */
+data class ScanCensus(val personal: Int = 0, val other: Int = 0, val makers: List<MakerCount> = emptyList())
+
 /**
  * Pure list logic for the scan screen, free of Android types so it can be unit tested.
  *
@@ -56,6 +62,28 @@ object DeviceListOrdering {
             }
         }
         return FilteredDevices(personal, other, hiddenOther)
+    }
+
+    /** Rows the list would show for [filter]: the live "Show N devices" count of the filter screen (#85). */
+    fun count(
+        devices: Collection<BleDevice>,
+        filter: DeviceFilter,
+        query: String,
+        now: Long,
+        paired: Set<String> = emptySet(),
+    ): Int = filter(devices, filter, query, now, paired).all.size
+
+    /** Personal and other devices in the scan, and its makers, most common first (#82, #85). */
+    fun census(devices: Collection<BleDevice>, paired: Set<String> = emptySet()): ScanCensus {
+        val personal = devices.count {
+            DeviceRelevanceRules.of(it, isPaired = it.address in paired) == DeviceRelevance.PERSONAL
+        }
+        val makers = devices.mapNotNull { it.manufacturer }
+            .groupingBy { it }
+            .eachCount()
+            .map { (name, count) -> MakerCount(name, count) }
+            .sortedWith(compareByDescending<MakerCount> { it.count }.thenBy { it.name })
+        return ScanCensus(personal = personal, other = devices.size - personal, makers = makers)
     }
 
     private fun matches(device: BleDevice, filter: DeviceFilter, q: String, now: Long): Boolean {
