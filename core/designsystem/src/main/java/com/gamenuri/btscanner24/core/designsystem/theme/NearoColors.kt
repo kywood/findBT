@@ -6,10 +6,16 @@ import androidx.compose.ui.graphics.Color
 
 /**
  * Background and content colour of the find screen for one proximity state. [accent] colours the
- * arrow, rings and gauge; close states keep the brand blue and turn only these mint (#77).
+ * arrow, rings and gauge; close states keep the brand blue and turn only these mint (#77). The
+ * background is a vertical gradient from [background] to [backgroundBottom] (flat when equal).
  */
 @Immutable
-data class FindStateColors(val background: Color, val content: Color, val accent: Color = content)
+data class FindStateColors(
+    val background: Color,
+    val content: Color,
+    val accent: Color = content,
+    val backgroundBottom: Color = background,
+)
 
 /** "Found it!" screen (#70). Its own token so the palette can change (#77) without touching layout. */
 @Immutable
@@ -43,25 +49,30 @@ data class NearoColors(
     val signalInactive: Color,
 )
 
-// The find screen is always dark-on-colour, the same in light and dark mode.
+// The find screen is always light-on-blue, the same in light and dark mode.
+private val White = Color(0xFFFFFFFF)
+private val Mint = Color(0xFF2EE6A0)
+
 private val findColors = NearoColors(
-    findSearching = FindStateColors(Color(0xFF111318), Color(0xFFB2C5FF)),
-    findFar = FindStateColors(Color(0xFF1747C2), Color(0xFFFFFFFF)),
-    findClose = FindStateColors(Color(0xFF2F6BF0), Color(0xFFFFFFFF)),
-    // Blue all the way through the find flow; mint only marks success on the arrow, rings and gauge (#77).
-    findVeryClose = FindStateColors(Color(0xFF2F6BF0), Color(0xFFFFFFFF), accent = Color(0xFF2EE6A0)),
-    findHere = FindStateColors(Color(0xFF2F6BF0), Color(0xFFFFFFFF), accent = Color(0xFF2EE6A0)),
-    findLost = FindStateColors(Color(0xFF2A2D34), Color(0xFFC5C6D0)),
-    // Design found-blue-v2 (#77): brand gradient, mint only on the check circle and rings, white Done.
+    // Find mode is muted brand blue all the way through (#97, color-modes-v1); browsing stays dark.
+    findSearching = FindStateColors(Color(0xFF365CC4), White, backgroundBottom = Color(0xFF24418F)),
+    findFar = FindStateColors(Color(0xFF2E54B6), White),
+    findClose = FindStateColors(Color(0xFF4777E2), White),
+    // Mint only marks success on the arrow, rings and gauge (#77).
+    findVeryClose = FindStateColors(Color(0xFF4777E2), White, accent = Mint),
+    findHere = FindStateColors(Color(0xFF4777E2), White, accent = Mint),
+    // Signal lost: the same blue with less colour (slate), never black (#97).
+    findLost = FindStateColors(Color(0xFF4A5A85), White, backgroundBottom = Color(0xFF2F3B5E)),
+    // Design found-blue-v2 (#77) with the muted tokens (#90 v2): mint only on the check and rings.
     found = FoundColors(
-        backgroundTop = Color(0xFF2F6BF0),
-        backgroundBottom = Color(0xFF173FA8),
-        content = Color(0xFFFFFFFF),
-        rings = Color(0xFF2EE6A0),
-        heroCircle = Color(0xFF2EE6A0),
+        backgroundTop = Color(0xFF4777E2),
+        backgroundBottom = Color(0xFF2A4A9E),
+        content = White,
+        rings = Mint,
+        heroCircle = Mint,
         check = Color(0xFF00391F),
-        buttonContainer = Color(0xFFFFFFFF),
-        buttonContent = Color(0xFF173FA8),
+        buttonContainer = White,
+        buttonContent = Color(0xFF2A4A9E),
     ),
     signalStrong = Color.Unspecified,
     signalMedium = Color.Unspecified,

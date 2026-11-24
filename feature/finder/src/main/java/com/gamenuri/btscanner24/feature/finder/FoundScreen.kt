@@ -1,5 +1,8 @@
 package com.gamenuri.btscanner24.feature.finder
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -25,10 +28,15 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -40,6 +48,7 @@ import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
 import com.gamenuri.btscanner24.core.model.DeviceLabel
 import com.gamenuri.btscanner24.core.model.NameSource
 import com.gamenuri.btscanner24.core.ui.text
+import kotlinx.coroutines.delay
 
 /**
  * "Found it!" (design screens-rest-v3 §1, #70): full-screen mint, a white check inside the same rings
@@ -47,8 +56,25 @@ import com.gamenuri.btscanner24.core.ui.text
  * Saving to My devices and the in-app review prompt come with #32/#9 storage and the Play libraries.
  */
 @Composable
-fun FoundContent(label: DeviceLabel, elapsedSeconds: Int, onDone: () -> Unit, modifier: Modifier = Modifier) {
+fun FoundContent(
+    label: DeviceLabel,
+    elapsedSeconds: Int,
+    onDone: () -> Unit,
+    modifier: Modifier = Modifier,
+    /** After the water rise (#90): pop the check once (1 → 1.12 → 1) with one haptic tick. */
+    popCheckAfterMs: Int? = null,
+) {
     val colors = NearoTheme.colors.found
+    val checkScale = remember { Animatable(1f) }
+    val haptics = LocalHapticFeedback.current
+    if (popCheckAfterMs != null) {
+        LaunchedEffect(Unit) {
+            delay(popCheckAfterMs.toLong())
+            haptics.performHapticFeedback(HapticFeedbackType.Confirm)
+            checkScale.animateTo(CHECK_POP_SCALE, tween(CHECK_POP_MS / 2, easing = FastOutSlowInEasing))
+            checkScale.animateTo(1f, tween(CHECK_POP_MS / 2, easing = FastOutSlowInEasing))
+        }
+    }
     CompositionLocalProvider(LocalContentColor provides colors.content) {
         Column(
             modifier = modifier
@@ -63,7 +89,13 @@ fun FoundContent(label: DeviceLabel, elapsedSeconds: Int, onDone: () -> Unit, mo
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {
-                CheckHero(colors)
+                CheckHero(
+                    colors,
+                    Modifier.graphicsLayer {
+                        scaleX = checkScale.value
+                        scaleY = checkScale.value
+                    },
+                )
                 Spacer(Modifier.height(28.dp))
                 Text(
                     text = stringResource(R.string.found_title),
@@ -94,9 +126,9 @@ fun FoundContent(label: DeviceLabel, elapsedSeconds: Int, onDone: () -> Unit, mo
 
 /** 84 dp circle with a check, inside two rings (110 and 150 dp) at 25 % of the ring colour. */
 @Composable
-private fun CheckHero(colors: FoundColors) {
+private fun CheckHero(colors: FoundColors, modifier: Modifier = Modifier) {
     val content = colors.rings
-    Box(modifier = Modifier.size(150.dp), contentAlignment = Alignment.Center) {
+    Box(modifier = modifier.size(150.dp), contentAlignment = Alignment.Center) {
         Canvas(Modifier.fillMaxSize()) {
             val ring = content.copy(alpha = 0.25f)
             val stroke = Stroke(1.5.dp.toPx())
@@ -147,3 +179,6 @@ private fun FoundPreview() {
         )
     }
 }
+
+private const val CHECK_POP_SCALE = 1.12f
+private const val CHECK_POP_MS = 260
