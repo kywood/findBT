@@ -1,19 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="onboarding_intro_title">なくしたイヤホン、ウォッチ、トラッカーを探そう</string>
-    <string name="onboarding_intro_body">NearoはBluetoothの信号をたどり、近づくとお知らせします。</string>
+    <string name="onboarding_intro_title">なくしたイ⁠ヤ⁠ホ⁠ン⁠・時計・⁠タ⁠グを探そう</string>
+    <string name="onboarding_intro_body">矢印の方向に歩くと、近づいているかどうかを Nearo が教えてくれます。</string>
     <string name="onboarding_get_started">はじめる</string>
     <string name="onboarding_permission_title">「付近のデバイス」を許可</string>
     <string name="onboarding_permission_body">周りのBluetoothデバイスを表示するために必要です。</string>
     <string name="onboarding_permission_title_legacy">位置情報へのアクセスを許可</string>
     <string name="onboarding_permission_body_legacy">Android 11以前では、Bluetoothデバイスを表示するために位置情報の権限が求められます。Nearoが位置情報を使うことはありません。</string>
     <string name="onboarding_check_location">位置情報を追跡することはありません</string>
-    <string name="onboarding_check_local">データがスマホの外に出ることはありません</string>
+    <string name="onboarding_check_local">スキャンしたデバイス情報はスマホの外に出ません</string>
     <string name="onboarding_check_stops">アプリを離れるとスキャンは止まります</string>
     <string name="onboarding_continue">続ける</string>
     <string name="onboarding_denied_title">権限が必要です</string>
-    <string name="onboarding_denied_body">「付近のデバイス」がないと、NearoはBluetoothデバイスを見つけられません。設定でオンにできます。</string>
-    <string name="onboarding_denied_body_legacy">位置情報の権限がないと、このAndroidバージョンではNearoがBluetoothデバイスを見つけられません。設定でオンにできます。</string>
+    <string name="onboarding_denied_body">「付近のデ⁠バ⁠イ⁠ス」がない⁠と、NearoはBluetoothデ⁠バ⁠イ⁠スを見つけら⁠れ⁠ま⁠せ⁠ん。設定でオ⁠ンにできます。</string>
+    <string name="onboarding_denied_body_legacy">位置情報の権限がない⁠と、このAndroidバ⁠ー⁠ジ⁠ョ⁠ンではNearoがBluetoothデ⁠バ⁠イ⁠スを見つけら⁠れ⁠ま⁠せ⁠ん。設定でオ⁠ンにできます。</string>
     <string name="onboarding_open_settings">設定を開く</string>
     <string name="onboarding_try_again">もう一度試す</string>
+    <string name="onboarding_hero_device">マイイヤホン</string>
+    <string name="onboarding_hero_distance_label">近い · おおよその距離</string>
 </resources>

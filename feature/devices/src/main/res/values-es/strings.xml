@@ -7,7 +7,7 @@
     <string name="devices_last_seen_now">Visto ahora mismo</string>
     <string name="devices_last_seen_minutes">Visto por última vez: hace %1$d min</string>
     <string name="devices_not_seen">Vinculado · aún no visto</string>
-    <string name="devices_more">Más</string>
+    <string name="devices_more_for">Más opciones de %1$s</string>
     <string name="devices_hide">Ocultar de la lista</string>
     <string name="devices_empty_title">No hay dispositivos vinculados</string>
     <string name="devices_empty_body">Los dispositivos vinculados a este teléfono aparecen aquí automáticamente.</string>
