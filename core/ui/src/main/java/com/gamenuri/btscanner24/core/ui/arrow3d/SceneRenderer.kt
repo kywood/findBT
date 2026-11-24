@@ -37,7 +37,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
     private val model = FloatArray(16)
     private val shadowModel = FloatArray(16)
     private val mvp = FloatArray(16)
-    private val shadow = shadowMatrix()
+    private val shadow = FloatArray(16)
     private var aspect = 1f
 
     // Eased values.
@@ -83,7 +83,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         Matrix.setIdentityM(model, 0)
         Matrix.translateM(model, 0, 0f, hover, 0f)
         Matrix.rotateM(model, 0, -yaw, 0f, 1f, 0f)
-        Matrix.scaleM(model, 0, width, 1f, 1f)
+        Matrix.scaleM(model, 0, width * MESH_SCALE, MESH_SCALE, MESH_SCALE)
         Matrix.translateM(model, 0, 0f, 0f, MESH_CENTER_Z)
 
         drawFloor(yaw)
@@ -118,7 +118,12 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         elevation += (targetElevation - elevation) * fast
         roll += (targetRoll - roll) * fast
         width += ((if (state.wide) WIDE_SCALE else 1f) - width) * slow
-        sectorHalf += ((if (state.wide) SECTOR_WIDE else SECTOR_NARROW) - sectorHalf) * slow
+        val targetSector = when {
+            state.locked -> SECTOR_LOCKED
+            state.wide -> SECTOR_WIDE
+            else -> SECTOR_NARROW
+        }
+        sectorHalf += (targetSector - sectorHalf) * slow
 
         val spinning = state.spinning
         if (spinning) {
@@ -189,14 +194,17 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
             GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, sectorBuffer)
             GLES20.glVertexAttribPointer(position, 3, GLES20.GL_FLOAT, false, 0, 0)
             Matrix.rotateM(mvp, 0, viewProjection, 0, -yaw, 0f, 1f, 0f)
-            flat(mvp, color, SECTOR_ALPHA)
+            flat(mvp, color, SECTOR_ALPHA, radial = true)
             val half = sectorHalf.roundToInt().coerceIn(1, SECTOR_MAX_HALF)
             GLES20.glDrawArrays(GLES20.GL_TRIANGLES, (SECTOR_MAX_HALF - half) * 3, half * 2 * 3)
         }
         GLES20.glDisableVertexAttribArray(position)
     }
 
-    /** The mesh squashed onto the floor along the light; the stencil keeps overlaps from doubling up. */
+    /**
+     * The mesh dropped straight onto the floor, nudged towards the viewer. Three faint copies of
+     * growing size stand in for a blur; the stencil keeps each copy from doubling up on itself.
+     */
     private fun drawShadow() {
         GLES20.glUseProgram(flatProgram)
         val position = GLES20.glGetAttribLocation(flatProgram, "aPos")
@@ -204,19 +212,28 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         GLES20.glEnableVertexAttribArray(position)
         GLES20.glVertexAttribPointer(position, 3, GLES20.GL_FLOAT, false, STRIDE_BYTES, 0)
         GLES20.glEnable(GLES20.GL_STENCIL_TEST)
-        GLES20.glStencilFunc(GLES20.GL_EQUAL, 0, 0xFF)
         GLES20.glStencilOp(GLES20.GL_KEEP, GLES20.GL_KEEP, GLES20.GL_INCR)
-        Matrix.multiplyMM(shadowModel, 0, shadow, 0, model, 0)
-        Matrix.multiplyMM(mvp, 0, viewProjection, 0, shadowModel, 0)
-        GLES20.glUniformMatrix4fv(GLES20.glGetUniformLocation(flatProgram, "uMvp"), 1, false, mvp, 0)
+        GLES20.glUniform1f(GLES20.glGetUniformLocation(flatProgram, "uRadial"), 0f)
         GLES20.glUniform4f(
             GLES20.glGetUniformLocation(flatProgram, "uColor"),
-            SHADOW_RED * SHADOW_ALPHA,
-            SHADOW_GREEN * SHADOW_ALPHA,
-            SHADOW_BLUE * SHADOW_ALPHA,
-            SHADOW_ALPHA,
+            SHADOW_RED * SHADOW_LAYER_ALPHA,
+            SHADOW_GREEN * SHADOW_LAYER_ALPHA,
+            SHADOW_BLUE * SHADOW_LAYER_ALPHA,
+            SHADOW_LAYER_ALPHA,
         )
-        GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, meshVertices)
+        GLES20.glStencilFunc(GLES20.GL_EQUAL, 0, 0xFF)
+        for (scale in SHADOW_SCALES) {
+            // A fresh stencil per copy: each one covers its own footprint exactly once.
+            GLES20.glClear(GLES20.GL_STENCIL_BUFFER_BIT)
+            Matrix.setIdentityM(shadow, 0)
+            Matrix.translateM(shadow, 0, 0f, 0f, SHADOW_OFFSET)
+            // Height scaled to zero: straight down onto the floor, wherever the arrow hovers.
+            Matrix.scaleM(shadow, 0, scale, 0f, scale)
+            Matrix.multiplyMM(shadowModel, 0, shadow, 0, model, 0)
+            Matrix.multiplyMM(mvp, 0, viewProjection, 0, shadowModel, 0)
+            GLES20.glUniformMatrix4fv(GLES20.glGetUniformLocation(flatProgram, "uMvp"), 1, false, mvp, 0)
+            GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, meshVertices)
+        }
         GLES20.glDisable(GLES20.GL_STENCIL_TEST)
         GLES20.glDisableVertexAttribArray(position)
     }
@@ -260,8 +277,10 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0)
     }
 
-    private fun flat(matrix: FloatArray, color: Int, alpha: Float) {
+    private fun flat(matrix: FloatArray, color: Int, alpha: Float, radial: Boolean = false) {
         GLES20.glUniformMatrix4fv(GLES20.glGetUniformLocation(flatProgram, "uMvp"), 1, false, matrix, 0)
+        // Radial: clear at the centre, full colour at the rim (the direction sector).
+        GLES20.glUniform1f(GLES20.glGetUniformLocation(flatProgram, "uRadial"), if (radial) 1f / SECTOR_RADIUS else 0f)
         GLES20.glUniform4f(
             GLES20.glGetUniformLocation(flatProgram, "uColor"),
             red(color) * alpha,
@@ -310,7 +329,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         const val FIELD_OF_VIEW = 30f
         const val NEAR = 0.5f
         const val FAR = 30f
-        const val CAMERA_DISTANCE = 5.6f
+        const val CAMERA_DISTANCE = 6.6f
         const val TARGET_HEIGHT = 0.12f
         const val MIN_ELEVATION = 22f
         const val MAX_ELEVATION = 78f
@@ -318,9 +337,11 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         const val POSE_SMOOTH_SECONDS = 0.09f
 
         // Arrow.
+        // Design #76, in units of the ring radius R (RING_OUTER): length 1.5 R, hover 0.22 R ± 0.02 R.
         const val MESH_CENTER_Z = 0.04f
-        const val HOVER_HEIGHT = 0.12f
-        const val HOVER_BOB = 0.035f
+        const val MESH_SCALE = 1.0625f
+        const val HOVER_HEIGHT = 0.30f
+        const val HOVER_BOB = 0.027f
         const val HOVER_PERIOD_SECONDS = 2.4f
         const val WIDE_SCALE = 1.4f
         const val SHAPE_SMOOTH_SECONDS = 0.15f
@@ -338,15 +359,18 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         const val RING_ALPHA = 0.25f
         const val SECTOR_RADIUS = 1.30f
         const val SECTOR_MAX_HALF = 45
-        const val SECTOR_NARROW = 25f
-        const val SECTOR_WIDE = 45f
-        const val SECTOR_ALPHA = 0.16f
+        const val SECTOR_LOCKED = 12f
+        const val SECTOR_NARROW = 20f
+        const val SECTOR_WIDE = 35f
+        const val SECTOR_ALPHA = 0.22f
 
-        // Shadow: a darker blue, never black, on the blue floor.
-        const val SHADOW_RED = 0.05f
-        const val SHADOW_GREEN = 0.12f
-        const val SHADOW_BLUE = 0.36f
-        const val SHADOW_ALPHA = 0.32f
+        // Shadow: #0B2A8A, never black, about 28 % where all three copies overlap.
+        const val SHADOW_RED = 0.043f
+        const val SHADOW_GREEN = 0.165f
+        const val SHADOW_BLUE = 0.541f
+        const val SHADOW_LAYER_ALPHA = 0.10f
+        const val SHADOW_OFFSET = 0.068f
+        val SHADOW_SCALES = floatArrayOf(0.98f, 1.04f, 1.10f)
 
         /** Towards the light: up, from the left, a little towards the viewer. */
         val LIGHT = normalized(-0.45f, 1f, 0.5f)
@@ -366,17 +390,6 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         fun green(color: Int): Float = (color shr 8 and 0xFF) / 255f
 
         fun blue(color: Int): Float = (color and 0xFF) / 255f
-
-        /** Column-major matrix that drops a point onto the floor (y = 0) along the light. */
-        fun shadowMatrix(): FloatArray {
-            val m = FloatArray(16)
-            m[0] = 1f
-            m[4] = -LIGHT[0] / LIGHT[1]
-            m[6] = -LIGHT[2] / LIGHT[1]
-            m[10] = 1f
-            m[15] = 1f
-            return m
-        }
 
         /** Direction on the floor at [degrees] clockwise from straight ahead (−Z). */
         fun floorDirection(degrees: Float): Pair<Float, Float> {
@@ -417,8 +430,11 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
 
         const val FLAT_VERTEX = """
             uniform mat4 uMvp;
+            uniform float uRadial;
             attribute vec3 aPos;
+            varying float vFade;
             void main() {
+                vFade = uRadial > 0.0 ? length(aPos.xz) * uRadial : 1.0;
                 gl_Position = uMvp * vec4(aPos, 1.0);
             }
         """
@@ -426,8 +442,9 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         const val FLAT_FRAGMENT = """
             precision mediump float;
             uniform vec4 uColor;
+            varying float vFade;
             void main() {
-                gl_FragColor = uColor;
+                gl_FragColor = uColor * vFade;
             }
         """
 
@@ -460,7 +477,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
                 vec3 n = normalize(vNormal);
                 vec3 v = normalize(uCamera - vWorld);
                 float diffuse = max(dot(n, uLight), 0.0);
-                vec3 shade = vec3(0.58, 0.64, 0.80);
+                vec3 shade = vec3(0.79, 0.84, 0.96);
                 vec3 color = uBase * mix(shade, vec3(1.0), diffuse);
                 float highlight = pow(max(dot(n, normalize(uLight + v)), 0.0), 48.0) * uGloss;
                 float rim = pow(1.0 - max(dot(n, v), 0.0), 3.0);
