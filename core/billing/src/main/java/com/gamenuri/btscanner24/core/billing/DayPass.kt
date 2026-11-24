@@ -2,7 +2,6 @@ package com.gamenuri.btscanner24.core.billing
 
 import android.content.SharedPreferences
 import java.time.Instant
-import java.time.LocalDate
 import java.time.ZoneId
 
 /**
@@ -30,7 +29,7 @@ class DayPass(private val storage: Storage, private val zone: () -> ZoneId = Zon
         return end
     }
 
-    private fun day(now: Long): Long = LocalDate.ofInstant(Instant.ofEpochMilli(now), zone()).toEpochDay()
+    private fun day(now: Long): Long = Instant.ofEpochMilli(now).atZone(zone()).toLocalDate().toEpochDay()
 
     class SharedPreferencesStorage(private val prefs: SharedPreferences) : Storage {
         override var until: Long

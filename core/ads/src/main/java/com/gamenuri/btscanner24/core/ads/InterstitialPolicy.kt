@@ -2,7 +2,6 @@ package com.gamenuri.btscanner24.core.ads
 
 import android.content.SharedPreferences
 import java.time.Instant
-import java.time.LocalDate
 import java.time.ZoneId
 
 /**
@@ -41,7 +40,7 @@ class InterstitialPolicy(
         storage.lastShownAt = now
     }
 
-    private fun day(millis: Long): Long = LocalDate.ofInstant(Instant.ofEpochMilli(millis), zone()).toEpochDay()
+    private fun day(millis: Long): Long = Instant.ofEpochMilli(millis).atZone(zone()).toLocalDate().toEpochDay()
 
     class SharedPreferencesStorage(private val prefs: SharedPreferences) : Storage {
         override var epochDay: Long
