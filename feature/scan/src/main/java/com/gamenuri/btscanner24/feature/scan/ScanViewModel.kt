@@ -172,6 +172,7 @@ class ScanViewModel(
     }
 
     fun setSort(sort: DeviceSort) = updatePreferences { it.copy(sort = sort) }
+
     /** "N other devices hidden · Show" at the end of the list (#82): same as turning the switch on. */
     fun showOther() = updateFilter { it.copy(showOther = true) }
 
