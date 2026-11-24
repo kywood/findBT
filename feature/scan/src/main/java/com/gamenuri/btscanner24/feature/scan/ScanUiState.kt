@@ -26,6 +26,8 @@ data class DeviceListItem(
     val showSuffix: Boolean = false,
     /** Paired with this phone; the name is the phone's alias for it. */
     val isPaired: Boolean = false,
+    /** In the "Other devices" section below personal devices (#82). */
+    val isOther: Boolean = false,
 )
 
 data class ScanUiState(
@@ -37,12 +39,16 @@ data class ScanUiState(
     val reorderAvailable: Boolean = false,
     /** The user paused the automatic scan; lasts until they leave the tab (#62). */
     val isPaused: Boolean = false,
-    /** Devices seen before filters and search, for "2 / 15". */
+    /** Devices seen before filters and search. The status line counts only personal ones ([census]). */
     val totalCount: Int = 0,
+    /** Other devices (#82) that match but are hidden while "Show other devices" is off. */
+    val hiddenOtherCount: Int = 0,
+    /** Personal/other split and makers of the whole scan, before filters (#82, #85). */
+    val census: ScanCensus = ScanCensus(),
 ) {
     val isScanning: Boolean get() = status == ScanStatus.Scanning
 
     /** Filters in use, for the badge on the filter button. Search is not counted. */
     val activeFilterCount: Int
-        get() = preferences.groups.size + (if (preferences.namedOnly) 1 else 0) + (if (preferences.hideGone) 1 else 0)
+        get() = preferences.filter.activeCount
 }

@@ -13,6 +13,7 @@ import com.gamenuri.btscanner24.core.data.DataDependenciesProvider
 import com.gamenuri.btscanner24.core.data.HiddenDevicesRepository
 import com.gamenuri.btscanner24.core.data.ListPreferencesRepository
 import com.gamenuri.btscanner24.demo.DemoMode
+import com.gamenuri.btscanner24.demo.ScanCensus
 import kotlin.concurrent.thread
 
 class BtScannerApp :
@@ -33,7 +34,7 @@ class BtScannerApp :
             scanner = BleScanner(this),
             repository = DeviceRepository(companies),
             bondedDevices = BondedDevices(this),
-        )
+        ).also { ScanCensus.start(it.repository) }
     }
 
     override fun onCreate() {

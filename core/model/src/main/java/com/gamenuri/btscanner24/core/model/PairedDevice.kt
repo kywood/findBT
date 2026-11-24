@@ -7,7 +7,18 @@ data class PairedDevice(val address: String, val name: String?, val category: De
      * cars, PCs and the like go in the collapsed "Other paired devices" group.
      */
     val isPriority: Boolean
-        get() = category.filterGroup != CategoryGroup.OTHER ||
-            category == DeviceCategory.HEALTH ||
-            category == DeviceCategory.SPEAKER
+        get() = category in PRIORITY
+
+    private companion object {
+        val PRIORITY = setOf(
+            DeviceCategory.EARBUDS,
+            DeviceCategory.HEADPHONES,
+            DeviceCategory.HEARING_AID,
+            DeviceCategory.WATCH,
+            DeviceCategory.FITNESS_BAND,
+            DeviceCategory.TRACKER,
+            DeviceCategory.HEALTH,
+            DeviceCategory.SPEAKER,
+        )
+    }
 }

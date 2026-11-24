@@ -22,6 +22,12 @@
     <string name="category_sensor">Sensor</string>
     <string name="category_unknown">Other device</string>
     <string name="category_group_earbuds">Earbuds</string>
+    <string name="category_group_headphones">Headphones</string>
+    <string name="category_group_band">Bands</string>
+    <string name="category_group_phone">Phones</string>
+    <string name="category_group_tablet">Tablets</string>
+    <string name="category_group_speaker">Speakers</string>
+    <string name="category_group_laptop">Laptops</string>
     <string name="category_group_watch">Watches</string>
     <string name="category_group_tracker">Trackers</string>
     <string name="category_group_other">Other</string>
