@@ -19,12 +19,7 @@ import kotlin.math.log10
 internal object DemoData {
 
     /** Makers are made up as well, so the filter's maker section has something to show (#100). */
-    private class Fake(
-        val name: String?,
-        val category: DeviceCategory,
-        val meters: Double,
-        val maker: String? = null,
-    )
+    private class Fake(val name: String?, val category: DeviceCategory, val meters: Double, val maker: String? = null)
 
     private val fakes = listOf(
         Fake("My Earbuds", DeviceCategory.EARBUDS, 0.7, "Lumen Audio"),
