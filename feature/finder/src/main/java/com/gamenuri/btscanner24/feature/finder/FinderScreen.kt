@@ -5,6 +5,7 @@ import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
@@ -65,6 +66,7 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -105,7 +107,8 @@ import kotlinx.coroutines.delay
 @Composable
 fun FinderScreen(
     address: String,
-    onClose: () -> Unit,
+    /** Leaves the screen; [Brush] is the background on screen now, for the drain over Home (#101). */
+    onClose: (cover: Brush) -> Unit,
     /** Water level of the entry from Home (#90), 0..1 over the press and the rise; 1 shows it fully. */
     entryProgress: () -> Float = { 1f },
     viewModel: FinderViewModel = viewModel(key = "finder-$address", factory = FinderViewModel.factory(address)),
@@ -114,8 +117,17 @@ fun FinderScreen(
 
     // "I found it" swaps in the Found screen; leaving this branch stops the scan, sensors and haptics.
     var foundAfterSeconds by rememberSaveable { mutableStateOf<Int?>(null) }
+    val found = NearoTheme.colors.found
+    val cover = if (foundAfterSeconds != null) {
+        Brush.verticalGradient(listOf(found.backgroundTop, found.backgroundBottom))
+    } else {
+        findColorsFor(state).brush()
+    }
+    val close by rememberUpdatedState { onClose(cover) }
+    // System back drains the same way as ✕ and Done.
+    BackHandler { close() }
     foundAfterSeconds?.let { seconds ->
-        FoundRise(state, seconds, onDone = onClose)
+        FoundRise(state, seconds, onDone = { close() })
         return
     }
 
@@ -147,7 +159,7 @@ fun FinderScreen(
         state = state,
         entryProgress = entryProgress,
         actions = FinderActions(
-            onClose = onClose,
+            onClose = { close() },
             onFound = { foundAfterSeconds = state.advanced.elapsedSeconds },
             onToggleVibration = viewModel::toggleVibration,
             onSpinAgain = viewModel::spinAgain,
