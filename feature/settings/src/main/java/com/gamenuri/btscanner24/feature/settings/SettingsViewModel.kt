@@ -36,7 +36,7 @@ class SettingsViewModel(private val store: PremiumStore) : ViewModel() {
     val uiState: StateFlow<SettingsUiState> =
         combine(store.state, showPaywall, isRestoring) { premium, sheet, restoring ->
             // The sheet closes by itself once the purchase goes through.
-            SettingsUiState(premium = premium, showPaywall = sheet && !premium.isPremium, isRestoring = restoring)
+            SettingsUiState(premium = premium, showPaywall = sheet && !premium.isPurchased, isRestoring = restoring)
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), SettingsUiState(store.state.value))
 
     init {

@@ -41,13 +41,14 @@ import kotlinx.coroutines.withContext
  */
 class NearoAds(
     private val app: Application,
-    private val units: AdUnits,
+    val units: AdUnits,
     private val premium: PremiumStore,
     private val policy: InterstitialPolicy,
     private val clock: () -> Long = System::currentTimeMillis,
 ) {
     interface Provider {
-        val ads: NearoAds
+        /** Null in the debug demo mode, so screenshots never carry ads. */
+        val ads: NearoAds?
     }
 
     private val scope = MainScope()

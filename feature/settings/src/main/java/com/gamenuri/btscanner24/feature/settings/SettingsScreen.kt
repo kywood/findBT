@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import android.text.format.DateUtils
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -47,6 +48,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -67,6 +69,7 @@ import com.gamenuri.btscanner24.core.designsystem.theme.BrandIconGradientTop
 import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
 import com.gamenuri.btscanner24.core.ui.premium.PaywallActions
 import com.gamenuri.btscanner24.core.ui.premium.PaywallSheet
+import kotlinx.coroutines.launch
 
 /** App facts the Settings screen shows or sends; given by `:app`, which owns BuildConfig. */
 data class AppInfo(
@@ -82,6 +85,12 @@ data class AppInfo(
  * is null or [isRequired] is false.
  */
 data class PrivacyOptions(val isRequired: Boolean, val show: () -> Unit)
+
+/**
+ * The opt-in rewarded ad for 24 hours of Premium (#81 ④). [show] plays it and calls back with the
+ * day pass end (epoch ms) once it was watched to the end. The button hides while [isReady] is false.
+ */
+data class RewardedOffer(val isReady: Boolean, val show: (onDayPass: (until: Long) -> Unit) -> Unit)
 
 data class SettingsActions(
     val onBack: () -> Unit = {},
@@ -101,6 +110,7 @@ fun SettingsScreen(
     onLicenses: () -> Unit,
     modifier: Modifier = Modifier,
     privacyOptions: PrivacyOptions? = null,
+    rewarded: RewardedOffer? = null,
     /** Opens the paywall sheet right away (debug demo shots, later "Go Premium" links). */
     openPaywall: Boolean = false,
 ) {
@@ -115,6 +125,8 @@ fun SettingsScreen(
     val restored = stringResource(R.string.settings_restore_ok)
     val nothing = stringResource(R.string.settings_restore_none)
     val failed = stringResource(R.string.settings_restore_failed)
+    val scope = rememberCoroutineScope()
+    val dayPassOn = stringResource(R.string.settings_day_pass_on)
     LaunchedEffect(viewModel) {
         viewModel.messages.collect { result ->
             snackbar.showSnackbar(
@@ -164,10 +176,26 @@ fun SettingsScreen(
                 onBuy = { activity?.let(viewModel::buy) },
                 onRestore = viewModel::restore,
                 onClose = viewModel::closePaywall,
+                // Only when an ad is loaded and today's day pass is still unused (#81).
+                onWatchAd = rewarded?.takeIf { it.isReady && state.premium.dayPassAvailable }?.let { offer ->
+                    {
+                        offer.show { until ->
+                            viewModel.closePaywall()
+                            scope.launch { snackbar.showSnackbar(dayPassOn.format(context.formatUntil(until))) }
+                        }
+                    }
+                },
             ),
         )
     }
 }
+
+/** "Nov 25, 3:20 PM" in the phone's language and clock style. */
+private fun Context.formatUntil(until: Long): String = DateUtils.formatDateTime(
+    this,
+    until,
+    DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_TIME or DateUtils.FORMAT_ABBREV_MONTH,
+)
 
 private fun Context.openUri(intent: Intent) {
     try {
@@ -210,7 +238,8 @@ fun SettingsContent(
                 .padding(bottom = 16.dp),
         ) {
             PremiumCard(premium, actions.onGetPremium)
-            if (!premium.isPremium) {
+            // Still offered during a 24 h day pass: it is not a purchase (#92).
+            if (!premium.isPurchased) {
                 SettingsRow(Icons.Outlined.Restore, R.string.settings_restore, onClick = actions.onRestore)
             }
             SectionHeader(R.string.settings_section_privacy)
@@ -268,13 +297,20 @@ private fun PremiumCard(premium: PremiumState, onGetPremium: () -> Unit) {
             Icon(Icons.Filled.CheckCircle, null, tint = NearoTheme.colors.signalStrong, modifier = Modifier.size(28.dp))
             Spacer(Modifier.width(14.dp))
             Column {
+                val until = premium.dayPassUntil?.takeIf { !premium.isPurchased }
                 Text(
-                    stringResource(R.string.settings_premium_active),
+                    stringResource(
+                        if (until != null) R.string.settings_day_pass_title else R.string.settings_premium_active,
+                    ),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                 )
                 Text(
-                    stringResource(R.string.settings_premium_active_body),
+                    if (until != null) {
+                        stringResource(R.string.settings_day_pass_until, LocalContext.current.formatUntil(until))
+                    } else {
+                        stringResource(R.string.settings_premium_active_body)
+                    },
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
