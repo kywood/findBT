@@ -29,6 +29,11 @@ internal object DemoData {
         Fake(null, DeviceCategory.TRACKER, 6.5),
         Fake("Studio Headphones", DeviceCategory.HEADPHONES, 7.5),
         Fake("Living Room Speaker", DeviceCategory.SPEAKER, 12.0),
+        // "Other devices" (#82): hidden by default, behind "N other devices hidden · Show".
+        Fake(null, DeviceCategory.UNKNOWN, 4.2),
+        Fake("Living Room TV", DeviceCategory.TV, 7.0),
+        Fake("Bathroom Scale", DeviceCategory.HEALTH, 11.0),
+        Fake(null, DeviceCategory.SENSOR, 13.0),
     )
 
     private fun address(index: Int) = "DE:00:00:00:00:%02X".format(index + 1)
