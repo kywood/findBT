@@ -196,40 +196,40 @@ fun FinderContent(state: FinderUiState, actions: FinderActions, modifier: Modifi
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 StageText(state)
-                // The dial takes what is left and shrinks on short screens (Flip3 cover, small phones). The
-                // confirm hint borrows its height from here too, so the distance below never moves (#60).
-                Column(
-                    modifier = Modifier.weight(1f).fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
+                // The dial takes what is left and shrinks on short screens (Flip3 cover, small phones).
+                Box(
+                    modifier = Modifier.weight(1f).fillMaxWidth().padding(vertical = 12.dp),
+                    contentAlignment = Alignment.Center,
                 ) {
-                    Box(
-                        modifier = Modifier.weight(1f).fillMaxWidth().padding(vertical = 12.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        CompositionLocalProvider(LocalContentColor provides accent) {
-                            DirectionDial(state, Modifier.heightIn(min = DIAL_MIN))
-                        }
+                    CompositionLocalProvider(LocalContentColor provides accent) {
+                        DirectionDial(state, Modifier.heightIn(min = DIAL_MIN))
                     }
+                }
+                DistanceBlock(state)
+                // One fixed-height slot under the trend chip: the confirm hint when very close (#94), else
+                // "spin again". It always takes its space, so the rows above keep their place (#60).
+                Box(Modifier.fillMaxWidth().heightIn(min = BOTTOM_SLOT), contentAlignment = Alignment.Center) {
                     if (state.showConfirmHint) {
                         // Names can be vague ("hiot0"); confirming by touch matters more than the name (#46).
                         Text(
                             text = stringResource(R.string.finder_confirm_hint),
-                            modifier = Modifier.padding(bottom = 12.dp),
+                            modifier = Modifier.padding(horizontal = 16.dp),
                             style = MaterialTheme.typography.bodySmall,
-                            color = LocalContentColor.current.copy(alpha = MUTED_ALPHA),
+                            color = content.copy(alpha = HINT_ALPHA),
                             textAlign = TextAlign.Center,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
                         )
+                    } else {
+                        val canRespin = state.stage == FinderStage.WALK || state.stage == FinderStage.TURN_AROUND
+                        TextButton(
+                            onClick = actions.onSpinAgain,
+                            enabled = canRespin,
+                            modifier = Modifier.slot(visible = canRespin),
+                        ) {
+                            Text(stringResource(R.string.finder_spin_again), color = content)
+                        }
                     }
-                }
-                DistanceBlock(state)
-                // Always takes its space; hidden by alpha so the rows above keep their place (#60).
-                val canRespin = state.stage == FinderStage.WALK || state.stage == FinderStage.TURN_AROUND
-                TextButton(
-                    onClick = actions.onSpinAgain,
-                    enabled = canRespin,
-                    modifier = Modifier.slot(visible = canRespin),
-                ) {
-                    Text(stringResource(R.string.finder_spin_again), color = content)
                 }
             }
         }
@@ -607,6 +607,8 @@ private const val LONG_HAPTIC_MS = 400L
 private const val COLOR_FADE_MS = 400
 
 private const val MUTED_ALPHA = 0.78f
+private const val HINT_ALPHA = 0.8f
+private val BOTTOM_SLOT = 48.dp
 private val GAUGE_TRACK = 6.dp
 private val DIAL_MIN = 180.dp
 private val GAUGE_DOT = 16.dp
