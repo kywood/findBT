@@ -24,7 +24,7 @@
     <!-- Filter screen and other devices (#85, #82) -->
     <string name="filter_close">閉じる</string>
     <string name="filter_section_show">表示</string>
-    <string name="filter_show_other_body">ビーコン、テレビ、センサーなど %1$d 件</string>
+    <string name="filter_show_other_body">名前がない、または種類がわからない信号 %1$d件</string>
     <string name="filter_show_unnamed">名前のないデバイスを表示</string>
     <string name="filter_distance">距離</string>
     <string name="filter_distance_within_5">5 m以内</string>
@@ -37,6 +37,16 @@
     <string name="filter_no_results">該当なし</string>
     <string name="nearby_other_show">表示</string>
     <string name="nearby_other_section">その他のデバイス · %1$d</string>
+    <!-- Other devices: close and explanation (#142) -->
+    <string name="nearby_other_close">閉じる</string>
+    <string name="nearby_other_close_section">その他のデバイスを閉じる</string>
+    <string name="nearby_other_order">%1$s · 新しい機器は下</string>
+    <string name="nearby_other_info">その他のデバイスについて</string>
+    <string name="other_info_title">その他のデバイス</string>
+    <string name="other_info_what">名前がない、または種類がわからない近くのBluetooth信号です。近所の機器、家電、テレビ、ビーコンなどが含まれることがあります。</string>
+    <string name="other_info_why">数が多く、ほとんどは自分のものではないため、最初は非表示にしています。</string>
+    <string name="other_info_mine">自分の機器がここにある場合は、タップして探し始めてください。近づくにつれて距離が縮まるか確認しましょう。</string>
+    <string name="other_info_ok">OK</string>
     <string name="nearby_empty_personal">近くに持ち歩くデバイスはありません</string>
     <plurals name="filter_show_results">
         <item quantity="other">%1$d 件のデバイスを表示</item>
