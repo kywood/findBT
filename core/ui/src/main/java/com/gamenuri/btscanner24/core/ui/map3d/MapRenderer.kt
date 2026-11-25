@@ -95,8 +95,9 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
         /** Where [tuck] is heading; other devices keep clear of this, so the choice does not flicker. */
         var tuckGoal = 0f
 
-        /** The angle it is heading to this frame, the one the others keep clear of. */
+        /** The angle it is heading to this frame, and where it covers the view there; the others keep clear. */
         var goalAngle = 0f
+        val goalRect = FloatArray(RECT_FLOATS)
     }
 
     private val models = HashMap<DeviceModel, Model>()
@@ -130,6 +131,7 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
 
     /** The "me" marker on screen (left, bottom, right, top in pixels from the lower edge): no tag lies on it. */
     private val meRect = FloatArray(RECT_FLOATS)
+    private val probeRect = FloatArray(RECT_FLOATS)
     private var viewportWidth = 1f
     private var viewportHeight = 1f
 
@@ -340,25 +342,69 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
         return wanted.coerceAtMost(MAX_ZOOM)
     }
 
-    /** The step-back one device at [angle] on a ring of [radius] needs to be whole on screen. */
+    /**
+     * The step-back one device at [angle] on a ring of [radius] needs to be whole on screen: its stand's
+     * edges, picked ring included, and its top.
+     */
     private fun need(room: FitRoom, angle: Float, radius: Float): Float {
+        pinRect(angle, radius, probeRect)
+        val above = room.above
+        var wanted = 1f
+        val top = probeRect[RECT_TOP]
+        val bottom = probeRect[RECT_BOTTOM]
+        if (top < above && room.topRoom > 0f) wanted = maxOf(wanted, (above - top) / room.topRoom)
+        if (bottom > above && room.bottomRoom > 0f) wanted = maxOf(wanted, (bottom - above) / room.bottomRoom)
+        val side = maxOf(abs(probeRect[RECT_LEFT] - 0.5f), abs(probeRect[RECT_RIGHT] - 0.5f))
+        return maxOf(wanted, side / room.sideRoom)
+    }
+
+    /**
+     * Where a device at [angle] on a ring of [radius] covers the design's view, as shares of its width
+     * and height from the top left: left, right, top, bottom. Stepping back scales every such box about
+     * the same point, so two that do not overlap here never do.
+     */
+    private fun pinRect(angle: Float, radius: Float, out: FloatArray) {
         val a = radians(angle)
         val x = sin(a) * radius
         val z = -cos(a) * radius
         val floor = MapFloor.height(radius)
-        var wanted = 1f
+        val half = PIN_SIZE * PIN_HALF_WIDTH
+        out[RECT_LEFT] = Float.MAX_VALUE
+        out[RECT_RIGHT] = -Float.MAX_VALUE
+        out[RECT_TOP] = Float.MAX_VALUE
+        out[RECT_BOTTOM] = -Float.MAX_VALUE
         for (lift in 0..1) {
-            project(x, floor + lift * PIN_TOP * PIN_SIZE, z)
-            val w = projected[3]
-            if (w <= 0f) continue
-            val fromTop = (1f - projected[1] / w) / 2f
-            val across = (projected[0] / w + 1f) / 2f
-            val above = room.above
-            if (fromTop < above && room.topRoom > 0f) wanted = maxOf(wanted, (above - fromTop) / room.topRoom)
-            if (fromTop > above && room.bottomRoom > 0f) wanted = maxOf(wanted, (fromTop - above) / room.bottomRoom)
-            wanted = maxOf(wanted, abs(across - 0.5f) / room.sideRoom)
+            for (side in SIDES) {
+                project(x + side * half, floor + lift * PIN_TOP * PIN_SIZE, z)
+                val w = projected[3]
+                if (w <= 0f) continue
+                val fromTop = (1f - projected[1] / w) / 2f
+                val across = (projected[0] / w + 1f) / 2f
+                out[RECT_LEFT] = minOf(out[RECT_LEFT], across)
+                out[RECT_RIGHT] = maxOf(out[RECT_RIGHT], across)
+                out[RECT_TOP] = minOf(out[RECT_TOP], fromTop)
+                out[RECT_BOTTOM] = maxOf(out[RECT_BOTTOM], fromTop)
+            }
         }
-        return wanted
+    }
+
+    /** Whether a device at [angle] on a ring of [radius] keeps clear of every device in [placed]. */
+    private fun clearOf(placed: List<Spot>, angle: Float, radius: Float): Boolean {
+        pinRect(angle, radius, probeRect)
+        return placed.none { other ->
+            val box = other.goalRect
+            probeRect[RECT_LEFT] < box[RECT_RIGHT] - CLEAR_OVERLAP &&
+                box[RECT_LEFT] < probeRect[RECT_RIGHT] - CLEAR_OVERLAP &&
+                probeRect[RECT_TOP] < box[RECT_BOTTOM] - CLEAR_OVERLAP &&
+                box[RECT_TOP] < probeRect[RECT_BOTTOM] - CLEAR_OVERLAP
+        }
+    }
+
+    /** Remembers where [spot] is heading, for the devices placed after it to keep clear of. */
+    private fun settle(spot: Spot, angle: Float, placed: MutableList<Spot>) {
+        spot.goalAngle = angle
+        pinRect(angle, spot.radius, spot.goalRect)
+        placed += spot
     }
 
     /**
@@ -384,8 +430,9 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
 
     /**
      * Devices without a measured direction have no real bearing, so when one would need the camera to
-     * step back beyond [MAX_ZOOM], it slides along its own ring to the nearest place that fits and is
-     * not on another device (#193). Measured devices never move. The farthest are placed first.
+     * step back beyond [MAX_ZOOM], or would stand on another device on screen, it slides along its own
+     * ring to the nearest place that fits and is clear (#193). Measured devices never move. The
+     * farthest are placed first.
      */
     private fun tuckPins(room: FitRoom) {
         val turn = worldTurn()
@@ -397,20 +444,18 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
             if (pin.measured) {
                 spot.tuck = 0f
                 spot.tuckGoal = 0f
-                spot.goalAngle = spot.angle - turn
                 spot.drawAngle = spot.angle - turn
-                placed += spot
+                settle(spot, spot.drawAngle, placed)
             }
         }
-        // Those that fit at their own place stay there, and the others keep clear of them.
+        // Those that fit at their own place, clear of the others, stay there; the rest keep clear of them.
         val loose = ArrayList<Spot>()
         for (pin in state.pins) {
             val spot = spots[pin.key] ?: continue
             if (pin.measured) continue
-            if (fits(room, spot)) {
+            if (fits(room, spot) && clearOf(placed, spot.angle, spot.radius)) {
                 spot.tuckGoal = 0f
-                spot.goalAngle = spot.angle
-                placed += spot
+                settle(spot, spot.angle, placed)
             } else {
                 loose += spot
             }
@@ -425,10 +470,9 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
         for (spot in loose) {
             val target = tuckTarget(room, spot, placed)
             spot.tuckGoal = target
-            spot.goalAngle = spot.angle + target
             spot.tuck = if (still) target else spot.tuck + wrap(target - spot.tuck) * ease
             spot.drawAngle = spot.angle + spot.tuck
-            placed += spot
+            settle(spot, spot.angle + target, placed)
         }
     }
 
@@ -444,7 +488,6 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
     /** The smallest slide along the ring, either way, that fits within [MAX_ZOOM] and keeps clear of [placed]. */
     private fun tuckTarget(room: FitRoom, spot: Spot, placed: List<Spot>): Float {
         val limit = MAX_ZOOM * TUCK_FIT_SHARE
-        val gap = degrees(TUCK_GAP / spot.radius.coerceAtLeast(MIN_TUCK_RADIUS))
         var best = spot.tuckGoal
         var bestNeed = Float.MAX_VALUE
         var step = TUCK_STEP_DEGREES
@@ -452,10 +495,7 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
             for (side in SIDES) {
                 val slide = side * step
                 val angle = spot.angle + slide
-                val clear = placed.none {
-                    abs(it.radius - spot.radius) < TUCK_RING_TOLERANCE && abs(wrap(it.goalAngle - angle)) < gap
-                }
-                if (!clear) continue
+                if (!clearOf(placed, angle, spot.radius)) continue
                 val needed = need(room, angle, spot.radius)
                 if (needed <= limit) return slide
                 if (needed < bestNeed) {
@@ -1254,9 +1294,16 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
         const val MAX_TUCK_DEGREES = 180f
         const val TUCK_FIT_SHARE = 0.94f
         const val TUCK_SETTLED_DEGREES = 0.2f
-        const val TUCK_GAP = 1.1f
-        const val MIN_TUCK_RADIUS = 1f
-        const val TUCK_RING_TOLERANCE = 0.3f
+
+        /** Half a stand's width with the picked ring round it, as a share of its size. */
+        const val PIN_HALF_WIDTH = 0.6f
+
+        /** How much two devices' boxes may touch (share of the view) and still count as clear. */
+        const val CLEAR_OVERLAP = 0.004f
+        const val RECT_LEFT = 0
+        const val RECT_RIGHT = 1
+        const val RECT_TOP = 2
+        const val RECT_BOTTOM = 3
         val SIDES = floatArrayOf(1f, -1f)
         const val HIT_RADIUS = 0.7f
         const val MIN_HIT_SHARE = 0.06f
@@ -1270,8 +1317,6 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
         }
 
         fun radians(degrees: Float): Float = degrees * PI.toFloat() / 180f
-
-        fun degrees(radians: Float): Float = radians * 180f / PI.toFloat()
 
         /** Into −180..180. */
         fun wrap(degrees: Float): Float = ((degrees % 360f) + 540f) % 360f - 180f
