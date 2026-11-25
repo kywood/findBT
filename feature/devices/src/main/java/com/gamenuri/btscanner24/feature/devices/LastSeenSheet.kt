@@ -76,9 +76,9 @@ internal fun LastSeenSheet(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Text(lastSeenTime(context, record.seenAt, now), style = MaterialTheme.typography.titleMedium)
-                    val place = record.place
+                    val spot = record.place
                     val line = when {
-                        place != null -> R.string.last_seen_place
+                        spot != null -> R.string.last_seen_place
                         canLocate -> R.string.last_seen_no_fix
                         else -> R.string.last_seen_no_permission
                     }
@@ -88,10 +88,10 @@ internal fun LastSeenSheet(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Spacer(Modifier.height(12.dp))
-                    if (place != null) {
+                    if (spot != null) {
                         Button(
                             onClick = {
-                                if (!context.openInMaps(place)) {
+                                if (!context.openInMaps(spot)) {
                                     Toast.makeText(context, noMapApp, Toast.LENGTH_SHORT).show()
                                 }
                             },
