@@ -14,5 +14,16 @@
     <string name="devices_open_bluetooth_settings">Parear nas configurações de Bluetooth</string>
     <string name="devices_permission_body">Permita \"Dispositivos por perto\" para ver os dispositivos pareados com este celular.</string>
     <string name="devices_permission_action">Permitir</string>
+    <string name="devices_scan_bluetooth_off">O Bluetooth está desativado, então não dá para saber o que está por perto.</string>
+    <string name="devices_scan_location_off">A localização está desativada. Nesta versão do Android, a busca por Bluetooth precisa da localização ativada.</string>
+    <string name="devices_scan_failed">Não foi possível iniciar a busca, então não dá para saber o que está por perto.</string>
+    <string name="devices_scan_retry">Tentar de novo</string>
     <string name="devices_add_tracker">Adicionar um rastreador</string>
+    <string name="devices_section_saved">Dispositivos salvos</string>
+    <string name="devices_saved_count_free">%1$d · %2$d grátis</string>
+    <string name="devices_saved_hint">Salve pela lista Por perto ou pela tela de busca</string>
+    <string name="devices_saved_mark">Salvo</string>
+    <string name="devices_saved_edit">Alterar nome ou tipo</string>
+    <string name="devices_saved_remove">Remover dos salvos</string>
+    <string name="devices_saved_not_seen">Salvo · ainda não detectado</string>
 </resources>

@@ -1,5 +1,6 @@
 package com.gamenuri.btscanner24.feature.finder
 
+import com.gamenuri.btscanner24.core.ble.ScanFailure
 import com.gamenuri.btscanner24.core.ble.proximity.ProximityBand
 import com.gamenuri.btscanner24.core.ble.proximity.ProximityTrend
 import com.gamenuri.btscanner24.core.model.DeviceCategory
@@ -9,6 +10,9 @@ import com.gamenuri.btscanner24.core.model.DeviceLabel
 enum class FinderStage {
     /** No advertisement from the target yet. */
     WAITING,
+
+    /** Still none after a while: say so and offer to try again or go back, instead of waiting forever (#117). */
+    NOT_FOUND,
 
     /** Turn a full circle; the needle spins and the ring shows progress. */
     SPIN,
@@ -39,9 +43,16 @@ enum class ArrowConfidence { HIGH, MEDIUM, NONE }
 
 data class FinderUiState(
     val deviceLabel: DeviceLabel = DeviceLabel.Generic(maker = null, category = DeviceCategory.UNKNOWN, suffix = ""),
+    /** What kind of device it is, for its 3D model in the find scene (#133). */
+    val category: DeviceCategory = DeviceCategory.UNKNOWN,
     val stage: FinderStage = FinderStage.WAITING,
     /** Arrow angle relative to the top of the phone, clockwise. Null hides the arrow. */
     val arrowDegrees: Float? = null,
+    /**
+     * The same direction in the heading's own frame (0..360), for the world-anchored 3D arrow (#76),
+     * which subtracts the live heading itself at sensor rate. Null when [arrowDegrees] is null.
+     */
+    val bearingDegrees: Float? = null,
     val confidence: ArrowConfidence = ArrowConfidence.NONE,
     val sweepProgress: Float = 0f,
     val distanceMeters: Double? = null,
@@ -55,6 +66,11 @@ data class FinderUiState(
     /** "Play sound" button (#28); hidden while [SoundState.UNAVAILABLE]. */
     val sound: SoundState = SoundState.UNAVAILABLE,
     val advanced: AdvancedInfo = AdvancedInfo(),
+    /**
+     * The scan itself cannot run (Bluetooth or Location off, permission missing): the screen says that
+     * instead of "no signal", in the [FinderStage.NOT_FOUND] layout with its retry.
+     */
+    val scanFailure: ScanFailure? = null,
 )
 
 /** Immediate Alert (0x1802) "Play sound" state (#28). */

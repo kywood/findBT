@@ -7,8 +7,6 @@ import android.os.Vibrator
 import android.os.VibratorManager
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -33,14 +31,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.VolumeOff
-import androidx.compose.material.icons.automirrored.filled.VolumeUp
-import androidx.compose.material.icons.filled.AcUnit
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.LocalFireDepartment
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -69,6 +63,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -77,7 +73,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.style.TextAlign
@@ -88,31 +86,39 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.gamenuri.btscanner24.core.ble.ScanFailure
 import com.gamenuri.btscanner24.core.ble.proximity.ProximityBand
 import com.gamenuri.btscanner24.core.ble.proximity.ProximityTrend
 import com.gamenuri.btscanner24.core.designsystem.component.WATER_RISE_MS
-import com.gamenuri.btscanner24.core.designsystem.component.waterRise
+import com.gamenuri.btscanner24.core.designsystem.component.WaterMotion
+import com.gamenuri.btscanner24.core.designsystem.component.water
 import com.gamenuri.btscanner24.core.designsystem.theme.FindStateColors
 import com.gamenuri.btscanner24.core.designsystem.theme.NearoTextStyles
 import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
 import com.gamenuri.btscanner24.core.model.DeviceLabel
 import com.gamenuri.btscanner24.core.model.NameSource
+import com.gamenuri.btscanner24.core.ui.R as UiR
 import com.gamenuri.btscanner24.core.ui.distanceText
 import com.gamenuri.btscanner24.core.ui.text
 import java.util.Locale
 import kotlin.math.roundToInt
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 /** Entry point: owns the ViewModel, lifecycle, haptics and keep-screen-on. Visuals are in [FinderContent]. */
 @Composable
 fun FinderScreen(
     address: String,
-    /** Leaves the screen; [Brush] is the background on screen now, for the drain over Home (#101). */
-    onClose: (cover: Brush) -> Unit,
+    /** Leaves the screen. It stays on top for [FINDER_EXIT_HOLD_MS] more while its water drains (#107). */
+    onClose: () -> Unit,
     /** "Done" on the Found screen, right before [onClose]; the app may show its full-screen ad then (#81). */
     onFoundDone: () -> Unit = {},
-    /** Water level of the entry from Home (#90), 0..1 over the press and the rise; 1 shows it fully. */
-    entryProgress: () -> Float = { 1f },
+    /** Where the row was tapped, 0..1 across the screen: the water gets its first push there. */
+    entryTapX: Float = 0.5f,
+    /** The water the opening tap set off already; without it the screen starts its own once drawn. */
+    entryWater: FindEntryWater? = null,
     viewModel: FinderViewModel = viewModel(key = "finder-$address", factory = FinderViewModel.factory(address)),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -125,21 +131,93 @@ fun FinderScreen(
     } else {
         findColorsFor(state).brush()
     }
-    val close by rememberUpdatedState { onClose(cover) }
+    // The screen comes in and leaves as water (#107): it fills from the bottom over Home, which stays
+    // underneath for the length of the navigation transition, and drains away the same way.
+    var entered by rememberSaveable { mutableStateOf(false) }
+    var leaving by remember { mutableStateOf(false) }
+    val ownWater = remember { WaterMotion(full = entered) }
+    val entry = entryWater?.motion ?: ownWater
+    val context = LocalContext.current
+    val reduceMotion = remember(context) { context.animationsOff() }
+    val slope = rememberWaterSlope()
+    // The live screen is slow to compose for the first time (230 to 480 ms on a Galaxy A50, #107), so
+    // this screen's first frame is empty and the content joins the water a few frames later, while the
+    // waterline is still low and the cover hides what is under it.
+    var live by remember { mutableStateOf(entered) }
+    LaunchedEffect(Unit) {
+        entryWater?.slope = slope
+        if (entered) {
+            // Restored (rotation, process death): no water, and a shared one may not know it is full.
+            if (!entry.isFull) entry.fill()
+            entryWater?.covering = false
+            return@LaunchedEffect
+        }
+        // One empty frame: this screen now draws under the water, so the cover over the list can go.
+        withFrameNanos { }
+        entryWater?.covering = false
+        coroutineScope {
+            // The opening tap has the water rising already; opened any other way, it starts here.
+            val rising = if (!entry.isEmpty) {
+                null
+            } else {
+                launch { entry.rise(kickAt = entryTapX, reduceMotion = reduceMotion, slope = slope) }
+            }
+            withFrameNanos { }
+            withFrameNanos { }
+            live = true
+            rising?.join() ?: snapshotFlow { entry.isFull }.first { it }
+        }
+        entered = true
+    }
+    LaunchedEffect(leaving) {
+        if (!leaving) return@LaunchedEffect
+        // Home's first frame after coming back is slow too; drain once it has drawn.
+        withFrameNanos { }
+        withFrameNanos { }
+        entry.drain(reduceMotion = reduceMotion, slope = slope)
+    }
+    val close by rememberUpdatedState {
+        // A second ✕ or back while draining would pop Home as well.
+        if (!leaving) {
+            leaving = true
+            onClose()
+        }
+    }
     // System back drains the same way as ✕ and Done.
     BackHandler { close() }
-    foundAfterSeconds?.let { seconds ->
-        FoundRise(
-            state,
-            seconds,
-            onDone = {
-                onFoundDone()
-                close()
-            },
-        )
-        return
+    Box(Modifier.fillMaxSize().water(entry, cover = cover)) {
+        val seconds = foundAfterSeconds
+        if (seconds != null) {
+            FoundRise(
+                state,
+                seconds,
+                reduceMotion,
+                onDone = {
+                    onFoundDone()
+                    close()
+                },
+            )
+        } else if (live) {
+            FinderLive(
+                viewModel = viewModel,
+                state = state,
+                paused = entry.isMoving,
+                onClose = { close() },
+                onFound = { foundAfterSeconds = state.advanced.elapsedSeconds },
+            )
+        }
     }
+}
 
+/** The live find screen: scanning, sensors, haptics and keep-screen-on while it is in composition. */
+@Composable
+private fun FinderLive(
+    viewModel: FinderViewModel,
+    state: FinderUiState,
+    paused: Boolean,
+    onClose: () -> Unit,
+    onFound: () -> Unit,
+) {
     // Scan and read sensors only while the screen is visible.
     LifecycleStartEffect(viewModel) {
         viewModel.start()
@@ -166,13 +244,14 @@ fun FinderScreen(
 
     FinderContent(
         state = state,
-        entryProgress = entryProgress,
+        paused = paused,
         actions = FinderActions(
-            onClose = { close() },
-            onFound = { foundAfterSeconds = state.advanced.elapsedSeconds },
+            onClose = onClose,
+            onFound = onFound,
             onToggleVibration = viewModel::toggleVibration,
             onSpinAgain = viewModel::spinAgain,
             onToggleSound = viewModel::toggleSound,
+            onRetry = viewModel::retry,
         ),
     )
 }
@@ -183,6 +262,7 @@ data class FinderActions(
     val onToggleVibration: () -> Unit = {},
     val onSpinAgain: () -> Unit = {},
     val onToggleSound: () -> Unit = {},
+    val onRetry: () -> Unit = {},
 )
 
 /**
@@ -190,22 +270,29 @@ data class FinderActions(
  * in from 45 %, then the check pops once.
  */
 @Composable
-private fun FoundRise(state: FinderUiState, seconds: Int, onDone: () -> Unit) {
-    val rise = remember { Animatable(0f) }
-    LaunchedEffect(Unit) { rise.animateTo(1f, tween(WATER_RISE_MS, easing = LinearEasing)) }
+private fun FoundRise(state: FinderUiState, seconds: Int, reduceMotion: Boolean, onDone: () -> Unit) {
+    // Saved, so a rotation does not play it again.
+    var risen by rememberSaveable { mutableStateOf(false) }
+    val rise = remember { WaterMotion(full = risen) }
+    val popCheckAfterMs = remember { if (risen) null else WATER_RISE_MS }
+    LaunchedEffect(Unit) {
+        if (risen) return@LaunchedEffect
+        withFrameNanos { }
+        rise.rise(kickAt = FOUND_TAP_X, reduceMotion = reduceMotion)
+        risen = true
+    }
     val colors = NearoTheme.colors.found
     Box(Modifier.fillMaxSize()) {
-        if (rise.value < 1f) FinderContent(state, FinderActions())
+        if (!rise.isFull) FinderContent(state, FinderActions(), paused = true)
         FoundContent(
             label = state.deviceLabel,
+            category = state.category,
             elapsedSeconds = seconds,
             onDone = onDone,
-            popCheckAfterMs = WATER_RISE_MS,
-            modifier = Modifier.waterRise(
-                progress = { rise.value },
+            popCheckAfterMs = popCheckAfterMs,
+            modifier = Modifier.water(
+                rise,
                 cover = Brush.verticalGradient(listOf(colors.backgroundTop, colors.backgroundBottom)),
-                contentFrom = FOUND_CONTENT_FROM,
-                pressMs = 0,
             ),
         )
     }
@@ -217,36 +304,48 @@ fun FinderContent(
     state: FinderUiState,
     actions: FinderActions,
     modifier: Modifier = Modifier,
-    entryProgress: () -> Float = { 1f },
+    /** Water is moving over this screen: hold the continuous animations until it is done (#106). */
+    paused: Boolean = false,
 ) {
     val palette = findColorsFor(state)
     val background = palette.background
     val stage = rememberStageRise(palette)
     val content by animateColorAsState(palette.content, tween(COLOR_FADE_MS), label = "findContent")
     val accent by animateColorAsState(palette.accent, tween(COLOR_FADE_MS), label = "findAccent")
+    // The 3D scene (#76) is a layer behind the whole screen, not a box in the layout; without
+    // working GL the dial draws the Canvas arrow in its place.
+    var sceneFailed by remember { mutableStateOf(false) }
+    val scene3d = LocalArFindScene.current && !sceneFailed && !LocalInspectionMode.current
+    val dialSlot = remember { SceneSlot() }
     // A new stage colour rises like water over the old one (#90); the content stays where it is.
-    Box(
-        modifier
-            .fillMaxSize()
-            .waterRise(progress = entryProgress, cover = palette.brush())
-            .background(stage.previous.brush()),
-    ) {
-        Box(
-            Modifier
-                .matchParentSize()
-                .waterRise(progress = { stage.progress.value }, glint = STAGE_GLINT, pressMs = 0)
-                .background(palette.brush()),
-        )
-        FinderScaffold(state, actions, content, accent, background)
+    Box(modifier.fillMaxSize().background(stage.previous.brush())) {
+        Box(Modifier.matchParentSize().water(stage.motion, glint = STAGE_GLINT).background(palette.brush()))
+        CompositionLocalProvider(LocalFindMotionPaused provides (paused || stage.motion.isMoving)) {
+            if (scene3d && state.showsScene()) {
+                // Lower than the slot's middle (design find-flow v1.4): the ring sits just over the
+                // distance block, which leaves the far step and the device marker the room above it.
+                FindSceneLayer(
+                    dialSlot,
+                    fadeOutsideSlot = true,
+                    centerBias = SCENE_CENTER_BIAS,
+                ) { centerY, topFade, bottomFade ->
+                    CompositionLocalProvider(LocalContentColor provides accent) {
+                        val fades = SceneFades(topFade, bottomFade)
+                        ArrowScene(state, centerY, fades, onUnavailable = { sceneFailed = true })
+                    }
+                }
+            }
+            FinderScaffold(state, actions, content, accent, background, scene3d, dialSlot)
+        }
     }
 }
 
-private fun FindStateColors.brush(): Brush = Brush.verticalGradient(listOf(background, backgroundBottom))
+internal fun FindStateColors.brush(): Brush = Brush.verticalGradient(listOf(background, backgroundBottom))
 
 /** Background colour of the last stage and the rise of the new one; quick back-and-forth just snaps. */
 private class StageRise(initial: FindStateColors) {
     var previous by mutableStateOf(initial)
-    val progress = Animatable(1f)
+    val motion = WaterMotion(full = true)
 }
 
 @Composable
@@ -264,11 +363,10 @@ private fun rememberStageRise(target: FindStateColors): StageRise {
         rise.previous = shown
         shown = target
         if (now - lastRiseAt < STAGE_RISE_GAP_MS) {
-            rise.progress.snapTo(1f)
+            rise.motion.fill()
         } else {
             lastRiseAt = now
-            rise.progress.snapTo(0f)
-            rise.progress.animateTo(1f, tween(WATER_RISE_MS, easing = LinearEasing))
+            rise.motion.rise()
         }
         rise.previous = target
     }
@@ -283,6 +381,8 @@ private fun FinderScaffold(
     content: Color,
     accent: Color,
     background: Color,
+    sceneBehind: Boolean,
+    dialSlot: SceneSlot,
 ) {
     Scaffold(
         containerColor = Color.Transparent,
@@ -320,18 +420,33 @@ private fun FinderScaffold(
                 StageText(state)
                 // The dial takes what is left and shrinks on short screens (Flip3 cover, small phones).
                 Box(
-                    modifier = Modifier.weight(1f).fillMaxWidth().padding(vertical = 12.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .padding(vertical = 12.dp)
+                        .sceneSlot(dialSlot),
                     contentAlignment = Alignment.Center,
                 ) {
                     CompositionLocalProvider(LocalContentColor provides accent) {
-                        DirectionDial(state, Modifier.heightIn(min = DIAL_MIN))
+                        DirectionDial(state, Modifier.heightIn(min = DIAL_MIN), sceneBehind)
                     }
                 }
                 DistanceBlock(state)
-                // One fixed-height slot under the trend chip: the confirm hint when very close (#94), else
-                // "spin again". It always takes its space, so the rows above keep their place (#60).
+                // One fixed-height slot under the gauge for the confirm hint when very close (#94). It
+                // always takes its space, so the rows above keep their place (#60).
                 Box(Modifier.fillMaxWidth().heightIn(min = BOTTOM_SLOT), contentAlignment = Alignment.Center) {
-                    if (state.showConfirmHint) {
+                    val noSignal = state.stage == FinderStage.NOT_FOUND || state.stage == FinderStage.SIGNAL_LOST
+                    if (noSignal) {
+                        // Never a dead end (#117): scan afresh, or leave for the list.
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            TextButton(onClick = actions.onRetry) {
+                                Text(stringResource(R.string.finder_retry), color = content)
+                            }
+                            TextButton(onClick = actions.onClose) {
+                                Text(stringResource(R.string.finder_back_to_list), color = content)
+                            }
+                        }
+                    } else if (state.showConfirmHint) {
                         // Names can be vague ("hiot0"); confirming by touch matters more than the name (#46).
                         Text(
                             text = stringResource(R.string.finder_confirm_hint),
@@ -342,15 +457,6 @@ private fun FinderScaffold(
                             maxLines = 2,
                             overflow = TextOverflow.Ellipsis,
                         )
-                    } else {
-                        val canRespin = state.stage == FinderStage.WALK || state.stage == FinderStage.TURN_AROUND
-                        TextButton(
-                            onClick = actions.onSpinAgain,
-                            enabled = canRespin,
-                            modifier = Modifier.slot(visible = canRespin),
-                        ) {
-                            Text(stringResource(R.string.finder_spin_again), color = content)
-                        }
                     }
                 }
             }
@@ -367,8 +473,36 @@ private fun ActionRow(state: FinderUiState, actions: FinderActions, content: Col
             .padding(horizontal = 24.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        if (state.showSoundButton) SoundButton(state.sound, actions.onToggleSound, content)
+        // "Spin again" shares the sound button's row, half each (design find-flow v1.4, #138).
+        // Also while locked: a lock can be wrong, and the design keeps the way back to a new sweep.
+        val canRespin = state.stage == FinderStage.WALK ||
+            state.stage == FinderStage.TURN_AROUND ||
+            state.stage == FinderStage.LOCKED
+        val respin: (@Composable (Modifier) -> Unit)? = if (canRespin) {
+            { modifier -> SpinAgainButton(actions.onSpinAgain, content, modifier) }
+        } else {
+            null
+        }
+        if (state.showSoundButton) {
+            SoundButton(state.sound, actions.onToggleSound, content, respin)
+        } else {
+            respin?.invoke(Modifier.fillMaxWidth())
+        }
         MainActions(state, actions, content, background)
+    }
+}
+
+@Composable
+private fun SpinAgainButton(onClick: () -> Unit, content: Color, modifier: Modifier = Modifier) {
+    OutlinedButton(
+        onClick = onClick,
+        modifier = modifier,
+        colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.Transparent, contentColor = content),
+        border = BorderStroke(1.dp, content.copy(alpha = 0.5f)),
+    ) {
+        Icon(Icons.Filled.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
+        Spacer(Modifier.size(8.dp))
+        Text(stringResource(R.string.finder_spin_again), maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 
@@ -377,11 +511,18 @@ private val FinderUiState.showSoundButton: Boolean
     get() = when (sound) {
         SoundState.UNAVAILABLE -> false
         SoundState.CONNECTING, SoundState.PLAYING, SoundState.NOT_SUPPORTED -> true
-        SoundState.READY, SoundState.FAILED -> stage != FinderStage.WAITING && stage != FinderStage.SIGNAL_LOST
+        SoundState.READY, SoundState.FAILED ->
+            stage != FinderStage.WAITING && stage != FinderStage.NOT_FOUND && stage != FinderStage.SIGNAL_LOST
     }
 
 @Composable
-private fun SoundButton(sound: SoundState, onClick: () -> Unit, content: Color) {
+private fun SoundButton(
+    sound: SoundState,
+    onClick: () -> Unit,
+    content: Color,
+    /** A second button for the same row, given the modifier that makes it share the width. */
+    beside: (@Composable (Modifier) -> Unit)? = null,
+) {
     if (sound == SoundState.NOT_SUPPORTED) {
         Text(
             text = stringResource(R.string.finder_sound_not_supported),
@@ -390,6 +531,7 @@ private fun SoundButton(sound: SoundState, onClick: () -> Unit, content: Color) 
             color = content.copy(alpha = MUTED_ALPHA),
             textAlign = TextAlign.Center,
         )
+        beside?.invoke(Modifier.fillMaxWidth())
         return
     }
     if (sound == SoundState.FAILED) {
@@ -407,27 +549,28 @@ private fun SoundButton(sound: SoundState, onClick: () -> Unit, content: Color) 
         SoundState.FAILED -> R.string.finder_sound_retry
         else -> R.string.finder_sound_play
     }
-    OutlinedButton(
-        onClick = onClick,
-        // Tapping while connecting cancels, same as stop.
-        modifier = Modifier.fillMaxWidth(),
-        colors = ButtonDefaults.outlinedButtonColors(
-            containerColor = if (sound == SoundState.PLAYING) content.copy(alpha = 0.18f) else Color.Transparent,
-            contentColor = content,
-        ),
-        border = BorderStroke(1.dp, content.copy(alpha = 0.5f)),
-    ) {
-        Icon(
-            imageVector = if (sound == SoundState.PLAYING) {
-                Icons.AutoMirrored.Filled.VolumeOff
-            } else {
-                Icons.AutoMirrored.Filled.VolumeUp
-            },
-            contentDescription = null,
-            modifier = Modifier.size(18.dp),
-        )
-        Spacer(Modifier.size(8.dp))
-        Text(stringResource(label))
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        OutlinedButton(
+            onClick = onClick,
+            // Tapping while connecting cancels, same as stop.
+            modifier = Modifier.weight(1f),
+            colors = ButtonDefaults.outlinedButtonColors(
+                containerColor = if (sound == SoundState.PLAYING) content.copy(alpha = 0.18f) else Color.Transparent,
+                contentColor = content,
+            ),
+            border = BorderStroke(1.dp, content.copy(alpha = 0.5f)),
+        ) {
+            Icon(
+                painter = painterResource(
+                    if (sound == SoundState.PLAYING) UiR.drawable.ic_sound_off else UiR.drawable.ic_sound,
+                ),
+                contentDescription = null,
+                modifier = Modifier.size(18.dp),
+            )
+            Spacer(Modifier.size(8.dp))
+            Text(stringResource(label), maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        beside?.invoke(Modifier.weight(1f))
     }
 }
 
@@ -475,6 +618,13 @@ private fun MainActions(state: FinderUiState, actions: FinderActions, content: C
 private fun StageText(state: FinderUiState) {
     val (title, body) = when (state.stage) {
         FinderStage.WAITING -> R.string.finder_waiting_title to R.string.finder_waiting_body
+        FinderStage.NOT_FOUND -> when (state.scanFailure) {
+            null -> R.string.finder_not_found_title to R.string.finder_not_found_body
+            ScanFailure.BLUETOOTH_OFF -> R.string.finder_bluetooth_off_title to R.string.finder_bluetooth_off_body
+            ScanFailure.LOCATION_OFF -> R.string.finder_location_off_title to R.string.finder_location_off_body
+            ScanFailure.PERMISSION_MISSING -> R.string.finder_permission_title to R.string.finder_permission_body
+            else -> R.string.finder_scan_failed_title to R.string.finder_scan_failed_body
+        }
         FinderStage.SPIN -> R.string.finder_spin_title to R.string.finder_spin_body
         FinderStage.SPIN_AGAIN -> R.string.finder_spin_again_title to R.string.finder_spin_again_body
         FinderStage.WALK -> if (state.band == ProximityBand.VERY_CLOSE || state.band == ProximityBand.RIGHT_HERE) {
@@ -498,7 +648,7 @@ private fun StageText(state: FinderUiState) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         // A vector lock instead of the 🔒 emoji, which looks different on every phone (#71).
         if (state.stage == FinderStage.LOCKED) {
-            Icon(Icons.Filled.Lock, contentDescription = null, modifier = Modifier.size(18.dp))
+            Icon(painterResource(UiR.drawable.ic_lock), contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(6.dp))
         }
         Text(stringResource(title), style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
@@ -522,11 +672,17 @@ private fun DistanceBlock(state: FinderUiState) {
 
     // Fixed slots (band line, trend chip): only alpha changes, so the number keeps its y (#60).
     val showBand = state.stage != FinderStage.RIGHT_HERE && state.band != null
-    Text(
-        text = state.band?.let { stringResource(it.labelRes()) }.orEmpty(),
-        modifier = Modifier.slot(visible = showBand),
-        style = MaterialTheme.typography.titleMedium,
-    )
+    // No "Keep going" while the user is asked to spin in place.
+    val spinning = state.stage == FinderStage.SPIN || state.stage == FinderStage.SPIN_AGAIN
+    // The band and the trend chip share one line (design find-flow v1.4), which leaves the scene more height.
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            text = state.band?.let { stringResource(it.labelRes()) }.orEmpty(),
+            modifier = Modifier.slot(visible = showBand),
+            style = MaterialTheme.typography.titleMedium,
+        )
+        if (state.stage != FinderStage.RIGHT_HERE && !spinning) TrendChip(state.trend)
+    }
     // One line in every language: "a menos de 1 m" shrinks from 54 sp down to 34 sp instead of losing "m" (#74).
     BasicText(
         text = distanceText(meters),
@@ -539,46 +695,33 @@ private fun DistanceBlock(state: FinderUiState) {
         style = MaterialTheme.typography.labelMedium,
         color = LocalContentColor.current.copy(alpha = MUTED_ALPHA),
     )
-    Spacer(Modifier.height(16.dp))
-    HeatGauge(state.heat, Modifier.fillMaxWidth(0.8f))
-    // No "Keep going" while the user is asked to spin in place.
-    val spinning = state.stage == FinderStage.SPIN || state.stage == FinderStage.SPIN_AGAIN
     Spacer(Modifier.height(12.dp))
-    TrendChip(state.trend, Modifier.slot(visible = state.stage != FinderStage.RIGHT_HERE && !spinning))
+    HeatGauge(state.heat, Modifier.fillMaxWidth(GAUGE_WIDTH))
 }
 
 /**
- * Hot-cold gauge: cold (far) on the left, hot (right here) on the right. The snowflake and flame
- * icons and the dot's position carry the meaning, so it does not depend on colour.
+ * Hot-cold gauge as a thin bar (design find-flow v1.4): filled from the left as far as the dot, which
+ * moves right as the device gets closer. Position carries the meaning, so it does not depend on colour.
  */
 @Composable
 private fun HeatGauge(heat: Float, modifier: Modifier = Modifier) {
     val content = LocalFindAccent.current.takeOrElse { LocalContentColor.current }
-    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
-        Icon(Icons.Filled.AcUnit, contentDescription = null, tint = GaugeCold, modifier = Modifier.size(GAUGE_ICON))
-        BoxWithConstraints(
-            modifier = Modifier.weight(1f).padding(horizontal = 8.dp).height(GAUGE_DOT),
-            contentAlignment = Alignment.CenterStart,
-        ) {
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .height(GAUGE_TRACK)
-                    .background(content.copy(alpha = 0.3f), RoundedCornerShape(GAUGE_TRACK)),
-            )
-            Box(
-                Modifier
-                    .offset(x = (maxWidth - GAUGE_DOT) * heat.coerceIn(0f, 1f))
-                    .size(GAUGE_DOT)
-                    .background(content, CircleShape),
-            )
-        }
-        Icon(
-            Icons.Filled.LocalFireDepartment,
-            contentDescription = null,
-            tint = GaugeHot,
-            modifier = Modifier.size(GAUGE_ICON),
+    val share = heat.coerceIn(0f, 1f)
+    BoxWithConstraints(modifier = modifier.height(GAUGE_DOT), contentAlignment = Alignment.CenterStart) {
+        val dotStart = (maxWidth - GAUGE_DOT) * share
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(GAUGE_TRACK)
+                .background(content.copy(alpha = 0.3f), RoundedCornerShape(GAUGE_TRACK)),
         )
+        Box(
+            Modifier
+                .width(dotStart + GAUGE_DOT / 2)
+                .height(GAUGE_TRACK)
+                .background(content, RoundedCornerShape(GAUGE_TRACK)),
+        )
+        Box(Modifier.offset(x = dotStart).size(GAUGE_DOT).background(content, CircleShape))
     }
 }
 
@@ -598,8 +741,9 @@ private fun TrendChip(trend: ProximityTrend, modifier: Modifier = Modifier) {
     ) {
         Text(
             text = stringResource(text),
-            style = MaterialTheme.typography.labelLarge,
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+            style = MaterialTheme.typography.labelMedium,
+            maxLines = 1,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp),
         )
     }
 }
@@ -613,7 +757,7 @@ private fun findColorsFor(state: FinderUiState): FindStateColors {
     val colors = NearoTheme.colors
     return when (state.stage) {
         FinderStage.WAITING -> colors.findSearching
-        FinderStage.SIGNAL_LOST -> colors.findLost
+        FinderStage.SIGNAL_LOST, FinderStage.NOT_FOUND -> colors.findLost
         FinderStage.RIGHT_HERE -> colors.findHere
         else -> when (state.band) {
             ProximityBand.FAR, null -> colors.findFar
@@ -691,7 +835,7 @@ internal enum class Rhythm(val pulses: Int, val periodMs: Long) {
 }
 
 private fun rhythmFor(state: FinderUiState): Rhythm = when (state.stage) {
-    FinderStage.WAITING, FinderStage.SIGNAL_LOST -> Rhythm.NONE
+    FinderStage.WAITING, FinderStage.NOT_FOUND, FinderStage.SIGNAL_LOST -> Rhythm.NONE
     FinderStage.RIGHT_HERE -> Rhythm.RIGHT_HERE
     else -> when (state.band) {
         ProximityBand.FAR, null -> Rhythm.FAR
@@ -731,25 +875,29 @@ private fun vibrator(context: Context): Vibrator? {
     return vibrator?.takeIf { it.hasVibrator() }
 }
 
+private const val SCENE_CENTER_BIAS = 0.64f
 private const val HAPTIC_MS = 40L
 private const val LONG_HAPTIC_MS = 400L
 private const val COLOR_FADE_MS = 400
 private const val STAGE_RISE_GAP_MS = 1_500L
 private const val STAGE_GLINT = 0.8f
 private const val MENU_WHITE = 0.14f
-private const val FOUND_CONTENT_FROM = 0.45f
+
+/** The "found it" button sits right of the centre; the Found water starts there. */
+private const val FOUND_TAP_X = 0.74f
+
+/** How long the find screen stays on top of Home after closing, for its water to drain away. */
+const val FINDER_EXIT_HOLD_MS = 1_300
 
 private const val MUTED_ALPHA = 0.78f
 private const val HINT_ALPHA = 0.8f
 private val BOTTOM_SLOT = 48.dp
-private val GAUGE_TRACK = 6.dp
+private val GAUGE_TRACK = 4.dp
 private val DIAL_MIN = 180.dp
-private val GAUGE_DOT = 16.dp
-private val GAUGE_ICON = 16.dp
+private val GAUGE_DOT = 12.dp
+private const val GAUGE_WIDTH = 0.76f
 
 // Gauge ends (#71): the same on every find state background.
-private val GaugeCold = Color(0xFFB2C5FF)
-private val GaugeHot = Color(0xFFFF8A5C)
 private const val NO_VALUE = "–"
 
 /** The find state's highlight (arrow, gauge); unset outside [FinderContent], where content colour is used. */

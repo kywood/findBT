@@ -37,6 +37,7 @@
     <string name="device_distance">~%1$s m</string>
     <string name="device_name_with_suffix">%1$s · %2$s</string>
     <string name="device_generic_maker_type">%1$s-%2$s</string>
+    <string name="device_generic_apple_find_my">Apple-Gerät</string>
     <string name="device_generic_maker">%1$s-Gerät</string>
     <string name="device_generic">Bluetooth-Gerät</string>
     <string name="badge_paired">Meins</string>
@@ -61,4 +62,17 @@
     <string name="paywall_or">oder</string>
     <string name="paywall_reward">Werbung ansehen für 24 h Premium</string>
     <string name="paywall_reward_note">Sieh dir eine Werbung (etwa 30 s) bis zum Ende an und nutze Premium 24 Stunden</string>
+    <string name="save_title">In „Meine Geräte“ speichern</string>
+    <string name="save_name_label">Name</string>
+    <string name="save_type_label">Typ</string>
+    <string name="save_local_note">Name und Typ bleiben auf diesem Handy</string>
+    <string name="save_cancel">Abbrechen</string>
+    <string name="save_confirm">Speichern</string>
+    <string name="save_done">In „Meine Geräte“ gespeichert</string>
+    <string name="save_view">Ansehen</string>
+    <string name="save_locked_title">1 gespeichertes Gerät ist kostenlos</string>
+    <string name="save_locked_body">Mit Premium speicherst du beliebig viele und entfernst die Werbung.</string>
+    <string name="save_locked_ad_used">Heute schon genutzt</string>
+    <string name="save_locked_later">Nicht jetzt</string>
+    <string name="device_more_for">Mehr für %1$s</string>
 </resources>

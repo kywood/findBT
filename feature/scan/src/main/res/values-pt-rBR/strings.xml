@@ -24,7 +24,7 @@
     <!-- Filter screen and other devices (#85, #82) -->
     <string name="filter_close">Fechar</string>
     <string name="filter_section_show">Mostrar</string>
-    <string name="filter_show_other_body">Beacons, TVs, sensores e mais · %1$d</string>
+    <string name="filter_show_other_body">Sinais sem nome ou de tipo não identificado · %1$d</string>
     <string name="filter_show_unnamed">Mostrar dispositivos sem nome</string>
     <string name="filter_distance">Distância</string>
     <string name="filter_distance_within_5">Até 5 m</string>
@@ -37,6 +37,16 @@
     <string name="filter_no_results">Nenhum resultado</string>
     <string name="nearby_other_show">Ver</string>
     <string name="nearby_other_section">Outros dispositivos · %1$d</string>
+    <!-- Other devices: close and explanation (#142) -->
+    <string name="nearby_other_close">Fechar</string>
+    <string name="nearby_other_close_section">Fechar outros dispositivos</string>
+    <string name="nearby_other_order">%1$s · os novos ficam no fim</string>
+    <string name="nearby_other_info">Sobre outros dispositivos</string>
+    <string name="other_info_title">Outros dispositivos</string>
+    <string name="other_info_what">Sinais Bluetooth próximos sem nome ou de um tipo difícil de identificar. Podem ser dispositivos de vizinhos, eletrodomésticos, TVs ou beacons.</string>
+    <string name="other_info_why">Começam ocultos porque costumam ser muitos e a maioria não é sua.</string>
+    <string name="other_info_mine">Se algum for seu, toque nele para começar a procurar. Veja se a distância diminui ao se aproximar. Quando tiver certeza, dê um nome e salve em Meus dispositivos.</string>
+    <string name="other_info_ok">Entendi</string>
     <string name="nearby_empty_personal">Nenhum dispositivo pessoal por perto</string>
     <plurals name="filter_show_results">
         <item quantity="one">Ver %1$d dispositivo</item>

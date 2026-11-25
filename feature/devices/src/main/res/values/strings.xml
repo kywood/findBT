@@ -14,5 +14,16 @@
     <string name="devices_open_bluetooth_settings">Pair in Bluetooth settings</string>
     <string name="devices_permission_body">Allow Nearby devices to see the devices paired with this phone.</string>
     <string name="devices_permission_action">Allow</string>
+    <string name="devices_scan_bluetooth_off">Bluetooth is off, so nearby devices can\'t be checked.</string>
+    <string name="devices_scan_location_off">Location is off. On this Android version Bluetooth scanning needs Location turned on.</string>
+    <string name="devices_scan_failed">Scanning could not start, so nearby devices can\'t be checked.</string>
+    <string name="devices_scan_retry">Try again</string>
     <string name="devices_add_tracker">Add a tracker</string>
+    <string name="devices_section_saved">Saved devices</string>
+    <string name="devices_saved_count_free">%1$d · %2$d free</string>
+    <string name="devices_saved_hint">Save from the Nearby list or the find screen</string>
+    <string name="devices_saved_mark">Saved</string>
+    <string name="devices_saved_edit">Change name or type</string>
+    <string name="devices_saved_remove">Remove from saved</string>
+    <string name="devices_saved_not_seen">Saved · not seen yet</string>
 </resources>

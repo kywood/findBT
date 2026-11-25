@@ -11,6 +11,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -32,14 +33,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Badge
@@ -48,11 +45,13 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -71,6 +70,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -95,6 +95,7 @@ import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
 import com.gamenuri.btscanner24.core.model.BleDevice
 import com.gamenuri.btscanner24.core.model.DeviceFilter
 import com.gamenuri.btscanner24.core.model.DeviceSort
+import com.gamenuri.btscanner24.core.model.SaveLimit
 import com.gamenuri.btscanner24.core.ui.DeviceCard
 import com.gamenuri.btscanner24.core.ui.R as UiR
 import com.gamenuri.btscanner24.core.ui.permission.rememberBlePermissionState
@@ -111,8 +112,10 @@ fun ScanScreen(
     onDeviceClick: (BleDevice) -> Unit = {},
     modifier: Modifier = Modifier,
     onOpenSettings: () -> Unit = {},
-    /** Shown once after the last row (the app puts its end-of-list ad card here, #81). */
-    listFooter: (@Composable () -> Unit)? = null,
+    /** "Save to My devices" from a row's ⋮ menu (#108); null hides the menu. */
+    onSaveDevice: ((BleDevice) -> Unit)? = null,
+    /** Addresses already saved: their rows offer no save. */
+    savedAddresses: Set<String> = emptySet(),
     viewModel: ScanViewModel = viewModel(factory = ScanViewModel.Factory),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -139,7 +142,6 @@ fun ScanScreen(
         modifier = modifier,
         title = title,
         state = state,
-        listFooter = listFooter,
         permissionBanner = when {
             permission.isGranted -> null
             permission.isPermanentlyDenied -> PermissionBanner.OPEN_SETTINGS
@@ -164,10 +166,14 @@ fun ScanScreen(
             onSortChange = viewModel::setSort,
             onApplyFilter = viewModel::applyFilter,
             onShowOther = viewModel::showOther,
+            onHideOther = viewModel::hideOther,
             countFor = viewModel::resultCount,
             onRefreshOrder = viewModel::refreshOrder,
+            onAutoRefreshOrder = viewModel::autoRefreshOrder,
             onDeviceClick = onDeviceClick,
             onOpenSettings = onOpenSettings,
+            onSaveDevice = onSaveDevice,
+            savedAddresses = savedAddresses,
         ),
     )
 }
@@ -190,12 +196,19 @@ data class ScanActions(
     val onApplyFilter: (DeviceFilter) -> Unit = {},
     /** "N other devices hidden · Show" at the end of the list (#82). */
     val onShowOther: () -> Unit = {},
+    /** "Close" on the other devices' header (#142). */
+    val onHideOther: () -> Unit = {},
     /** Live result count for an edited filter. */
     val countFor: (DeviceFilter) -> Int = { 0 },
     val onRefreshOrder: () -> Unit = {},
+    /** The untapped re-sort (timer, back at the top): personal rows only (#143). */
+    val onAutoRefreshOrder: () -> Unit = {},
     /** Opens find mode for the device. */
     val onDeviceClick: (BleDevice) -> Unit = {},
     val onOpenSettings: () -> Unit = {},
+    /** Saves the device to My devices (#108); null when saving is not wired (previews, demo). */
+    val onSaveDevice: ((BleDevice) -> Unit)? = null,
+    val savedAddresses: Set<String> = emptySet(),
 )
 
 /**
@@ -210,7 +223,6 @@ fun ScanContent(
     permissionBanner: PermissionBanner?,
     actions: ScanActions,
     modifier: Modifier = Modifier,
-    listFooter: (@Composable () -> Unit)? = null,
 ) {
     var searchOpen by rememberSaveable { mutableStateOf(false) }
     var filtersOpen by rememberSaveable { mutableStateOf(false) }
@@ -220,7 +232,7 @@ fun ScanContent(
         actions.onRefreshOrder()
         scope.launch { listState.animateScrollToItem(0) }
     }
-    ReorderAutoSort(state.reorderAvailable, listState, actions.onRefreshOrder)
+    ReorderAutoSort(state.reorderAvailable, listState, actions.onAutoRefreshOrder)
 
     Scaffold(
         modifier = modifier,
@@ -246,7 +258,6 @@ fun ScanContent(
                     actions = actions,
                     listState = listState,
                     modifier = Modifier.fillMaxWidth().weight(1f),
-                    footer = listFooter,
                 )
             }
         }
@@ -296,18 +307,19 @@ private fun ScanTopBar(
                     onSearchOpenChange(!searchOpen)
                 },
             ) {
-                Icon(
-                    imageVector = if (searchOpen) Icons.Default.Close else Icons.Default.Search,
-                    contentDescription = stringResource(
-                        if (searchOpen) R.string.action_close_search else R.string.action_search,
-                    ),
-                )
+                val searchLabel =
+                    stringResource(if (searchOpen) R.string.action_close_search else R.string.action_search)
+                if (searchOpen) {
+                    Icon(Icons.Default.Close, contentDescription = searchLabel)
+                } else {
+                    Icon(painterResource(UiR.drawable.ic_search), contentDescription = searchLabel)
+                }
             }
             if (!searchOpen) {
                 val scanning = state.isScanning
                 IconButton(onClick = if (scanning) actions.onPause else actions.onResume) {
                     Icon(
-                        imageVector = if (scanning) Icons.Default.Pause else Icons.Default.PlayArrow,
+                        painter = painterResource(if (scanning) UiR.drawable.ic_pause else UiR.drawable.ic_play),
                         contentDescription = stringResource(
                             if (scanning) R.string.action_pause_scan else R.string.action_resume_scan,
                         ),
@@ -469,7 +481,7 @@ private fun FilterButton(count: Int, onClick: () -> Unit) {
         // The count sits inside the button in primary colours; red would read as an error (#89).
         Box(Modifier.size(FILTER_BUTTON)) {
             FilledTonalIconButton(onClick = onClick, modifier = Modifier.fillMaxSize()) {
-                Icon(Icons.Default.Tune, contentDescription = description)
+                Icon(painterResource(UiR.drawable.ic_filter), contentDescription = description)
             }
             Badge(
                 modifier = Modifier.align(Alignment.TopEnd).padding(top = 2.dp, end = 2.dp).size(15.dp),
@@ -481,11 +493,12 @@ private fun FilterButton(count: Int, onClick: () -> Unit) {
         }
     } else {
         IconButton(onClick = onClick, modifier = Modifier.size(40.dp)) {
-            Icon(Icons.Default.Tune, contentDescription = description)
+            Icon(painterResource(UiR.drawable.ic_filter), contentDescription = description)
         }
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun DeviceList(
     state: ScanUiState,
@@ -494,8 +507,9 @@ private fun DeviceList(
     actions: ScanActions,
     listState: LazyListState,
     modifier: Modifier = Modifier,
-    footer: (@Composable () -> Unit)? = null,
 ) {
+    var otherInfoOpen by rememberSaveable { mutableStateOf(false) }
+    if (otherInfoOpen) OtherInfoSheet(onDismiss = { otherInfoOpen = false })
     LazyColumn(
         modifier = modifier,
         state = listState,
@@ -552,23 +566,34 @@ private fun DeviceList(
         // Stable keys keep each row attached to its device; rows only move on a full sort.
         items(personal, key = { it.device.address }) { item -> DeviceRow(item, actions, Modifier.animateItem()) }
         if (state.hiddenOtherCount > 0) {
-            item(key = "other-hidden") { HiddenOtherRow(state.hiddenOtherCount, actions.onShowOther) }
-        }
-        if (other.isNotEmpty()) {
-            item(key = "other-header") { OtherHeader(other.size) }
-            items(other, key = { it.device.address }) { item ->
-                DeviceRow(item, actions, Modifier.animateItem(), compact = true)
+            item(key = "other-hidden") {
+                HiddenOtherRow(state.hiddenOtherCount, actions.onShowOther, onInfo = { otherInfoOpen = true })
             }
         }
-        // After everything else, never between rows. A short search or filter result stays clean (#81).
-        val narrowed = state.activeFilterCount > 0 || state.query.isNotBlank()
-        if (footer != null && state.items.isNotEmpty() && !(narrowed && state.items.size <= FOOTER_MIN_RESULTS)) {
-            item(key = "footer") { footer() }
+        if (other.isNotEmpty()) {
+            // A clear break between the user's own kind of devices and everything else (#142): a gap, a
+            // header that stays in view while its section scrolls, and a quieter surface under its rows.
+            item(key = "other-gap") { Spacer(Modifier.height(OTHER_SECTION_GAP)) }
+            stickyHeader(key = "other-header") {
+                OtherHeader(
+                    count = other.size,
+                    sort = state.preferences.sort,
+                    onClose = actions.onHideOther,
+                    onInfo = { otherInfoOpen = true },
+                )
+            }
+            items(other, key = { it.device.address }) { item ->
+                DeviceRow(
+                    item,
+                    actions,
+                    Modifier.animateItem().background(MaterialTheme.colorScheme.surfaceContainerLow),
+                    compact = true,
+                )
+            }
+            item(key = "other-close") { OtherFooter(actions.onHideOther) }
         }
     }
 }
-
-private const val FOOTER_MIN_RESULTS = 3
 
 @Composable
 private fun DeviceRow(item: DeviceListItem, actions: ScanActions, modifier: Modifier, compact: Boolean = false) {
@@ -583,12 +608,17 @@ private fun DeviceRow(item: DeviceListItem, actions: ScanActions, modifier: Modi
         onClick = { actions.onDeviceClick(item.device) },
         modifier = modifier,
         compact = compact,
+        // Paired devices are in My devices already; unnamed ones cannot be recognised again.
+        onSave = actions.onSaveDevice
+            ?.takeIf { !item.isPaired && item.device.address !in actions.savedAddresses }
+            ?.takeIf { SaveLimit.canBeSaved(item.device) }
+            ?.let { save -> { save(item.device) } },
     )
 }
 
 /** "23 other devices hidden · Show": one centred line, the whole row is the 48 dp touch target (#82). */
 @Composable
-private fun HiddenOtherRow(count: Int, onShow: () -> Unit) {
+private fun HiddenOtherRow(count: Int, onShow: () -> Unit, onInfo: () -> Unit) {
     val show = stringResource(R.string.nearby_other_show)
     Row(
         modifier = Modifier
@@ -611,19 +641,105 @@ private fun HiddenOtherRow(count: Int, onShow: () -> Unit) {
             color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.Bold,
         )
+        OtherInfoButton(onInfo)
     }
 }
 
+/** ⓘ beside "other devices": opens the short explanation of what they are (#142). */
 @Composable
-private fun OtherHeader(count: Int) {
-    Column(Modifier.fillMaxWidth()) {
-        HorizontalDivider(Modifier.padding(top = 8.dp))
-        Text(
-            text = stringResource(R.string.nearby_other_section, count),
-            modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 4.dp),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+private fun OtherInfoButton(onClick: () -> Unit) {
+    IconButton(onClick = onClick) {
+        Icon(
+            Icons.Outlined.Info,
+            contentDescription = stringResource(R.string.nearby_other_info),
+            modifier = Modifier.size(18.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+    }
+}
+
+/** What "other devices" are, why they start hidden, and what to do if one of them is yours (#142). */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun OtherInfoSheet(onDismiss: () -> Unit) {
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text(stringResource(R.string.other_info_title), style = MaterialTheme.typography.titleLarge)
+            Text(stringResource(R.string.other_info_what), style = MaterialTheme.typography.bodyMedium)
+            Text(stringResource(R.string.other_info_why), style = MaterialTheme.typography.bodyMedium)
+            Text(stringResource(R.string.other_info_mine), style = MaterialTheme.typography.bodyMedium)
+            Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.other_info_ok))
+            }
+        }
+    }
+}
+
+/**
+ * "Other devices · 23" with the order they are in, ⓘ, and a "Close" button at the end, which hides
+ * the section again (#142). It carries the section's upper edge: a strong line on a quieter surface.
+ */
+@Composable
+private fun OtherHeader(count: Int, sort: DeviceSort, onClose: () -> Unit, onInfo: () -> Unit) {
+    Column(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceContainer)) {
+        HorizontalDivider(thickness = 2.dp, color = MaterialTheme.colorScheme.outline)
+        Row(
+            modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(start = 16.dp, end = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            // The text column takes all the width the close button leaves, so the order line fits (#142).
+            Column(Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = stringResource(R.string.nearby_other_section, count),
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
+                    OtherInfoButton(onInfo)
+                }
+                Text(
+                    // Sorted like this when last sorted; devices heard since then wait at the bottom (#143).
+                    text = stringResource(R.string.nearby_other_order, stringResource(sort.labelRes())),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            Spacer(Modifier.width(8.dp))
+            FilledTonalButton(
+                onClick = onClose,
+                modifier = Modifier.heightIn(min = 40.dp),
+                contentPadding = PaddingValues(start = 12.dp, end = 16.dp),
+            ) {
+                Icon(Icons.Filled.Close, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(6.dp))
+                Text(stringResource(R.string.nearby_other_close))
+            }
+        }
+    }
+}
+
+/** The section's lower edge: the same close again, so a long section need not be scrolled back up. */
+@Composable
+private fun OtherFooter(onClose: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surfaceContainerLow)
+            .padding(vertical = 8.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        FilledTonalButton(onClick = onClose, modifier = Modifier.heightIn(min = 40.dp)) {
+            Icon(Icons.Filled.Close, contentDescription = null, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(6.dp))
+            Text(stringResource(R.string.nearby_other_close_section))
+        }
     }
 }
 
@@ -636,7 +752,7 @@ private fun SortMenu(selected: DeviceSort, onSelect: (DeviceSort) -> Unit) {
             colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurface),
         ) {
             Icon(
-                Icons.AutoMirrored.Filled.Sort,
+                painterResource(UiR.drawable.ic_sort),
                 contentDescription = stringResource(R.string.sort_menu),
                 modifier = Modifier.size(18.dp),
             )
@@ -668,6 +784,7 @@ private const val PULSE_MS = 1_000
 private const val CHIP_FADE_MS = 150
 private val FILTER_BUTTON = 34.dp
 private const val REORDER_AUTO_MS = 8_000L
+private val OTHER_SECTION_GAP = 20.dp
 
 @Composable
 private fun RadioOffState(reason: ScanFailure, actions: ScanActions, modifier: Modifier = Modifier) {

@@ -14,13 +14,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -29,6 +32,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -52,6 +56,7 @@ import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.gamenuri.btscanner24.core.ble.BleScanner
+import com.gamenuri.btscanner24.core.ble.ScanFailure
 import com.gamenuri.btscanner24.core.designsystem.component.StatusBanner
 import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
 import com.gamenuri.btscanner24.core.model.BleDevice
@@ -72,6 +77,10 @@ fun DevicesScreen(
     modifier: Modifier = Modifier,
     onAddTracker: () -> Unit = {},
     onOpenSettings: () -> Unit = {},
+    /** "Rename or change type" on a saved device (#108); the app shows the sheet. */
+    onEditSaved: (MyDeviceItem) -> Unit = {},
+    /** How many saves are free, for the count pill; null with Premium or a day pass. */
+    freeSaveLimit: Int? = null,
     viewModel: DevicesViewModel = viewModel(factory = DevicesViewModel.Factory),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -93,8 +102,17 @@ fun DevicesScreen(
         onOpenBluetoothSettings = { context.startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS)) },
         onAddTracker = onAddTracker,
         onOpenSettings = onOpenSettings,
+        onRetryScan = viewModel::onScreenStarted,
+        saved = SavedActions(onRemove = viewModel::remove, onEdit = onEditSaved, freeLimit = freeSaveLimit),
     )
 }
+
+/** What the saved devices section needs (#108). */
+data class SavedActions(
+    val onRemove: (MyDeviceItem) -> Unit = {},
+    val onEdit: (MyDeviceItem) -> Unit = {},
+    val freeLimit: Int? = null,
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -107,6 +125,8 @@ fun DevicesContent(
     modifier: Modifier = Modifier,
     onAddTracker: () -> Unit = {},
     onOpenSettings: () -> Unit = {},
+    onRetryScan: () -> Unit = {},
+    saved: SavedActions = SavedActions(),
     now: Long = System.currentTimeMillis(),
 ) {
     Scaffold(
@@ -127,7 +147,24 @@ fun DevicesContent(
                 )
             }
             state.isEmpty -> EmptyState(onOpenBluetoothSettings, Modifier.padding(padding))
-            else -> DeviceSections(state, now, onDeviceClick, onHide, onAddTracker, Modifier.padding(padding))
+            else -> Column(Modifier.padding(padding)) {
+                // Without a scan nothing can be marked nearby: say why instead of showing everything as away.
+                state.scanFailure?.let { reason ->
+                    StatusBanner(
+                        message = stringResource(
+                            when (reason) {
+                                ScanFailure.BLUETOOTH_OFF -> R.string.devices_scan_bluetooth_off
+                                ScanFailure.LOCATION_OFF -> R.string.devices_scan_location_off
+                                else -> R.string.devices_scan_failed
+                            },
+                        ),
+                        actionLabel = stringResource(R.string.devices_scan_retry),
+                        onAction = onRetryScan,
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                    )
+                }
+                DeviceSections(state, now, onDeviceClick, onHide, onAddTracker, saved)
+            }
         }
     }
 }
@@ -139,6 +176,7 @@ private fun DeviceSections(
     onDeviceClick: (MyDeviceItem) -> Unit,
     onHide: (MyDeviceItem) -> Unit,
     onAddTracker: () -> Unit,
+    saved: SavedActions,
     modifier: Modifier = Modifier,
 ) {
     var othersOpen by rememberSaveable { mutableStateOf(false) }
@@ -147,13 +185,28 @@ private fun DeviceSections(
         // Plain full-width rows like the Nearby tab (design home-header-v4); headers keep the 16 dp inset.
         contentPadding = PaddingValues(bottom = 16.dp),
     ) {
+        // Saved by hand (#108): always first, with the count and, for free users, the limit.
+        item(key = "h-saved") { SavedHeader(state.savedCount, saved.freeLimit) }
+        if (state.savedCount == 0) {
+            item(key = "saved-hint") {
+                Text(
+                    text = stringResource(R.string.devices_saved_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                )
+            }
+        }
+        items(state.saved, key = { "s-" + it.paired.address }) { PairedRow(it, now, onDeviceClick, onHide, saved) }
         if (state.nearby.isNotEmpty()) {
             item(key = "h-nearby") { SectionHeader(stringResource(R.string.devices_section_nearby)) }
-            items(state.nearby, key = { "n-" + it.paired.address }) { PairedRow(it, now, onDeviceClick, onHide) }
+            items(state.nearby, key = { "n-" + it.paired.address }) { PairedRow(it, now, onDeviceClick, onHide, saved) }
         }
         if (state.notNearby.isNotEmpty()) {
             item(key = "h-away") { SectionHeader(stringResource(R.string.devices_section_not_nearby)) }
-            items(state.notNearby, key = { "a-" + it.paired.address }) { PairedRow(it, now, onDeviceClick, onHide) }
+            items(state.notNearby, key = { "a-" + it.paired.address }) {
+                PairedRow(it, now, onDeviceClick, onHide, saved)
+            }
         }
         if (state.others.isNotEmpty()) {
             item(key = "h-others") {
@@ -167,7 +220,9 @@ private fun DeviceSections(
                 }
             }
             if (othersOpen) {
-                items(state.others, key = { "o-" + it.paired.address }) { PairedRow(it, now, onDeviceClick, onHide) }
+                items(state.others, key = { "o-" + it.paired.address }) {
+                    PairedRow(it, now, onDeviceClick, onHide, saved)
+                }
             }
         }
         // Trackers are not paired, so they never show up above on their own (design home-v3).
@@ -190,8 +245,38 @@ private fun SectionHeader(text: String) {
     )
 }
 
+/** "Saved devices" with the count on the right: "1 · 1 free" for free users, just the number otherwise. */
 @Composable
-private fun PairedRow(item: MyDeviceItem, now: Long, onClick: (MyDeviceItem) -> Unit, onHide: (MyDeviceItem) -> Unit) {
+private fun SavedHeader(count: Int, freeLimit: Int?) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.weight(1f)) { SectionHeader(stringResource(R.string.devices_section_saved)) }
+        Surface(
+            shape = RoundedCornerShape(50),
+            color = MaterialTheme.colorScheme.surfaceVariant,
+            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(end = 16.dp, top = 12.dp),
+        ) {
+            Text(
+                text = if (freeLimit != null) {
+                    stringResource(R.string.devices_saved_count_free, count, freeLimit)
+                } else {
+                    count.toString()
+                },
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun PairedRow(
+    item: MyDeviceItem,
+    now: Long,
+    onClick: (MyDeviceItem) -> Unit,
+    onHide: (MyDeviceItem) -> Unit,
+    saved: SavedActions,
+) {
     var menuOpen by remember { mutableStateOf(false) }
     Row(
         modifier = Modifier
@@ -207,12 +292,23 @@ private fun PairedRow(item: MyDeviceItem, now: Long, onClick: (MyDeviceItem) -> 
         // A paired device with no name is rare; its type is enough here (no address suffix in My devices).
         val title = item.paired.name?.takeIf { it.isNotBlank() } ?: item.paired.category.label()
         Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false),
+                )
+                if (item.isSaved) {
+                    Icon(
+                        Icons.Outlined.BookmarkBorder,
+                        contentDescription = stringResource(R.string.devices_saved_mark),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(start = 6.dp).size(14.dp),
+                    )
+                }
+            }
             Text(
                 text = subtitle(item, now),
                 style = MaterialTheme.typography.bodySmall,
@@ -240,13 +336,30 @@ private fun PairedRow(item: MyDeviceItem, now: Long, onClick: (MyDeviceItem) -> 
                 Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.devices_more_for, title))
             }
             DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.devices_hide)) },
-                    onClick = {
-                        menuOpen = false
-                        onHide(item)
-                    },
-                )
+                if (item.isSaved) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.devices_saved_edit)) },
+                        onClick = {
+                            menuOpen = false
+                            saved.onEdit(item)
+                        },
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.devices_saved_remove)) },
+                        onClick = {
+                            menuOpen = false
+                            saved.onRemove(item)
+                        },
+                    )
+                } else {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.devices_hide)) },
+                        onClick = {
+                            menuOpen = false
+                            onHide(item)
+                        },
+                    )
+                }
             }
         }
     }
@@ -262,7 +375,8 @@ private fun subtitle(item: MyDeviceItem, now: Long): String {
             }
                 ?: item.paired.category.label()
         }
-        sighting == null -> stringResource(R.string.devices_not_seen)
+        sighting == null ->
+            stringResource(if (item.isSaved) R.string.devices_saved_not_seen else R.string.devices_not_seen)
         else -> {
             val minutes = ((now - sighting.lastSeen) / 60_000).toInt()
             if (minutes < 1) {

@@ -1,6 +1,7 @@
 package com.gamenuri.btscanner24.core.ui
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -9,11 +10,22 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material3.Badge
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -47,6 +59,8 @@ fun DeviceCard(
     onClick: (() -> Unit)? = null,
     /** The smaller row of the "Other devices" section (#82): 50 dp, grey 34 dp icon. */
     compact: Boolean = false,
+    /** Adds a ⋮ menu with "Save to My devices" (#108); null where saving is not offered. */
+    onSave: (() -> Unit)? = null,
 ) {
     val signal = stringResource(
         when (device.signalLevel) {
@@ -66,7 +80,10 @@ fun DeviceCard(
             .padding(horizontal = 16.dp, vertical = if (compact) 4.dp else 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (compact) DeviceIcon(device.category, size = 34.dp, muted = true) else DeviceIcon(device.category)
+        // An unnamed Apple Find My signal can be any Apple device, so it gets the neutral icon (#144).
+        val findMy = label is DeviceLabel.Generic && label.appleFindMy
+        val iconCategory = if (findMy) DeviceCategory.UNKNOWN else device.category
+        if (compact) DeviceIcon(iconCategory, size = 34.dp, muted = true) else DeviceIcon(iconCategory)
         Spacer(Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -101,6 +118,27 @@ fun DeviceCard(
                 },
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        if (onSave != null) RowMenu(name = label.text(withSuffix = showSuffix), onSave = onSave)
+    }
+}
+
+@Composable
+private fun RowMenu(name: String, onSave: () -> Unit) {
+    var open by remember { mutableStateOf(false) }
+    Box {
+        IconButton(onClick = { open = true }) {
+            Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.device_more_for, name))
+        }
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.save_title)) },
+                leadingIcon = { Icon(Icons.Outlined.BookmarkBorder, contentDescription = null) },
+                onClick = {
+                    open = false
+                    onSave()
+                },
             )
         }
     }

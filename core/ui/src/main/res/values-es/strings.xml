@@ -37,6 +37,7 @@
     <string name="device_distance">~%1$s m</string>
     <string name="device_name_with_suffix">%1$s · %2$s</string>
     <string name="device_generic_maker_type">%2$s %1$s</string>
+    <string name="device_generic_apple_find_my">Dispositivo Apple</string>
     <string name="device_generic_maker">Dispositivo %1$s</string>
     <string name="device_generic">Dispositivo Bluetooth</string>
     <string name="badge_paired">Mío</string>
@@ -61,4 +62,17 @@
     <string name="paywall_or">o</string>
     <string name="paywall_reward">Ver un anuncio para 24 h de Premium</string>
     <string name="paywall_reward_note">Mira un anuncio (unos 30 s) hasta el final para tener Premium 24 horas</string>
+    <string name="save_title">Guardar en Mis dispositivos</string>
+    <string name="save_name_label">Nombre</string>
+    <string name="save_type_label">Tipo</string>
+    <string name="save_local_note">El nombre y el tipo se quedan en este teléfono</string>
+    <string name="save_cancel">Cancelar</string>
+    <string name="save_confirm">Guardar</string>
+    <string name="save_done">Guardado en Mis dispositivos</string>
+    <string name="save_view">Ver</string>
+    <string name="save_locked_title">1 dispositivo guardado es gratis</string>
+    <string name="save_locked_body">Con Premium, guarda todos los que quieras y quita los anuncios.</string>
+    <string name="save_locked_ad_used">Ya lo usaste hoy</string>
+    <string name="save_locked_later">Ahora no</string>
+    <string name="device_more_for">Más opciones para %1$s</string>
 </resources>

@@ -69,6 +69,7 @@ internal object DemoData {
     fun findState(name: String): FinderUiState {
         val base = FinderUiState(
             deviceLabel = DeviceLabel.Named("My Earbuds", NameSource.ADVERTISED, suffix = "0001"),
+            category = DeviceCategory.EARBUDS,
             advanced = AdvancedInfo(address = address(0)),
             // The demo earbuds can ring, so every in-range state shows the same bottom bar (#28, #60).
             sound = SoundState.READY,
@@ -88,6 +89,14 @@ internal object DemoData {
                 confidence = ArrowConfidence.HIGH,
                 trend = ProximityTrend.CLOSER,
                 sound = if (name == "sound") SoundState.PLAYING else base.sound,
+            ).distance(3.0, ProximityBand.NEAR)
+            // World-anchored for the 3D scene (#76): the arrow keeps its place in the room as the phone turns.
+            "ar" -> base.copy(
+                stage = FinderStage.WALK,
+                arrowDegrees = 0f,
+                bearingDegrees = 0f,
+                confidence = ArrowConfidence.HIGH,
+                trend = ProximityTrend.CLOSER,
             ).distance(3.0, ProximityBand.NEAR)
             "locked" -> base.copy(
                 stage = FinderStage.LOCKED,
@@ -109,6 +118,7 @@ internal object DemoData {
                 showConfirmHint = true,
             ).distance(1.2, ProximityBand.VERY_CLOSE)
             "here" -> base.copy(stage = FinderStage.RIGHT_HERE).distance(0.3, ProximityBand.RIGHT_HERE)
+            "not_found" -> base.copy(stage = FinderStage.NOT_FOUND)
             "lost" -> base.copy(stage = FinderStage.SIGNAL_LOST, secondsSinceSeen = 12).distance(6.0, ProximityBand.FAR)
             else -> base
         }

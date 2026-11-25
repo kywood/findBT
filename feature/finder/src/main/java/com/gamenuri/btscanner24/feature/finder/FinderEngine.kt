@@ -6,6 +6,7 @@ import com.gamenuri.btscanner24.core.ble.proximity.ProximityEstimator
 import com.gamenuri.btscanner24.core.ble.proximity.ProximityReading
 import com.gamenuri.btscanner24.core.ble.proximity.ProximityTrend
 import com.gamenuri.btscanner24.core.model.BleDevice
+import com.gamenuri.btscanner24.core.model.DeviceCategory
 import com.gamenuri.btscanner24.core.model.DeviceLabel
 import com.gamenuri.btscanner24.core.model.DeviceNaming
 import com.gamenuri.btscanner24.core.sensors.Angles
@@ -32,6 +33,7 @@ internal class FinderEngine(
 ) {
     private val tracker = TargetTracker(target)
     private var label: DeviceLabel = DeviceNaming.label(target, pairedAlias)
+    private var category: DeviceCategory = target.category
     private var reading: ProximityReading? = null
     private var lastSightingMs: Long? = null
     private var heading: Double? = null
@@ -42,6 +44,7 @@ internal class FinderEngine(
     private var shownDistance: Double? = null
     private var listDistance: Double? = null
     private var shownAtMs: Long = Long.MIN_VALUE
+    private var waitingSinceMs: Long = startMs
 
     /** @return true when the sighting belonged to the target. */
     fun onSighting(device: BleDevice, nowMs: Long): Boolean {
@@ -49,6 +52,8 @@ internal class FinderEngine(
         // Keep a real name once seen; a later packet without one must not turn it back into a generic label.
         val next = DeviceNaming.label(device, pairedAlias)
         if (next is DeviceLabel.Named || label is DeviceLabel.Generic) label = next
+        // Likewise a kind once known stays known.
+        if (device.category != DeviceCategory.UNKNOWN) category = device.category
         val newReading = proximity.add(device.rssi, nowMs, device.txPower)
         reading = newReading
         // Show the repository's per-device estimate when it has one, so the number matches the list (#21).
@@ -82,6 +87,11 @@ internal class FinderEngine(
     private fun flipped(before: Double?, after: Double?): Boolean =
         before != null && after != null && abs(Angles.delta(before, after)) > FLIP_DEGREES
 
+    /** A scan (re)starts, or the user asks to try again: the wait for a first signal begins anew (#117). */
+    fun restartWaiting(nowMs: Long) {
+        waitingSinceMs = nowMs
+    }
+
     /** The "Turn once again" button. */
     fun restartSweep() {
         bearing.reset()
@@ -97,8 +107,10 @@ internal class FinderEngine(
         val showArrow = stage == FinderStage.WALK || stage == FinderStage.LOCKED || stage == FinderStage.TURN_AROUND
         return FinderUiState(
             deviceLabel = label,
+            category = category,
             stage = stage,
             arrowDegrees = relative?.takeIf { showArrow }?.toFloat(),
+            bearingDegrees = est?.bearingDegrees?.takeIf { showArrow && relative != null }?.toFloat(),
             confidence = if (showArrow) confidenceFor(est, current) else ArrowConfidence.NONE,
             sweepProgress = est?.sweepProgress ?: 0f,
             distanceMeters = shownDistance(nowMs, listDistance ?: current?.distanceMeters),
@@ -140,7 +152,8 @@ internal class FinderEngine(
         est: BearingEstimator.Estimate?,
         relative: Double?,
     ): FinderStage = when {
-        current == null -> FinderStage.WAITING
+        current == null ->
+            if (nowMs - waitingSinceMs > NOT_FOUND_AFTER_MS) FinderStage.NOT_FOUND else FinderStage.WAITING
         signalLost(nowMs) -> FinderStage.SIGNAL_LOST
         rightHereSinceMs?.let { nowMs - it >= RIGHT_HERE_HOLD_MS } == true -> FinderStage.RIGHT_HERE
         !hasCompass -> FinderStage.NO_COMPASS
@@ -163,6 +176,7 @@ internal class FinderEngine(
 
     private companion object {
         const val SIGNAL_LOST_MS = 8_000L
+        const val NOT_FOUND_AFTER_MS = 10_000L
         const val RIGHT_HERE_HOLD_MS = 2_000L
         const val DISTANCE_REFRESH_MS = 1_000L
         const val CONFIRM_HINT_AFTER_MS = 15_000L

@@ -24,7 +24,7 @@
     <!-- Filter screen and other devices (#85, #82) -->
     <string name="filter_close">닫기</string>
     <string name="filter_section_show">표시</string>
-    <string name="filter_show_other_body">비콘, TV, 센서 등 %1$d개</string>
+    <string name="filter_show_other_body">이름이 없거나 종류를 구분하기 어려운 신호 %1$d개</string>
     <string name="filter_show_unnamed">이름 없는 기기 표시</string>
     <string name="filter_distance">거리</string>
     <string name="filter_distance_within_5">5m 이내</string>
@@ -37,6 +37,16 @@
     <string name="filter_no_results">결과 없음</string>
     <string name="nearby_other_show">보기</string>
     <string name="nearby_other_section">기타 장치 · %1$d</string>
+    <!-- Other devices: close and explanation (#142) -->
+    <string name="nearby_other_close">닫기</string>
+    <string name="nearby_other_close_section">기타 장치 닫기</string>
+    <string name="nearby_other_order">%1$s · 새 기기는 아래</string>
+    <string name="nearby_other_info">기타 장치 설명</string>
+    <string name="other_info_title">기타 장치</string>
+    <string name="other_info_what">이름이 없거나 종류를 구분하기 어려운 주변 블루투스 신호예요. 이웃의 기기, 가전, TV, 비콘 등이 포함될 수 있어요.</string>
+    <string name="other_info_why">보통 개수가 많고 대부분 내 것이 아니어서 처음에는 숨겨 둬요.</string>
+    <string name="other_info_mine">내 기기가 여기 있다면 눌러서 찾기를 시작해 보세요. 그쪽으로 걸어갈 때 거리가 줄어드는지 확인하면 돼요. 내 기기가 맞다면 이름을 붙여 내 기기에 저장해 두세요.</string>
+    <string name="other_info_ok">확인</string>
     <string name="nearby_empty_personal">근처에 들고 다니는 기기가 없어요</string>
     <plurals name="filter_show_results">
         <item quantity="other">기기 %1$d개 보기</item>

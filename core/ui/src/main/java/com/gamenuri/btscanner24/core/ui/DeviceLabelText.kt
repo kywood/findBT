@@ -18,6 +18,7 @@ fun DeviceLabel.text(withSuffix: Boolean = false): String = when (this) {
         // Local copy: no smart cast on a property from another module.
         val company = maker
         when {
+            appleFindMy -> stringResource(R.string.device_generic_apple_find_my)
             company != null && known -> stringResource(R.string.device_generic_maker_type, company, category.label())
             company != null -> stringResource(R.string.device_generic_maker, company)
             known -> category.label()
