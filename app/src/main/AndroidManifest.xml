@@ -38,6 +38,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <!-- AdMob app ID (#31): the test ID unless local.properties sets nearo.admob.appId. -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="${admobAppId}" />
         <!-- Lets adb measure start-up of the release-like "benchmark" build (#34). -->
         <profileable android:shell="true" />
     </application>

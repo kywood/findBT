@@ -8,6 +8,9 @@
     <string name="settings_premium_buy_no_price">Obtener Premium</string>
     <string name="settings_premium_active">Premium activo</string>
     <string name="settings_premium_active_body">¡Gracias! Los anuncios están desactivados.</string>
+    <string name="settings_day_pass_title">Premium durante 24 horas</string>
+    <string name="settings_day_pass_until">Hasta el %1$s</string>
+    <string name="settings_day_pass_on">Premium activado 24 horas · hasta el %1$s</string>
     <string name="settings_restore">Restaurar compra</string>
     <string name="settings_restore_ok">Premium restaurado</string>
     <string name="settings_restore_none">No hay compras para restaurar</string>
