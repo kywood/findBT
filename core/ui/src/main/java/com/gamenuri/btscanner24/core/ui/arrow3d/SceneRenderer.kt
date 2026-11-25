@@ -392,7 +392,9 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         val tall = (PEDESTAL_THICKNESS + MARKER_FLOAT + MARKER_MODEL) * MESH_SCALE + MARKER_BOB
         val reach = if (modelVertices > 0) tall else 0f
         // Normalised height (−1 bottom, +1 top) of the highest place for the marker.
-        val limit = 1f - 2f * (top + TARGET_CLEARANCE)
+        // The ball is measured at its middle and needs air above it; a model is measured at its very top.
+        val clearance = if (reach > 0f) TARGET_MODEL_CLEARANCE else TARGET_CLEARANCE
+        val limit = 1f - 2f * (top + clearance)
         var radius = FAR_RING
         while (radius > TARGET_MIN_RADIUS) {
             probe[0] = x * radius
@@ -1005,6 +1007,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         const val TARGET_MIN_RADIUS = 1.25f * RING_OUTER
         const val TARGET_STEP = 0.05f * RING_OUTER
         const val TARGET_CLEARANCE = 0.045f
+        const val TARGET_MODEL_CLEARANCE = 0.012f
         const val HERE_EPSILON = 0.01f
 
         // Stepped floor (design find-flow-3d v1.2, #132): three round steps at R, 1.76 R and 2.64 R,
