@@ -952,7 +952,7 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
         if (overlaps(l, b, r, t, meRect, 0)) return false
         // A tag never hides another device's model (design v2.2 collision panel, #193).
         for (other in 0 until modelRects.size / RECT_FLOATS) {
-            if (other != self && overlaps(l, b, r, t, modelRects, other * RECT_FLOATS)) return false
+            if (other != self && hides(l, b, r, t, other * RECT_FLOATS)) return false
         }
         for (other in 0 until kept) {
             if (overlaps(l, b, r, t, rects, other * RECT_FLOATS)) return false
@@ -963,6 +963,20 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
         rects[at + 2] = r
         rects[at + 3] = t
         return true
+    }
+
+    /**
+     * Whether a tag at [left], [bottom], [right], [top] hides the model whose box is at [at] in
+     * [modelRects]: it lies on more than [TAG_MODEL_COVER] of it. A tag only grazing a model's edge
+     * still reads, and hiding every such tag left the map nearly without names (#193).
+     */
+    private fun hides(left: Float, bottom: Float, right: Float, top: Float, at: Int): Boolean {
+        val box = modelRects
+        val width = minOf(right, box[at + 2]) - maxOf(left, box[at])
+        val height = minOf(top, box[at + 3]) - maxOf(bottom, box[at + 1])
+        if (width <= 0f || height <= 0f) return false
+        val area = (box[at + 2] - box[at]) * (box[at + 3] - box[at + 1])
+        return area > 0f && width * height > TAG_MODEL_COVER * area
     }
 
     private fun overlaps(left: Float, bottom: Float, right: Float, top: Float, other: FloatArray, at: Int): Boolean = !(
@@ -1380,11 +1394,14 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
         const val TUCK_SETTLED_DEGREES = 0.2f
 
         /** Half a stand's width with the picked ring round it, as a share of its size. */
-        const val PIN_HALF_WIDTH = 0.75f
+        const val PIN_HALF_WIDTH = 0.6f
 
         /** A floor step label under a name tag fades to this, over this long. */
         const val STEP_LABEL_UNDER_TAG_ALPHA = 0.15f
         const val LABEL_FADE_SECONDS = 0.2f
+
+        /** The share of a model a tag may lie on and still count as not hiding it. */
+        const val TAG_MODEL_COVER = 0.2f
 
         /** No device's model is left out of a tag's check. */
         const val NO_PIN = -1
