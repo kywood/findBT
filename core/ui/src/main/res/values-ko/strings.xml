@@ -38,7 +38,7 @@
     <!-- Device naming (#46): suffix is the last 4 hex digits of the address. Distances (#21): coarse beyond 5 m. -->
     <string name="device_name_with_suffix">%1$s · %2$s</string>
     <string name="device_generic_maker_type">%1$s %2$s</string>
-    <string name="device_generic_apple_find_my">Apple 나의 찾기 기기</string>
+    <string name="device_generic_apple_find_my">Apple 기기</string>
     <string name="device_generic_maker">%1$s 기기</string>
     <string name="device_generic">블루투스 기기</string>
     <string name="badge_paired">내 기기</string>
