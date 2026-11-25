@@ -45,7 +45,7 @@
     <string name="other_info_title">Other devices</string>
     <string name="other_info_what">Nearby Bluetooth signals with no name, or of a kind that is hard to tell. They can be a neighbour’s devices, home appliances, TVs or beacons.</string>
     <string name="other_info_why">They start hidden because there are usually many of them and most are not yours.</string>
-    <string name="other_info_mine">If one of them is yours, tap it to start finding it. Watch whether the distance drops as you walk towards it.</string>
+    <string name="other_info_mine">If one of them is yours, tap it to start finding it. Watch whether the distance drops as you walk towards it. Once you are sure, name it and save it to My devices.</string>
     <string name="other_info_ok">Got it</string>
     <string name="nearby_empty_personal">No carried devices nearby</string>
     <plurals name="filter_show_results">
