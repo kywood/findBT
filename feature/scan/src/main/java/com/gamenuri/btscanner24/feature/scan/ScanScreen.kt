@@ -107,8 +107,6 @@ fun ScanScreen(
     onDeviceClick: (BleDevice) -> Unit = {},
     modifier: Modifier = Modifier,
     onOpenSettings: () -> Unit = {},
-    /** Shown once after the last row (the app puts its end-of-list ad card here, #81). */
-    listFooter: (@Composable () -> Unit)? = null,
     viewModel: ScanViewModel = viewModel(factory = ScanViewModel.Factory),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -135,7 +133,6 @@ fun ScanScreen(
         modifier = modifier,
         title = title,
         state = state,
-        listFooter = listFooter,
         permissionBanner = when {
             permission.isGranted -> null
             permission.isPermanentlyDenied -> PermissionBanner.OPEN_SETTINGS
@@ -206,7 +203,6 @@ fun ScanContent(
     permissionBanner: PermissionBanner?,
     actions: ScanActions,
     modifier: Modifier = Modifier,
-    listFooter: (@Composable () -> Unit)? = null,
 ) {
     var searchOpen by rememberSaveable { mutableStateOf(false) }
     var filtersOpen by rememberSaveable { mutableStateOf(false) }
@@ -242,7 +238,6 @@ fun ScanContent(
                     actions = actions,
                     listState = listState,
                     modifier = Modifier.fillMaxWidth().weight(1f),
-                    footer = listFooter,
                 )
             }
         }
@@ -491,7 +486,6 @@ private fun DeviceList(
     actions: ScanActions,
     listState: LazyListState,
     modifier: Modifier = Modifier,
-    footer: (@Composable () -> Unit)? = null,
 ) {
     LazyColumn(
         modifier = modifier,
@@ -557,15 +551,8 @@ private fun DeviceList(
                 DeviceRow(item, actions, Modifier.animateItem(), compact = true)
             }
         }
-        // After everything else, never between rows. A short search or filter result stays clean (#81).
-        val narrowed = state.activeFilterCount > 0 || state.query.isNotBlank()
-        if (footer != null && state.items.isNotEmpty() && !(narrowed && state.items.size <= FOOTER_MIN_RESULTS)) {
-            item(key = "footer") { footer() }
-        }
     }
 }
-
-private const val FOOTER_MIN_RESULTS = 3
 
 @Composable
 private fun DeviceRow(item: DeviceListItem, actions: ScanActions, modifier: Modifier, compact: Boolean = false) {
