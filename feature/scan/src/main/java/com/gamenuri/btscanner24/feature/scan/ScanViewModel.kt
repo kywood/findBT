@@ -44,6 +44,9 @@ class ScanViewModel(
     private val query = MutableStateFlow("")
     private val reorderRequests = MutableStateFlow(0)
 
+    /** Sorts asked for by the timer or by scrolling to the top, not by a tap: personal rows only (#143). */
+    private val autoReorderRequests = MutableStateFlow(0)
+
     /** Paired address -> the phone's name for it, re-read whenever the screen starts (#46). */
     private val pairedAliases = MutableStateFlow<Map<String, String>>(emptyMap())
 
@@ -73,8 +76,10 @@ class ScanViewModel(
         }
     }
 
-    private val listInputs = combine(preferences, query, reorderRequests, pairedAliases) { prefs, q, token, aliases ->
-        ListInputs(prefs, q, token, aliases)
+    private val reorderTokens = combine(reorderRequests, autoReorderRequests) { asked, auto -> asked to auto }
+
+    private val listInputs = combine(preferences, query, reorderTokens, pairedAliases) { prefs, q, tokens, aliases ->
+        ListInputs(prefs, q, tokens.first, tokens.second, aliases)
     }
 
     private val scanState = combine(status, paused) { status, paused -> status to paused }
@@ -82,8 +87,8 @@ class ScanViewModel(
     val uiState: StateFlow<ScanUiState> =
         combine(scanState, throttledDevices, listInputs, ticker) { (status, paused), devices, inputs, _ ->
             val now = clock()
-            val (prefs, q, token, aliases) = inputs
-            val list = ordering.update(devices.values, prefs, q, token, now, aliases)
+            val (prefs, q, token, autoToken, aliases) = inputs
+            val list = ordering.update(devices.values, prefs, q, token, now, aliases, autoToken)
             latest = devices.values
             ScanUiState(
                 status = status,
@@ -166,6 +171,14 @@ class ScanViewModel(
         reorderRequests.value++
     }
 
+    /**
+     * The same without a tap (#87: after a few seconds, or on scrolling back to the top). It sorts the
+     * personal rows only; the other devices keep their places until the user asks (#143).
+     */
+    fun autoRefreshOrder() {
+        autoReorderRequests.value++
+    }
+
     fun setQuery(value: String) {
         query.value = value
     }
@@ -218,6 +231,7 @@ private data class ListInputs(
     val prefs: ListPreferences,
     val query: String,
     val token: Int,
+    val autoToken: Int,
     val aliases: Map<String, String>,
 )
 
@@ -226,14 +240,21 @@ private data class ListInputs(
  * sort/filter/search change, and when the user taps "Refresh order"; otherwise rows keep their place.
  * Right after a full sort the list keeps sorting for [SETTLE_MS] while the first burst of
  * advertisements arrives, so a fresh scan does not show every device as "new".
+ *
+ * The "Other devices" section (#82) is long and its signals jitter, so its order would never agree
+ * with the sort for long: it is sorted only on those explicit occasions, never by the automatic
+ * re-sort, and it does not raise the "new order" chip (#143).
  */
 internal class OrderingState {
     private var displayedOrder: List<String> = emptyList()
     private var settleUntil: Long = 0
-    private var sortedAddresses: Set<String> = emptySet()
+    private var otherSettleUntil: Long = 0
+    private var sortedPersonal: Set<String> = emptySet()
+    private var sortedOther: Set<String> = emptySet()
     private var lastPrefs: ListPreferences? = null
     private var lastQuery: String? = null
     private var lastToken: Int? = null
+    private var lastAutoToken: Int? = null
 
     fun update(
         devices: Collection<BleDevice>,
@@ -242,24 +263,40 @@ internal class OrderingState {
         token: Int,
         now: Long,
         pairedAliases: Map<String, String> = emptyMap(),
+        autoToken: Int = 0,
     ): OrderedList {
         val split = DeviceListOrdering.filter(devices, prefs.filter, query, now, paired = pairedAliases.keys)
-        val filtered = split.all
-        // Personal devices first, then the "Other devices" section (#82), each in the chosen sort.
-        val sorted = DeviceListOrdering.sort(split.personal, prefs.sort) +
-            DeviceListOrdering.sort(split.other, prefs.sort)
         val otherAddresses = split.other.mapTo(HashSet()) { it.address }
         val explicit = displayedOrder.isEmpty() || prefs != lastPrefs || query != lastQuery || token != lastToken
-        if (explicit && filtered.isNotEmpty()) settleUntil = now + SETTLE_MS
-        val fullSort = explicit || now < settleUntil
+        val auto = lastAutoToken != null && autoToken != lastAutoToken
+        if (explicit && split.all.isNotEmpty()) {
+            settleUntil = now + SETTLE_MS
+            otherSettleUntil = now + SETTLE_MS
+        } else if (auto && split.personal.isNotEmpty()) {
+            settleUntil = now + SETTLE_MS
+        }
+        val sortPersonal = explicit || auto || now < settleUntil
+        val sortOther = explicit || now < otherSettleUntil
         lastPrefs = prefs
         lastQuery = query
         lastToken = token
+        lastAutoToken = autoToken
 
-        val kept = if (fullSort) sorted else DeviceListOrdering.keepOrder(displayedOrder, filtered)
-        // Keep-order may interleave a device that switched section; the sections themselves stay apart.
-        val ordered = kept.filter { it.address !in otherAddresses } + kept.filter { it.address in otherAddresses }
-        if (fullSort) sortedAddresses = sorted.mapTo(HashSet()) { it.address }
+        // Personal devices first, then the "Other devices" section, each in the chosen sort or as it was.
+        val sortedPersonalRows = DeviceListOrdering.sort(split.personal, prefs.sort)
+        val personal = if (sortPersonal) {
+            sortedPersonalRows
+        } else {
+            DeviceListOrdering.keepOrder(displayedOrder, split.personal)
+        }
+        val other = if (sortOther) {
+            DeviceListOrdering.sort(split.other, prefs.sort)
+        } else {
+            DeviceListOrdering.keepOrder(displayedOrder, split.other)
+        }
+        val ordered = personal + other
+        if (sortPersonal) sortedPersonal = personal.mapTo(HashSet()) { it.address }
+        if (sortOther) sortedOther = other.mapTo(HashSet()) { it.address }
         displayedOrder = ordered.map { it.address }
 
         val labels = ordered.map { DeviceNaming.label(it, pairedAlias = pairedAliases[it.address]) }
@@ -267,7 +304,7 @@ internal class OrderingState {
         val items = ordered.mapIndexed { index, device ->
             DeviceListItem(
                 device = device,
-                isNew = device.address !in sortedAddresses,
+                isNew = device.address !in sortedPersonal && device.address !in sortedOther,
                 isGone = DeviceListOrdering.isGone(device, now),
                 distanceMeters = device.distanceMeters,
                 label = labels[index],
@@ -276,7 +313,7 @@ internal class OrderingState {
                 isOther = device.address in otherAddresses,
             )
         }
-        val reorderAvailable = !fullSort && sorted.map { it.address } != displayedOrder
+        val reorderAvailable = !sortPersonal && sortedPersonalRows.map { it.address } != personal.map { it.address }
         return OrderedList(items, reorderAvailable, split.hiddenOther)
     }
 
