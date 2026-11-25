@@ -13,26 +13,20 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
@@ -44,11 +38,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.gamenuri.btscanner24.core.ads.NearoAds
 import com.gamenuri.btscanner24.core.ble.BleScanner
-import com.gamenuri.btscanner24.core.designsystem.component.WATER_PRESS_MS
-import com.gamenuri.btscanner24.core.designsystem.component.WATER_TOTAL_MS
-import com.gamenuri.btscanner24.core.designsystem.component.waterRise
 import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
 import com.gamenuri.btscanner24.demo.DemoMode
+import com.gamenuri.btscanner24.feature.finder.FINDER_EXIT_HOLD_MS
 import com.gamenuri.btscanner24.feature.finder.FinderScreen
 import com.gamenuri.btscanner24.feature.finder.LocalArFindScene
 import com.gamenuri.btscanner24.feature.finder.LocalFindScenePose
@@ -62,11 +54,7 @@ import com.gamenuri.btscanner24.feature.settings.PrivacyOptions
 import com.gamenuri.btscanner24.feature.settings.RewardedOffer
 import com.gamenuri.btscanner24.feature.settings.SettingsScreen
 import java.util.Locale
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -134,11 +122,18 @@ private fun DemoOnboarding(name: String) {
 @Composable
 private fun AppNavHost(start: String, startOnMyDevices: Boolean, openPaywall: Boolean, onOnboardingDone: () -> Unit) {
     val navController = rememberNavController()
-    val water = rememberFindWater()
+    // Where the last touch came down, 0..1 across the screen: the find screen's water starts there (#107).
+    val tapX = remember { FloatArray(1) { 0.5f } }
+    val watchTaps = Modifier.pointerInput(Unit) {
+        awaitEachGesture {
+            val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+            if (size.width > 0) tapX[0] = down.position.x / size.width
+        }
+    }
     val activity = LocalActivity.current
     val ads = remember(activity) { activity?.let { NearoAds.from(it) } }
     val rewardedReady by (ads?.rewardedReady ?: NoRewardedAd).collectAsStateWithLifecycle()
-    Box(Modifier.fillMaxSize()) {
+    Box(Modifier.fillMaxSize().then(watchTaps)) {
         NavHost(navController = navController, startDestination = start) {
             composable(Routes.ONBOARDING) {
                 OnboardingScreen(
@@ -150,16 +145,20 @@ private fun AppNavHost(start: String, startOnMyDevices: Boolean, openPaywall: Bo
             }
             composable(
                 Routes.HOME,
-                // The water cover has already hidden home when the find screen opens (#101).
-                exitTransition = { if (targetState.isFinder()) ExitTransition.None else null },
+                // Home stays put under the find screen while its water rises, and is back at once
+                // under the draining water (#107).
+                exitTransition = { if (targetState.isFinder()) hold(HOME_HOLD_MS) else null },
                 popEnterTransition = { if (initialState.isFinder()) EnterTransition.None else null },
             ) {
                 // Consent (UMP) and the ads SDK start with Home, never during onboarding (#31).
                 LaunchedEffect(ads, activity) { if (ads != null && activity != null) ads.start(activity) }
                 HomeScreen(
-                    onFind = { address -> water.rise { navController.navigate(Routes.finder(address)) } },
+                    onFind = { address -> navController.navigate(Routes.finder(address)) { launchSingleTop = true } },
                     onOpenSettings = { navController.navigate(Routes.SETTINGS) },
                     startOnMyDevices = startOnMyDevices,
+                    rewarded = ads?.let { nearoAds ->
+                        RewardedAd(rewardedReady) { activity?.let { nearoAds.showRewarded(it) { } } }
+                    },
                 )
             }
             composable(Routes.SETTINGS) {
@@ -185,122 +184,26 @@ private fun AppNavHost(start: String, startOnMyDevices: Boolean, openPaywall: Bo
             }
             composable(
                 Routes.FINDER,
-                // Both ways the water cover hides the swap, so the screens themselves just appear (#101).
+                // The find screen draws itself as water (#107): it is there at once, showing only what
+                // is under its waterline, and stays on top while that drains.
                 enterTransition = { EnterTransition.None },
-                popExitTransition = { ExitTransition.None },
+                popExitTransition = { hold(FINDER_EXIT_HOLD_MS) },
             ) { entry ->
-                // The cover lifts only once the find screen has drawn, so its first, slow frame stays hidden.
-                LaunchedEffect(Unit) {
-                    withFrameNanos { }
-                    water.reveal()
-                }
+                val entryTapX = remember { tapX[0] }
                 FinderScreen(
                     address = entry.arguments?.getString(Routes.ADDRESS_ARG).orEmpty(),
-                    onClose = { cover -> water.drain(cover) { navController.popBackStack() } },
+                    onClose = { navController.popBackStack() },
                     // Full-screen ad only here, after a finished find, and only when the rules allow (#81 ③).
                     onFoundDone = { if (ads != null && activity != null) ads.onFoundDone(activity) },
+                    entryTapX = entryTapX,
                 )
             }
         }
-        FindWaterCover(water)
     }
 }
 
-/**
- * Home ↔ find (#90, #97, #101). The water is a plain fill drawn above every screen, so it never waits
- * for one: the first frame of a screen is slow on older phones (about 0.5 s on the A50), and a
- * transition that runs during it is lost.
- * - In: the water rises over the list first, then the find screen is composed under it, and the cover
- *   fades off once that has drawn.
- * - Out: the cover fades in over the find screen in its current colour, Home comes back under it, and
- *   once Home has drawn the water drains away.
- */
-@Stable
-private class FindWater(private val scope: CoroutineScope) {
-    val level = Animatable(0f)
-    val alpha = Animatable(1f)
-    var covering by mutableStateOf(false)
-        private set
-
-    /** Searching colours on the way in; the find screen's own colours on the way out. */
-    var brush by mutableStateOf<Brush?>(null)
-        private set
-
-    /** The 120 ms press before the rise; none before a drain. */
-    var pressMs by mutableIntStateOf(WATER_PRESS_MS)
-        private set
-    private var job: Job? = null
-    private var draining = false
-
-    fun rise(then: () -> Unit) {
-        if (job?.isActive == true) return
-        job = scope.launch {
-            brush = null
-            pressMs = WATER_PRESS_MS
-            alpha.snapTo(1f)
-            level.snapTo(0f)
-            covering = true
-            level.animateTo(1f, tween(WATER_TOTAL_MS, easing = LinearEasing))
-            then()
-            // Safety net: never leave the cover up if the find screen does not report back.
-            delay(COVER_TIMEOUT_MS)
-            lift()
-        }
-    }
-
-    fun reveal() {
-        if (!covering || level.targetValue < 1f) return
-        job?.cancel()
-        job = scope.launch { lift() }
-    }
-
-    fun drain(cover: Brush, then: () -> Unit) {
-        // A second ✕ or back while draining would pop Home as well.
-        if (draining) return
-        draining = true
-        job?.cancel()
-        job = scope.launch {
-            brush = cover
-            pressMs = 0
-            level.snapTo(1f)
-            alpha.snapTo(0f)
-            covering = true
-            alpha.animateTo(1f, tween(COVER_FADE_MS))
-            then()
-            // Home's first frame after coming back can be slow; drain only once it has drawn.
-            withFrameNanos { }
-            withFrameNanos { }
-            level.animateTo(0f, tween(WATER_DRAIN_MS, easing = LinearEasing))
-            covering = false
-            draining = false
-        }
-    }
-
-    private suspend fun lift() {
-        alpha.animateTo(0f, tween(COVER_FADE_MS))
-        covering = false
-    }
-}
-
-@Composable
-private fun rememberFindWater(): FindWater {
-    val scope = rememberCoroutineScope()
-    return remember(scope) { FindWater(scope) }
-}
-
-@Composable
-private fun FindWaterCover(water: FindWater) {
-    if (!water.covering) return
-    val colors = NearoTheme.colors.findSearching
-    val searching = remember(colors) { Brush.verticalGradient(listOf(colors.background, colors.backgroundBottom)) }
-    Box(
-        Modifier
-            .fillMaxSize()
-            .graphicsLayer { alpha = water.alpha.value }
-            .waterRise(progress = { water.level.value }, pressMs = water.pressMs)
-            .background(water.brush ?: searching),
-    )
-}
+/** Keeps the leaving screen composed and in place for [millis]; the other screen does the moving. */
+private fun hold(millis: Int): ExitTransition = fadeOut(tween(millis), targetAlpha = HOLD_ALPHA)
 
 /**
  * Shows [content] in another language without touching the system setting, for demo screenshots in
@@ -345,12 +248,11 @@ private fun NavBackStackEntry.isFinder(): Boolean = destination.route == Routes.
 /** Stands in for the rewarded-ad state when there are no ads (demo mode). */
 private val NoRewardedAd = MutableStateFlow(false)
 
-/** Blue → dark drains faster than it rises (#97, color-modes-v1). */
-private const val WATER_DRAIN_MS = 500
+/** Longer than the find screen's first frame plus its water rise, on the slowest test phone (A50). */
+private const val HOME_HOLD_MS = 2_500
 
-/** The cover fades off the find screen once it has drawn, which reads as its content fading in. */
-private const val COVER_FADE_MS = 250
-private const val COVER_TIMEOUT_MS = 2_000L
+/** Not exactly 1, so the hold is a real animation with a duration; invisible. */
+private const val HOLD_ALPHA = 0.99f
 
 /** Navigation routes. Each screen's back stack entry owns its ViewModel, so leaving find mode clears it. */
 private object Routes {

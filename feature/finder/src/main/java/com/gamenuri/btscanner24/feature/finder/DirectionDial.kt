@@ -1,6 +1,5 @@
 package com.gamenuri.btscanner24.feature.finder
 
-import android.provider.Settings
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.Spring
@@ -18,6 +17,7 @@ import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
@@ -120,9 +120,7 @@ internal fun ArrowScene(state: FinderUiState, centerY: Float, fades: SceneFades,
             }
         }
     }
-    val reduceMotion = remember(context) {
-        Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
-    }
+    val reduceMotion = remember(context) { context.animationsOff() }
     val color = LocalContentColor.current
     FindScene3d(
         spec = FindSceneSpec(
@@ -216,24 +214,24 @@ private fun FloorArrow(degrees: Float, confidence: ArrowConfidence, locked: Bool
 
 @Composable
 private fun SpinningNeedle(progress: Float) {
-    val transition = rememberInfiniteTransition(label = "spin")
-    val rotation by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(tween(durationMillis = 2_400, easing = LinearEasing)),
-        label = "needle",
-    )
+    // Holds still while water moves over the screen (#106).
+    val rotation = if (LocalFindMotionPaused.current) {
+        remember { mutableFloatStateOf(0f) }
+    } else {
+        rememberInfiniteTransition(label = "spin").animateFloat(
+            initialValue = 0f,
+            targetValue = 360f,
+            animationSpec = infiniteRepeatable(tween(durationMillis = 2_400, easing = LinearEasing)),
+            label = "needle",
+        )
+    }
     val color = LocalContentColor.current
     val track = LocalContentColor.current.copy(alpha = 0.25f)
     Canvas(modifier = Modifier.fillMaxSize()) {
         progressRing(track, color, progress)
-        val path = nearoArrowPath(scale = 0.75f)
-        // Three fading ghosts behind the needle read as motion.
-        for (ghost in GHOSTS downTo 0) {
-            rotate(rotation - ghost * GHOST_SPACING_DEGREES) {
-                val ghostAlpha = if (ghost == 0) 1f else 0.12f * (GHOSTS + 1 - ghost)
-                drawRoundedArrow(path, Brush.linearGradient(listOf(color, color)), alpha = ghostAlpha)
-            }
+        // One arrow, no ghost trail (#106); the angle is read here, so only drawing is redone.
+        rotate(rotation.value) {
+            drawRoundedArrow(nearoArrowPath(scale = 0.75f), Brush.linearGradient(listOf(color, color)))
         }
     }
 }
@@ -247,18 +245,21 @@ private fun HeatRing(heat: Float) {
 
 @Composable
 private fun RightHereRings() {
-    val transition = rememberInfiniteTransition(label = "rings")
-    val pulse by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(durationMillis = 1_600, easing = LinearEasing)),
-        label = "pulse",
-    )
+    val pulse = if (LocalFindMotionPaused.current) {
+        remember { mutableFloatStateOf(0f) }
+    } else {
+        rememberInfiniteTransition(label = "rings").animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(tween(durationMillis = 1_600, easing = LinearEasing)),
+            label = "pulse",
+        )
+    }
     val color = LocalContentColor.current
     Canvas(modifier = Modifier.fillMaxSize()) {
         val maxRadius = size.minDimension / 2
         for (ring in 0 until RINGS) {
-            val t = (pulse + ring.toFloat() / RINGS) % 1f
+            val t = (pulse.value + ring.toFloat() / RINGS) % 1f
             drawCircle(color.copy(alpha = 0.5f * (1f - t)), radius = maxRadius * t, style = Stroke(3.dp.toPx()))
         }
         drawCircle(color, radius = maxRadius * 0.12f)
@@ -295,6 +296,4 @@ private fun rememberContinuousAngle(degrees: Float): Float {
 
 private const val MIN_TURN_DEGREES = 5f
 private const val FALLBACK_RING = 0.385f
-private const val GHOSTS = 3
-private const val GHOST_SPACING_DEGREES = 12f
 private const val RINGS = 3
