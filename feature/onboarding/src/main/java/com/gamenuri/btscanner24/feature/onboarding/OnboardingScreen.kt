@@ -59,6 +59,7 @@ import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
 import com.gamenuri.btscanner24.core.ui.R as UiR
 import com.gamenuri.btscanner24.core.ui.arrow3d.FindScene3d
 import com.gamenuri.btscanner24.core.ui.arrow3d.FindSceneSpec
+import com.gamenuri.btscanner24.core.ui.distanceText
 import com.gamenuri.btscanner24.core.ui.permission.openAppSettings
 import com.gamenuri.btscanner24.core.ui.permission.rememberBlePermissionState
 
@@ -259,7 +260,8 @@ private fun IntroHero(modifier: Modifier = Modifier) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = stringResource(R.string.onboarding_hero_distance),
+                // The same wording and unit as the real screens: "~3 m", or "~10 ft" where feet are used (#83).
+                text = distanceText(HERO_DISTANCE_M),
                 color = BrandIconGradientBottom,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
@@ -281,6 +283,7 @@ private val HeroSceneSize = 236.dp
 
 /** Turned a little to the side so the arrow's thickness and shadow show. */
 private const val HERO_ARROW_DEGREES = -24f
+private const val HERO_DISTANCE_M = 3.0
 
 @Composable
 private fun CheckLine(text: Int) {
