@@ -16,9 +16,12 @@ import com.gamenuri.btscanner24.core.ble.CompanyDirectory
 import com.gamenuri.btscanner24.core.ble.ConnectedDevices
 import com.gamenuri.btscanner24.core.ble.DeviceRepository
 import com.gamenuri.btscanner24.core.ble.ScanEvent
+import com.gamenuri.btscanner24.core.model.DeviceCategory
 import com.gamenuri.btscanner24.core.model.PairedDevice
+import com.gamenuri.btscanner24.core.ui.save.SaveDeviceSheet
 import com.gamenuri.btscanner24.feature.finder.FinderActions
 import com.gamenuri.btscanner24.feature.finder.FinderContent
+import com.gamenuri.btscanner24.feature.finder.FinderSave
 import com.gamenuri.btscanner24.feature.finder.FoundContent
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.Flow
@@ -71,7 +74,26 @@ internal object DemoMode {
             )
             return
         }
-        FinderContent(state = DemoData.findState(state), actions = FinderActions(onClose = onClose, onFound = onClose))
+        // "save", "saved" and "save_sheet" show the find screen's save path (#152) on the "close" state.
+        val save = when (state) {
+            "save", "save_sheet" -> FinderSave(isSaved = false, justSaved = false, onSave = {}, onView = {})
+            "saved" -> FinderSave(isSaved = true, justSaved = true, onSave = {}, onView = {})
+            else -> null
+        }
+        FinderContent(
+            state = DemoData.findState(if (save != null) "close" else state),
+            actions = FinderActions(onClose = onClose, onFound = onClose),
+            save = save,
+        )
+        if (state == "save_sheet") {
+            SaveDeviceSheet(
+                initialName = "Keys Tag",
+                initialCategory = DeviceCategory.TRACKER,
+                onSave = { _, _ -> },
+                onDismiss = {},
+                onFindScreen = true,
+            )
+        }
     }
 
     /** Fixed "$4.99" so paywall and settings shots never depend on Play (#32). */

@@ -34,10 +34,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -124,6 +126,8 @@ fun FinderScreen(
     entryTapX: Float = 0.5f,
     /** The water the opening tap set off already; without it the screen starts its own once drawn. */
     entryWater: FindEntryWater? = null,
+    /** "Save to My devices" from here (#152); null hides the bookmark. */
+    save: FinderSave? = null,
     viewModel: FinderViewModel = viewModel(key = "finder-$address", factory = FinderViewModel.factory(address)),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -209,6 +213,7 @@ fun FinderScreen(
                 paused = entry.isMoving,
                 onClose = { close() },
                 onFound = { foundAfterSeconds = state.advanced.elapsedSeconds },
+                save = save,
             )
         }
     }
@@ -222,6 +227,7 @@ private fun FinderLive(
     paused: Boolean,
     onClose: () -> Unit,
     onFound: () -> Unit,
+    save: FinderSave?,
 ) {
     // Scan and read sensors only while the screen is visible.
     LifecycleStartEffect(viewModel) {
@@ -260,6 +266,7 @@ private fun FinderLive(
             onOpenOutput = { openMediaOutput(context) },
             onLouder = viewModel::louder,
         ),
+        save = save,
     )
 }
 
@@ -273,6 +280,12 @@ data class FinderActions(
     val onOpenOutput: () -> Unit = {},
     val onLouder: () -> Unit = {},
 )
+
+/**
+ * "Save to My devices" without leaving the find screen (#152). The app owns the sheets and the saved
+ * list; this screen shows the bookmark and, once saved, the bar with "View".
+ */
+class FinderSave(val isSaved: Boolean, val justSaved: Boolean, val onSave: () -> Unit, val onView: () -> Unit)
 
 /**
  * Found it (#90 v2): the Found screen rises over a still picture of the find screen, its content fades
@@ -315,6 +328,7 @@ fun FinderContent(
     modifier: Modifier = Modifier,
     /** Water is moving over this screen: hold the continuous animations until it is done (#106). */
     paused: Boolean = false,
+    save: FinderSave? = null,
 ) {
     val palette = findColorsFor(state)
     val background = palette.background
@@ -412,11 +426,21 @@ private fun FinderScaffold(
                 },
                 // "⋯" opens the raw numbers (design v3: top-right is details/advanced), so nothing sits
                 // under the navigation bar at the bottom of a long screen.
-                actions = { AdvancedMenu(state.advanced, tint = content, background = background) },
+                actions = {
+                    if (save != null) {
+                        IconButton(onClick = save.onSave) {
+                            Icon(
+                                if (save.isSaved) Icons.Filled.Bookmark else Icons.Outlined.BookmarkBorder,
+                                contentDescription = stringResource(UiR.string.save_title),
+                            )
+                        }
+                    }
+                    AdvancedMenu(state.advanced, tint = content, background = background)
+                },
             )
         },
         // The action row is pinned above the navigation bar and never scrolls away (design review #55).
-        bottomBar = { ActionRow(state, actions, content, background) },
+        bottomBar = { ActionRow(state, actions, content, background, save) },
     ) { padding ->
         CompositionLocalProvider(LocalFindAccent provides accent) {
             Column(
@@ -482,7 +506,13 @@ private fun FinderScaffold(
 }
 
 @Composable
-private fun ActionRow(state: FinderUiState, actions: FinderActions, content: Color, background: Color) {
+private fun ActionRow(
+    state: FinderUiState,
+    actions: FinderActions,
+    content: Color,
+    background: Color,
+    save: FinderSave? = null,
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -490,6 +520,7 @@ private fun ActionRow(state: FinderUiState, actions: FinderActions, content: Col
             .padding(horizontal = 24.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
+        if (save?.justSaved == true) SavedBar(save.onView, content)
         // "Spin again" shares the sound button's row, half each (design find-flow v1.4, #138).
         // Also while locked: a lock can be wrong, and the design keeps the way back to a new sweep.
         val canRespin = state.stage == FinderStage.WALK ||
@@ -604,6 +635,26 @@ private fun EarCheckDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
             TextButton(onClick = onConfirm) { Text(stringResource(R.string.finder_sound_ear_confirm)) }
         },
     )
+}
+
+/** "Saved to My devices · View" right after saving from here (#152): a light surface, never a dark card. */
+@Composable
+private fun SavedBar(onView: () -> Unit, content: Color) {
+    Surface(color = content.copy(alpha = 0.16f), contentColor = content, shape = RoundedCornerShape(12.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(UiR.string.save_done),
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            TextButton(onClick = onView) { Text(stringResource(UiR.string.save_view), color = content) }
+        }
+    }
 }
 
 @Composable

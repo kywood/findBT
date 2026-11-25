@@ -23,7 +23,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
@@ -147,6 +149,8 @@ private fun AppNavHost(
     }
     // The find screen's water starts in the tap itself, over Home, before the navigation is done (#107).
     val findEntry = rememberFindEntryWater()
+    // "View" on the find screen's saved bar goes back to Home on the My devices tab (#152).
+    var myDevicesRequests by remember { mutableIntStateOf(0) }
     val activity = LocalActivity.current
     val ads = remember(activity) { activity?.let { NearoAds.from(it) } }
     val rewardedReady by (ads?.rewardedReady ?: NoRewardedAd).collectAsStateWithLifecycle()
@@ -176,6 +180,7 @@ private fun AppNavHost(
                     },
                     onOpenSettings = { navController.navigate(Routes.SETTINGS) },
                     startOnMyDevices = startOnMyDevices,
+                    myDevicesRequests = myDevicesRequests,
                     rewarded = ads?.let { nearoAds ->
                         RewardedAd(rewardedReady) { activity?.let { nearoAds.showRewarded(it) { } } }
                     },
@@ -211,8 +216,20 @@ private fun AppNavHost(
                 popExitTransition = { hold(FINDER_EXIT_HOLD_MS) },
             ) { entry ->
                 val entryTapX = remember { tapX[0] }
+                val address = entry.arguments?.getString(Routes.ADDRESS_ARG).orEmpty()
+                val save = rememberFinderSave(
+                    address = address,
+                    rewarded = ads?.let { nearoAds ->
+                        RewardedAd(rewardedReady) { activity?.let { nearoAds.showRewarded(it) { } } }
+                    },
+                    onView = {
+                        myDevicesRequests++
+                        navController.popBackStack()
+                    },
+                )
                 FinderScreen(
-                    address = entry.arguments?.getString(Routes.ADDRESS_ARG).orEmpty(),
+                    address = address,
+                    save = save,
                     onClose = { navController.popBackStack() },
                     // Full-screen ad only here, after a finished find, and only when the rules allow (#81 ③).
                     onFoundDone = { if (ads != null && activity != null) ads.onFoundDone(activity) },

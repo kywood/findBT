@@ -14,7 +14,9 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -45,10 +47,19 @@ fun HomeScreen(
     onFind: (address: String) -> Unit,
     onOpenSettings: () -> Unit,
     startOnMyDevices: Boolean = false,
+    /** Goes up each time another screen asks for the My devices tab (#152). */
+    myDevicesRequests: Int = 0,
     /** The rewarded ad for the locked save sheet (#108); null without ads. */
     rewarded: RewardedAd? = null,
 ) {
     var tab by rememberSaveable { mutableStateOf(if (startOnMyDevices) HomeTab.MY_DEVICES else HomeTab.NEARBY) }
+    var handledRequests by rememberSaveable { mutableIntStateOf(myDevicesRequests) }
+    LaunchedEffect(myDevicesRequests) {
+        if (myDevicesRequests != handledRequests) {
+            handledRequests = myDevicesRequests
+            tab = HomeTab.MY_DEVICES
+        }
+    }
     val app = LocalContext.current.applicationContext
     val store = (app as PremiumStore.Provider).premium
     val premium by store.state.collectAsStateWithLifecycle()
