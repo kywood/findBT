@@ -12,6 +12,9 @@ val localProperties = Properties().apply {
     rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
 }
 
+// The earbud find tone (#153, #189): null when local.properties does not set it.
+val earbudTone: String? = localProperties.getProperty("nearo.feature.earbudTone")
+
 android {
     namespace = "com.gamenuri.btscanner24"
     compileSdk {
@@ -37,10 +40,9 @@ android {
             buildConfigField("String", "ADMOB_${unit.uppercase()}", "\"$value\"")
         }
 
-        // The find tone through connected earbuds (#153). `nearo.feature.earbudTone=false` in
-        // local.properties leaves it out of a build without touching the code.
-        val earbudTone = localProperties.getProperty("nearo.feature.earbudTone", "true").toBoolean()
-        buildConfigField("boolean", "EARBUD_TONE", earbudTone.toString())
+        // The find tone through connected earbuds (#153). Off in release until the user has tested it
+        // on real earbuds (#189); `nearo.feature.earbudTone=true` in local.properties turns it on.
+        buildConfigField("boolean", "EARBUD_TONE", (earbudTone ?: "false").toBoolean().toString())
         buildConfigField("String", "SUPPORT_EMAIL", "\"${localProperties.getProperty("nearo.supportEmail", "")}\"")
         // GitHub Pages copy of docs/privacy (#57).
         buildConfigField("String", "PRIVACY_POLICY_URL", "\"https://kywood.github.io/findBT/privacy/\"")
@@ -51,6 +53,8 @@ android {
             // Installs next to the Play Store build on test phones; release applicationId is unchanged.
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
+            // On in debug so the user can try it on the test phone; `=false` turns it off.
+            buildConfigField("boolean", "EARBUD_TONE", (earbudTone ?: "true").toBoolean().toString())
         }
         release {
             // R8 drops the unused part of material-icons-extended and friends; a much smaller dex
