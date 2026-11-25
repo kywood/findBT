@@ -10,6 +10,9 @@ enum class FinderStage {
     /** No advertisement from the target yet. */
     WAITING,
 
+    /** Still none after a while: say so and offer to try again or go back, instead of waiting forever (#117). */
+    NOT_FOUND,
+
     /** Turn a full circle; the needle spins and the ring shows progress. */
     SPIN,
 

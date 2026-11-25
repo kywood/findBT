@@ -22,6 +22,10 @@
     <string name="finder_right_here_body">Está ao seu alcance. Olhe ao redor.</string>
     <string name="finder_signal_lost_title">Sinal perdido</string>
     <string name="finder_signal_lost_body">Visto há %1$d s · volte para onde o sinal estava mais forte</string>
+    <string name="finder_not_found_title">Sinal não encontrado</string>
+    <string name="finder_not_found_body">Chegue mais perto ou veja se está ligado</string>
+    <string name="finder_retry">Tentar de novo</string>
+    <string name="finder_back_to_list">Voltar à lista</string>
     <string name="finder_no_compass_title">Siga o quente e frio</string>
     <string name="finder_no_compass_body">Este celular não tem sensor de direção, então não há seta</string>
     <string name="finder_distance_label">distância aproximada</string>

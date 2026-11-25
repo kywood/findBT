@@ -22,6 +22,10 @@
     <string name="finder_right_here_body">Está a tu alcance. Mira a tu alrededor.</string>
     <string name="finder_signal_lost_title">Señal perdida</string>
     <string name="finder_signal_lost_body">Visto hace %1$d s · vuelve a donde la señal era más fuerte</string>
+    <string name="finder_not_found_title">No se encontró la señal</string>
+    <string name="finder_not_found_body">Acércate o comprueba que esté encendido</string>
+    <string name="finder_retry">Reintentar</string>
+    <string name="finder_back_to_list">Volver a la lista</string>
     <string name="finder_no_compass_title">Sigue el frío y el calor</string>
     <string name="finder_no_compass_body">Este teléfono no tiene sensor de dirección, así que no hay flecha</string>
     <string name="finder_distance_label">distancia aproximada</string>

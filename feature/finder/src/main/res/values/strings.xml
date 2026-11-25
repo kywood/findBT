@@ -23,6 +23,10 @@
     <string name="finder_right_here_body">It is within arm\'s reach. Look around you.</string>
     <string name="finder_signal_lost_title">Signal lost</string>
     <string name="finder_signal_lost_body">Last seen %1$d s ago · go back to where it was stronger</string>
+    <string name="finder_not_found_title">Couldn\'t find the signal</string>
+    <string name="finder_not_found_body">Move closer, or check that it is turned on</string>
+    <string name="finder_retry">Try again</string>
+    <string name="finder_back_to_list">Back to list</string>
     <string name="finder_no_compass_title">Follow warmer and colder</string>
     <string name="finder_no_compass_body">This phone has no direction sensor, so there is no arrow</string>
 

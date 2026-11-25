@@ -109,6 +109,7 @@ internal object DemoData {
                 showConfirmHint = true,
             ).distance(1.2, ProximityBand.VERY_CLOSE)
             "here" -> base.copy(stage = FinderStage.RIGHT_HERE).distance(0.3, ProximityBand.RIGHT_HERE)
+            "not_found" -> base.copy(stage = FinderStage.NOT_FOUND)
             "lost" -> base.copy(stage = FinderStage.SIGNAL_LOST, secondsSinceSeen = 12).distance(6.0, ProximityBand.FAR)
             else -> base
         }

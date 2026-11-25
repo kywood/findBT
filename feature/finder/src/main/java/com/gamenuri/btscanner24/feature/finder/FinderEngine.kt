@@ -42,6 +42,7 @@ internal class FinderEngine(
     private var shownDistance: Double? = null
     private var listDistance: Double? = null
     private var shownAtMs: Long = Long.MIN_VALUE
+    private var waitingSinceMs: Long = startMs
 
     /** @return true when the sighting belonged to the target. */
     fun onSighting(device: BleDevice, nowMs: Long): Boolean {
@@ -81,6 +82,11 @@ internal class FinderEngine(
 
     private fun flipped(before: Double?, after: Double?): Boolean =
         before != null && after != null && abs(Angles.delta(before, after)) > FLIP_DEGREES
+
+    /** A scan (re)starts, or the user asks to try again: the wait for a first signal begins anew (#117). */
+    fun restartWaiting(nowMs: Long) {
+        waitingSinceMs = nowMs
+    }
 
     /** The "Turn once again" button. */
     fun restartSweep() {
@@ -140,7 +146,8 @@ internal class FinderEngine(
         est: BearingEstimator.Estimate?,
         relative: Double?,
     ): FinderStage = when {
-        current == null -> FinderStage.WAITING
+        current == null ->
+            if (nowMs - waitingSinceMs > NOT_FOUND_AFTER_MS) FinderStage.NOT_FOUND else FinderStage.WAITING
         signalLost(nowMs) -> FinderStage.SIGNAL_LOST
         rightHereSinceMs?.let { nowMs - it >= RIGHT_HERE_HOLD_MS } == true -> FinderStage.RIGHT_HERE
         !hasCompass -> FinderStage.NO_COMPASS
@@ -163,6 +170,7 @@ internal class FinderEngine(
 
     private companion object {
         const val SIGNAL_LOST_MS = 8_000L
+        const val NOT_FOUND_AFTER_MS = 10_000L
         const val RIGHT_HERE_HOLD_MS = 2_000L
         const val DISTANCE_REFRESH_MS = 1_000L
         const val CONFIRM_HINT_AFTER_MS = 15_000L

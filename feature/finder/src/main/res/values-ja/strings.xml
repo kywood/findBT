@@ -22,6 +22,10 @@
     <string name="finder_right_here_body">手の届く範囲にあります。周りを見てください。</string>
     <string name="finder_signal_lost_title">信号が途切れました</string>
     <string name="finder_signal_lost_body">%1$d秒前に検出 · 信号が強かった場所に戻ってください</string>
+    <string name="finder_not_found_title">信号が見つかりません</string>
+    <string name="finder_not_found_body">もっと近づくか、電源が入っているか確認してください</string>
+    <string name="finder_retry">もう一度試す</string>
+    <string name="finder_back_to_list">一覧に戻る</string>
     <string name="finder_no_compass_title">温かい・冷たいを頼りに</string>
     <string name="finder_no_compass_body">このスマホには方向センサーがないため、矢印は表示されません</string>
     <string name="finder_distance_label">おおよその距離</string>

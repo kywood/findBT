@@ -12,6 +12,7 @@ import com.gamenuri.btscanner24.core.ble.DeviceRepository
 import com.gamenuri.btscanner24.core.ble.ImmediateAlert
 import com.gamenuri.btscanner24.core.ble.RingResult
 import com.gamenuri.btscanner24.core.ble.ScanEvent
+import com.gamenuri.btscanner24.core.ble.scanContinuously
 import com.gamenuri.btscanner24.core.model.BleDevice
 import com.gamenuri.btscanner24.core.sensors.MotionSensor
 import kotlinx.coroutines.Dispatchers
@@ -74,12 +75,15 @@ class FinderViewModel(
 
     fun start() {
         if (job?.isActive == true) return
+        engine.restartWaiting(clock())
         job = viewModelScope.launch {
             // Subscribe to sightings before the scan starts so no early advertisement is missed.
             launch { repository.sightings.collect { engine.onSighting(it, clock()) } }
             // Parsing runs off the main thread; the engine itself stays on Main with the sensor collector.
             launch(Dispatchers.Default) {
-                scanner.scan().collect { event ->
+                // Coming from a list, this is often the sixth scan start within 30 s, which Android
+                // accepts but never answers: the screen would wait for a signal forever (#117).
+                scanner.scanContinuously().collect { event ->
                     if (event is ScanEvent.Result) repository.onScanResult(event.result)
                 }
             }
@@ -153,7 +157,10 @@ class FinderViewModel(
         // Only while the screen is started (job), and never two GATT connections at once.
         if (job?.isActive != true || support != null) return
         if (probeJob?.isActive == true || soundJob?.isActive == true) return
-        if (state.stage == FinderStage.WAITING || state.stage == FinderStage.SIGNAL_LOST) return
+        val noSignal = state.stage == FinderStage.WAITING ||
+            state.stage == FinderStage.NOT_FOUND ||
+            state.stage == FinderStage.SIGNAL_LOST
+        if (noSignal) return
         if (!alert.hasPermission()) return
         val address = state.advanced.address
         if (repository.devices.value[address]?.serviceUuids16?.contains(ImmediateAlert.SERVICE_UUID_16) == true) {
@@ -184,6 +191,13 @@ class FinderViewModel(
 
     fun toggleVibration() {
         vibrationOn.value = !vibrationOn.value
+        publish()
+    }
+
+    /** "Try again" when no signal came or it was lost: a fresh scan and a fresh wait (#117). */
+    fun retry() {
+        stop()
+        start()
         publish()
     }
 

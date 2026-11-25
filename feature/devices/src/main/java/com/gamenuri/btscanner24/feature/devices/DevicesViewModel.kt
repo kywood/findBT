@@ -10,6 +10,7 @@ import com.gamenuri.btscanner24.core.ble.BleScanner
 import com.gamenuri.btscanner24.core.ble.BondedDevices
 import com.gamenuri.btscanner24.core.ble.DeviceRepository
 import com.gamenuri.btscanner24.core.ble.ScanEvent
+import com.gamenuri.btscanner24.core.ble.scanContinuously
 import com.gamenuri.btscanner24.core.data.DataDependenciesProvider
 import com.gamenuri.btscanner24.core.data.HiddenDevicesRepository
 import com.gamenuri.btscanner24.core.model.PairedDevice
@@ -58,11 +59,9 @@ class DevicesViewModel(
         paired.value = bondedDevices.list()
         if (scanJob?.isActive == true || !scanner.hasScanPermission()) return
         scanJob = viewModelScope.launch(Dispatchers.Default) {
-            // Shares Android's 5-starts-per-30-s budget with the Nearby tab; quick tab switches would
-            // otherwise hit "scanning too frequently" (#62).
-            val cooldown = scanner.startCooldownMillis()
-            if (cooldown > 0) delay(cooldown)
-            scanner.scan().collect { event ->
+            // Waits out Android's 5-starts-per-30-s budget shared with the Nearby tab (#62) and starts
+            // again when the scan dies quietly, so a device nearby keeps its signal (#116).
+            scanner.scanContinuously().collect { event ->
                 if (event is ScanEvent.Result) repository.onScanResult(event.result)
             }
         }

@@ -173,6 +173,7 @@ fun FinderScreen(
             onToggleVibration = viewModel::toggleVibration,
             onSpinAgain = viewModel::spinAgain,
             onToggleSound = viewModel::toggleSound,
+            onRetry = viewModel::retry,
         ),
     )
 }
@@ -183,6 +184,7 @@ data class FinderActions(
     val onToggleVibration: () -> Unit = {},
     val onSpinAgain: () -> Unit = {},
     val onToggleSound: () -> Unit = {},
+    val onRetry: () -> Unit = {},
 )
 
 /**
@@ -331,7 +333,18 @@ private fun FinderScaffold(
                 // One fixed-height slot under the trend chip: the confirm hint when very close (#94), else
                 // "spin again". It always takes its space, so the rows above keep their place (#60).
                 Box(Modifier.fillMaxWidth().heightIn(min = BOTTOM_SLOT), contentAlignment = Alignment.Center) {
-                    if (state.showConfirmHint) {
+                    val noSignal = state.stage == FinderStage.NOT_FOUND || state.stage == FinderStage.SIGNAL_LOST
+                    if (noSignal) {
+                        // Never a dead end (#117): scan afresh, or leave for the list.
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            TextButton(onClick = actions.onRetry) {
+                                Text(stringResource(R.string.finder_retry), color = content)
+                            }
+                            TextButton(onClick = actions.onClose) {
+                                Text(stringResource(R.string.finder_back_to_list), color = content)
+                            }
+                        }
+                    } else if (state.showConfirmHint) {
                         // Names can be vague ("hiot0"); confirming by touch matters more than the name (#46).
                         Text(
                             text = stringResource(R.string.finder_confirm_hint),
@@ -377,7 +390,8 @@ private val FinderUiState.showSoundButton: Boolean
     get() = when (sound) {
         SoundState.UNAVAILABLE -> false
         SoundState.CONNECTING, SoundState.PLAYING, SoundState.NOT_SUPPORTED -> true
-        SoundState.READY, SoundState.FAILED -> stage != FinderStage.WAITING && stage != FinderStage.SIGNAL_LOST
+        SoundState.READY, SoundState.FAILED ->
+            stage != FinderStage.WAITING && stage != FinderStage.NOT_FOUND && stage != FinderStage.SIGNAL_LOST
     }
 
 @Composable
@@ -475,6 +489,7 @@ private fun MainActions(state: FinderUiState, actions: FinderActions, content: C
 private fun StageText(state: FinderUiState) {
     val (title, body) = when (state.stage) {
         FinderStage.WAITING -> R.string.finder_waiting_title to R.string.finder_waiting_body
+        FinderStage.NOT_FOUND -> R.string.finder_not_found_title to R.string.finder_not_found_body
         FinderStage.SPIN -> R.string.finder_spin_title to R.string.finder_spin_body
         FinderStage.SPIN_AGAIN -> R.string.finder_spin_again_title to R.string.finder_spin_again_body
         FinderStage.WALK -> if (state.band == ProximityBand.VERY_CLOSE || state.band == ProximityBand.RIGHT_HERE) {
@@ -613,7 +628,7 @@ private fun findColorsFor(state: FinderUiState): FindStateColors {
     val colors = NearoTheme.colors
     return when (state.stage) {
         FinderStage.WAITING -> colors.findSearching
-        FinderStage.SIGNAL_LOST -> colors.findLost
+        FinderStage.SIGNAL_LOST, FinderStage.NOT_FOUND -> colors.findLost
         FinderStage.RIGHT_HERE -> colors.findHere
         else -> when (state.band) {
             ProximityBand.FAR, null -> colors.findFar
@@ -691,7 +706,7 @@ internal enum class Rhythm(val pulses: Int, val periodMs: Long) {
 }
 
 private fun rhythmFor(state: FinderUiState): Rhythm = when (state.stage) {
-    FinderStage.WAITING, FinderStage.SIGNAL_LOST -> Rhythm.NONE
+    FinderStage.WAITING, FinderStage.NOT_FOUND, FinderStage.SIGNAL_LOST -> Rhythm.NONE
     FinderStage.RIGHT_HERE -> Rhythm.RIGHT_HERE
     else -> when (state.band) {
         ProximityBand.FAR, null -> Rhythm.FAR
