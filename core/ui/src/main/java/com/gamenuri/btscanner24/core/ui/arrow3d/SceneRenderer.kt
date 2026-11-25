@@ -195,7 +195,8 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         val hasModel = modelVertices > 0
         if (showPuck && !hasModel) drawShadow(puckBuffer, puckVertices, markerModel)
         if (showArrow) {
-            drawSolid(meshBuffer, meshVertices, model, state.arrowColor, stretch = width, across = across, thick = thick)
+            val colour = state.arrowColor
+            drawSolid(meshBuffer, meshVertices, model, colour, stretch = width, across = across, thick = thick)
         }
         if (showPuck && hasModel) {
             drawHereModel()
