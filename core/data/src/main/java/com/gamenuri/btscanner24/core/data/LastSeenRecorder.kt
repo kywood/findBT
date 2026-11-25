@@ -88,7 +88,8 @@ class LastSeenRecorder(
 
     /** Paired devices change rarely and reading them is a call into the system: once in a while is enough. */
     private fun pairedAt(now: Long): List<PairedDevice> {
-        if (now - pairedReadAt >= PAIRED_EVERY_MS || now < pairedReadAt) {
+        // Never read yet: `now - Long.MIN_VALUE` overflows to a negative number, so check it first.
+        if (pairedReadAt == Long.MIN_VALUE || now - pairedReadAt >= PAIRED_EVERY_MS || now < pairedReadAt) {
             pairedReadAt = now
             val read = paired()
             pairedKnown = read != null
@@ -100,7 +101,8 @@ class LastSeenRecorder(
 
     /** One position serves every device heard within the same minute. */
     private suspend fun placeNow(now: Long): LastSeen.Place? {
-        if (now - placeReadAt >= LastSeenPolicy.MIN_GAP_MS || now < placeReadAt) {
+        // Never read yet: `now - Long.MIN_VALUE` overflows to a negative number, so check it first.
+        if (placeReadAt == Long.MIN_VALUE || now - placeReadAt >= LastSeenPolicy.MIN_GAP_MS || now < placeReadAt) {
             placeReadAt = now
             place = locate()
         }

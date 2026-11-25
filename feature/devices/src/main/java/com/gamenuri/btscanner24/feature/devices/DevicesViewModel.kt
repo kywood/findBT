@@ -46,6 +46,7 @@ class DevicesViewModel(
     private val paired = MutableStateFlow<List<PairedDevice>>(emptyList())
     private val hasPermission = MutableStateFlow(bondedDevices.hasPermission())
     private val connected = MutableStateFlow<Set<String>>(emptySet())
+
     /** This tab's hold on the shared scan (#177); null while it is not on screen. */
     private var scanHold: AutoCloseable? = null
     private var connectedJob: Job? = null
