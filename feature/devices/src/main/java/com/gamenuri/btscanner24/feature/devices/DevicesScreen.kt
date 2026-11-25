@@ -47,6 +47,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -125,6 +126,12 @@ fun DevicesScreen(
         ),
     )
 }
+
+/**
+ * Whether My Devices shows the "Protection mode is off" strip. Demo store captures (#14) turn it off,
+ * so they do not depend on how protection is set on the test phone.
+ */
+val LocalProtectionNudge = staticCompositionLocalOf { true }
 
 /** What the protection strip and the left-behind banner need (#163). */
 data class ProtectionActions(
@@ -251,7 +258,7 @@ private fun DeviceSections(
                 onMute = { protection.onMute(alert.item) },
             )
         }
-        if (state.protectionOff) {
+        if (state.protectionOff && LocalProtectionNudge.current) {
             item(key = "protection-off") { ProtectionOffStrip(protection.onOpen) }
         }
         // Saved by hand (#108): always first, with the count and, for free users, the limit.

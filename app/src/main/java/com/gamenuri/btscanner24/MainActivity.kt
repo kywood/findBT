@@ -48,6 +48,7 @@ import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
 import com.gamenuri.btscanner24.core.model.DistanceUnit
 import com.gamenuri.btscanner24.core.ui.LocalDistanceUnit
 import com.gamenuri.btscanner24.demo.DemoMode
+import com.gamenuri.btscanner24.feature.devices.LocalProtectionNudge
 import com.gamenuri.btscanner24.feature.finder.FINDER_EXIT_HOLD_MS
 import com.gamenuri.btscanner24.feature.finder.FindEntryCover
 import com.gamenuri.btscanner24.feature.finder.FinderScreen
@@ -114,6 +115,7 @@ class MainActivity : ComponentActivity() {
                     CompositionLocalProvider(
                         LocalDistanceUnit provides (pickedUnit ?: DistanceUnit.forRegion(region)),
                         LocalArFindScene provides (demo?.arScene != false),
+                        LocalProtectionNudge provides (demo == null),
                         LocalFindScenePose provides (demo?.findState == null || demo.followPose),
                         // `--es demo map` opens the Nearby tab on its 3D map, with the design's fixed view.
                         LocalNearbyMap provides NearbyMapOptions(
