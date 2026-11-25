@@ -79,4 +79,14 @@
     <string name="save_locked_ad_used">今日はすでに使用しました</string>
     <string name="save_locked_later">あとで</string>
     <string name="device_more_for">%1$sのその他の操作</string>
+    <!-- Help when a device is not detected (#154). -->
+    <string name="help_not_detected_link">デバイスが表示されませんか?</string>
+    <string name="help_not_detected_short">ヘルプ</string>
+    <string name="help_not_detected_title">デバイスが見つからないとき</string>
+    <string name="help_not_detected_case">イヤホンは閉じたケースの中では信号を出しません。ふたを開けるか、取り出してください。</string>
+    <string name="help_not_detected_battery">電源が切れている、またはバッテリーが空のデバイスは信号を出しません。</string>
+    <string name="help_not_detected_range">Bluetoothが届くのは屋内で約10mで、壁があるとさらに短くなります。最後に使った場所からゆっくり歩いてみてください。</string>
+    <string name="help_not_detected_one_bud">片方だけなくしましたか?手元にある方をケースに入れてふたを閉じると、なくした方だけが検出されます。</string>
+    <string name="help_not_detected_settings">スマートフォンの設定でBluetoothと位置情報がオンになっているか確認してください。</string>
+    <string name="help_not_detected_ok">OK</string>
 </resources>

@@ -81,4 +81,14 @@
     <string name="save_locked_ad_used">오늘은 이미 사용했어요</string>
     <string name="save_locked_later">나중에</string>
     <string name="device_more_for">%1$s 더보기</string>
+    <!-- Help when a device is not detected (#154). -->
+    <string name="help_not_detected_link">기기가 안 보이나요?</string>
+    <string name="help_not_detected_short">도움말</string>
+    <string name="help_not_detected_title">기기가 안 잡힐 때</string>
+    <string name="help_not_detected_case">이어폰이 닫힌 케이스 안에 있으면 신호가 나오지 않아요. 뚜껑을 열거나 꺼내 주세요.</string>
+    <string name="help_not_detected_battery">꺼져 있거나 배터리가 다 된 기기는 신호가 나오지 않아요.</string>
+    <string name="help_not_detected_range">블루투스는 실내에서 약 10m까지 닿고, 벽이 있으면 더 짧아져요. 마지막으로 쓴 곳부터 천천히 걸어 보세요.</string>
+    <string name="help_not_detected_one_bud">한쪽만 잃어버렸나요? 가지고 있는 쪽을 케이스에 넣고 뚜껑을 닫으면 잃어버린 쪽만 잡혀요.</string>
+    <string name="help_not_detected_settings">휴대폰 설정에서 블루투스와 위치가 켜져 있는지 확인해 주세요.</string>
+    <string name="help_not_detected_ok">확인</string>
 </resources>

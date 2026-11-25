@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.MoreVert
@@ -67,6 +68,7 @@ import com.gamenuri.btscanner24.core.ui.DeviceIcon
 import com.gamenuri.btscanner24.core.ui.R as UiR
 import com.gamenuri.btscanner24.core.ui.SignalBars
 import com.gamenuri.btscanner24.core.ui.distanceText
+import com.gamenuri.btscanner24.core.ui.help.NotDetectedHelpSheet
 import com.gamenuri.btscanner24.core.ui.label
 import com.gamenuri.btscanner24.core.ui.permission.rememberBlePermissionState
 
@@ -180,6 +182,8 @@ private fun DeviceSections(
     modifier: Modifier = Modifier,
 ) {
     var othersOpen by rememberSaveable { mutableStateOf(false) }
+    var helpOpen by rememberSaveable { mutableStateOf(false) }
+    if (helpOpen) NotDetectedHelpSheet(onDismiss = { helpOpen = false })
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         // Plain full-width rows like the Nearby tab (design home-header-v4); headers keep the 16 dp inset.
@@ -222,6 +226,18 @@ private fun DeviceSections(
             if (othersOpen) {
                 items(state.others, key = { "o-" + it.paired.address }) {
                     PairedRow(it, now, onDeviceClick, onHide, saved)
+                }
+            }
+        }
+        // Why a device may not be picked up and what to try (#154), while one of them is not seen.
+        if (state.notNearby.isNotEmpty() || state.saved.any { !it.isNearby }) {
+            item(key = "not-detected-help") {
+                TextButton(onClick = { helpOpen = true }, modifier = Modifier.padding(start = 4.dp, top = 8.dp)) {
+                    Icon(Icons.AutoMirrored.Outlined.HelpOutline, contentDescription = null)
+                    Text(
+                        stringResource(UiR.string.help_not_detected_link),
+                        modifier = Modifier.padding(start = 8.dp),
+                    )
                 }
             }
         }

@@ -79,4 +79,14 @@
     <string name="save_locked_ad_used">Heute schon genutzt</string>
     <string name="save_locked_later">Nicht jetzt</string>
     <string name="device_more_for">Mehr für %1$s</string>
+    <!-- Help when a device is not detected (#154). -->
+    <string name="help_not_detected_link">Gerät wird nicht angezeigt?</string>
+    <string name="help_not_detected_short">Hilfe</string>
+    <string name="help_not_detected_title">Wenn ein Gerät nicht gefunden wird</string>
+    <string name="help_not_detected_case">Ohrhörer in einem geschlossenen Case senden kein Signal. Öffne den Deckel oder nimm sie heraus.</string>
+    <string name="help_not_detected_battery">Ein ausgeschaltetes Gerät oder eines mit leerem Akku sendet kein Signal.</string>
+    <string name="help_not_detected_range">Bluetooth reicht in Räumen etwa 10 m weit, durch Wände weniger. Beginne dort, wo du es zuletzt benutzt hast, und geh langsam umher.</string>
+    <string name="help_not_detected_one_bud">Nur einen Ohrhörer verloren? Leg den anderen ins Case und schließ den Deckel, damit nur der verlorene erkannt wird.</string>
+    <string name="help_not_detected_settings">Prüfe, ob Bluetooth und Standort in den Einstellungen des Handys eingeschaltet sind.</string>
+    <string name="help_not_detected_ok">OK</string>
 </resources>
