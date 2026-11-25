@@ -3,7 +3,7 @@
     <string name="finder_close">Schließen</string>
     <string name="finder_found">Gefunden</string>
     <string name="finder_vibration">Vibration</string>
-    <string name="finder_spin_again">Noch einmal drehen</string>
+    <string name="finder_spin_again">Erneut drehen</string>
     <string name="finder_advanced">Erweitert</string>
     <string name="finder_direction_label">Ungefähre Richtung</string>
     <string name="finder_waiting_title">Suche nach dem Signal…</string>
