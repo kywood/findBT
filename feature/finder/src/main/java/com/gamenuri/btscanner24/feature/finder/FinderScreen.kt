@@ -258,6 +258,7 @@ private fun FinderLive(
             onToggleSound = viewModel::toggleSound,
             onRetry = viewModel::retry,
             onOpenOutput = { openMediaOutput(context) },
+            onLouder = viewModel::louder,
         ),
     )
 }
@@ -270,6 +271,7 @@ data class FinderActions(
     val onToggleSound: () -> Unit = {},
     val onRetry: () -> Unit = {},
     val onOpenOutput: () -> Unit = {},
+    val onLouder: () -> Unit = {},
 )
 
 /**
@@ -511,7 +513,9 @@ private fun ActionRow(state: FinderUiState, actions: FinderActions, content: Col
                 onDismiss = { earCheckOpen = false },
             )
         }
-        if (state.soundNeedsOutput) {
+        if (state.soundViaPhone && state.sound == SoundState.PLAYING) {
+            TonePlayingControls(onStop = actions.onToggleSound, onLouder = actions.onLouder, content, background)
+        } else if (state.soundNeedsOutput) {
             OutputGuide(actions.onOpenOutput, content)
             respin?.invoke(Modifier.fillMaxWidth())
         } else if (state.showSoundButton) {
@@ -564,6 +568,29 @@ private fun openMediaOutput(context: Context) {
     }
 }
 
+/** While the tone plays in the earbuds: a big stop that is hard to miss, and louder only on request (#153). */
+@Composable
+private fun TonePlayingControls(onStop: () -> Unit, onLouder: () -> Unit, content: Color, background: Color) {
+    Button(
+        onClick = onStop,
+        modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = content, contentColor = background),
+    ) {
+        Icon(painterResource(UiR.drawable.ic_sound_off), contentDescription = null, modifier = Modifier.size(20.dp))
+        Spacer(Modifier.size(8.dp))
+        Text(stringResource(R.string.finder_sound_stop), style = MaterialTheme.typography.titleMedium)
+    }
+    OutlinedButton(
+        onClick = onLouder,
+        modifier = Modifier.fillMaxWidth(),
+        colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.Transparent, contentColor = content),
+        border = BorderStroke(1.dp, content.copy(alpha = 0.5f)),
+    ) {
+        Text(stringResource(R.string.finder_sound_louder), maxLines = 1, overflow = TextOverflow.Ellipsis)
+    }
+}
+
+/** Asked before every tone. Cancel is the filled button: starting takes a deliberate tap (#153). */
 @Composable
 private fun EarCheckDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
     AlertDialog(
@@ -571,10 +598,10 @@ private fun EarCheckDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
         title = { Text(stringResource(R.string.finder_sound_ear_title)) },
         text = { Text(stringResource(R.string.finder_sound_ear_body)) },
         confirmButton = {
-            TextButton(onClick = onConfirm) { Text(stringResource(R.string.finder_sound_ear_confirm)) }
+            Button(onClick = onDismiss) { Text(stringResource(R.string.finder_sound_ear_cancel)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.finder_sound_ear_cancel)) }
+            TextButton(onClick = onConfirm) { Text(stringResource(R.string.finder_sound_ear_confirm)) }
         },
     )
 }

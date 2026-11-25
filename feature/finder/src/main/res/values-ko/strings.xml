@@ -69,9 +69,10 @@
     <string name="finder_sound_failed">소리를 울리지 못했어요. 더 가까이 가서 다시 시도해 보세요.</string>
     <string name="finder_sound_not_supported">이 기기는 소리를 울릴 수 없어요.</string>
     <string name="finder_sound_ear_title">지금 귀에 끼고 있나요?</string>
-    <string name="finder_sound_ear_body">이 기기에서 큰 소리가 점점 커지며 납니다. 끼고 있다면 먼저 빼 주세요.</string>
+    <string name="finder_sound_ear_body">이 기기에서 소리가 작게 시작해 점점 커집니다. 본인이나 다른 사람이 끼고 있다면 반드시 먼저 빼고 시작하세요.</string>
     <string name="finder_sound_ear_confirm">소리 울리기</string>
     <string name="finder_sound_ear_cancel">취소</string>
+    <string name="finder_sound_louder">더 크게</string>
     <string name="finder_sound_output_note">연결돼 있지만 소리가 다른 곳으로 나가고 있어요. 소리 출력을 이 기기로 바꾸면 소리를 울릴 수 있어요.</string>
     <string name="finder_sound_output_button">소리 출력 바꾸기</string>
 </resources>

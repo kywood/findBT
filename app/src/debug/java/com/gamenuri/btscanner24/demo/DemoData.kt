@@ -121,6 +121,13 @@ internal object DemoData {
             "not_found" -> base.copy(stage = FinderStage.NOT_FOUND)
             // Connected to the phone and silent: the connected text and the sound through the earbuds (#119, #153).
             "connected" -> base.copy(stage = FinderStage.NOT_FOUND, isConnected = true, soundViaPhone = true)
+            // The tone is playing in the earbuds: the big stop and "louder" (#153). A still picture, no audio.
+            "ringing" -> base.copy(
+                stage = FinderStage.NOT_FOUND,
+                isConnected = true,
+                soundViaPhone = true,
+                sound = SoundState.PLAYING,
+            )
             // Connected, but media plays elsewhere: the guide to switch the output (#153).
             "output" -> base.copy(
                 stage = FinderStage.NOT_FOUND,

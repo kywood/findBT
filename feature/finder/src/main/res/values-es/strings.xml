@@ -65,9 +65,10 @@
     <string name="finder_sound_failed">No se pudo reproducir el sonido. Acércate y vuelve a intentarlo.</string>
     <string name="finder_sound_not_supported">Este dispositivo no puede reproducir sonido.</string>
     <string name="finder_sound_ear_title">¿Los llevas puestos ahora?</string>
-    <string name="finder_sound_ear_body">Sonará un sonido fuerte en este dispositivo e irá subiendo. Si lo llevas puesto, quítatelo primero.</string>
+    <string name="finder_sound_ear_body">Sonará un sonido en este dispositivo, bajo al principio y luego más fuerte. Si tú u otra persona lo lleváis puesto, quitadlo antes de empezar.</string>
     <string name="finder_sound_ear_confirm">Reproducir sonido</string>
     <string name="finder_sound_ear_cancel">Cancelar</string>
+    <string name="finder_sound_louder">Más fuerte</string>
     <string name="finder_sound_output_note">Está conectado, pero el sonido sale por otra salida. Cambia la salida a este dispositivo para hacerlo sonar.</string>
     <string name="finder_sound_output_button">Cambiar salida de sonido</string>
 </resources>

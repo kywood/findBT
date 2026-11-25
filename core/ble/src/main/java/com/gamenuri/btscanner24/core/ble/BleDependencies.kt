@@ -9,6 +9,8 @@ class BleDependencies(
     val repository: DeviceRepository,
     val bondedDevices: BondedDevices,
     val connectedDevices: ConnectedDevices,
+    /** The find tone through connected earbuds (#153); null leaves the feature out of the build. */
+    val mediaFindTone: MediaFindTone? = null,
 ) {
     /** Implemented by the Application; feature ViewModel factories read dependencies through it. */
     interface Provider {
