@@ -967,7 +967,8 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         // Design #76, in units of the ring radius R (RING_OUTER). [ArrowMesh] is in R already; its
         // underside floats 0.22 R above the floor (centre 0.29 R), bobbing by ± 0.02 R.
         const val MESH_SCALE = RING_OUTER
-        const val FULL_BLEED_ARROW = 0.72f
+        // About 40% of the ring's width, as drawn in v1.4 (it read as half of it on the A50, #146).
+        const val FULL_BLEED_ARROW = 0.58f
         const val FULL_BLEED_ARROW_THICKNESS = 0.86f
         const val HOVER_HEIGHT = 0.29f * RING_OUTER
         const val HOVER_BOB = 0.027f
@@ -1065,7 +1066,8 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         // 0.064 over its stand, bobbing ± 0.024, turned 20° towards the viewer. "Right here": longest
         // side 0.74, its underside 0.24 over the floor, bobbing ± 0.032, one turn in about 9 s, leaning
         // 7° forward, over a white stand (radius 0.42, 0.096 high) that carries a mint ring (0.32).
-        const val MARKER_MODEL = 0.44f
+        // Raised so the far model reads at about a fifth of the screen's width, as in v1.4 (#146).
+        const val MARKER_MODEL = 0.58f
         const val MARKER_FLOAT = 0.064f
         const val MARKER_MIN_FIT = 0.8f
         const val MARKER_ASIDE_DEGREES = 24f
