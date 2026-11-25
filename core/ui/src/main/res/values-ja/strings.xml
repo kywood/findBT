@@ -61,4 +61,17 @@
     <string name="paywall_or">または</string>
     <string name="paywall_reward">広告を見て24時間プレミアム</string>
     <string name="paywall_reward_note">広告を1本（約30秒）最後まで見ると、24時間プレミアムを使えます</string>
+    <string name="save_title">マイデバイスに保存</string>
+    <string name="save_name_label">名前</string>
+    <string name="save_type_label">種類</string>
+    <string name="save_local_note">名前と種類はこのスマートフォンにのみ保存されます</string>
+    <string name="save_cancel">キャンセル</string>
+    <string name="save_confirm">保存</string>
+    <string name="save_done">マイデバイスに保存しました</string>
+    <string name="save_view">表示</string>
+    <string name="save_locked_title">保存できるデバイスは1台まで無料です</string>
+    <string name="save_locked_body">プレミアムなら好きなだけ保存でき、広告も表示されません。</string>
+    <string name="save_locked_ad_used">今日はすでに使用しました</string>
+    <string name="save_locked_later">あとで</string>
+    <string name="device_more_for">%1$sのその他の操作</string>
 </resources>

@@ -63,4 +63,17 @@
     <string name="paywall_or">또는</string>
     <string name="paywall_reward">광고 보고 24시간 무료로 쓰기</string>
     <string name="paywall_reward_note">광고 1개(약 30초)를 끝까지 보면 24시간 동안 프리미엄</string>
+    <string name="save_title">내 기기에 저장</string>
+    <string name="save_name_label">이름</string>
+    <string name="save_type_label">종류</string>
+    <string name="save_local_note">이름과 종류는 이 폰에만 저장돼요</string>
+    <string name="save_cancel">취소</string>
+    <string name="save_confirm">저장</string>
+    <string name="save_done">내 기기에 저장했어요</string>
+    <string name="save_view">보기</string>
+    <string name="save_locked_title">저장한 기기는 1개까지 무료예요</string>
+    <string name="save_locked_body">프리미엄이면 원하는 만큼 저장하고, 광고 없이 쓸 수 있어요.</string>
+    <string name="save_locked_ad_used">오늘은 이미 사용했어요</string>
+    <string name="save_locked_later">나중에</string>
+    <string name="device_more_for">%1$s 더보기</string>
 </resources>
