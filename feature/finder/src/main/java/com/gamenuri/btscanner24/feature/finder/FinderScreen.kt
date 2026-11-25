@@ -64,7 +64,6 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -221,7 +220,7 @@ fun FinderContent(
     // working GL the dial draws the Canvas arrow in its place.
     var sceneFailed by remember { mutableStateOf(false) }
     val scene3d = LocalArFindScene.current && !sceneFailed && !LocalInspectionMode.current
-    var dialCenterY by remember { mutableFloatStateOf(Float.NaN) }
+    val dialSlot = remember { SceneSlot() }
     // A new stage colour rises like water over the old one (#90); the content stays where it is.
     Box(
         modifier
@@ -236,13 +235,13 @@ fun FinderContent(
                 .background(palette.brush()),
         )
         if (scene3d && state.showsScene()) {
-            FindSceneLayer(dialCenterY) { centerY ->
+            FindSceneLayer(dialSlot, fadeAboveSlot = true) { centerY, topFade ->
                 CompositionLocalProvider(LocalContentColor provides accent) {
-                    ArrowScene(state, centerY, onUnavailable = { sceneFailed = true })
+                    ArrowScene(state, centerY, topFade, onUnavailable = { sceneFailed = true })
                 }
             }
         }
-        FinderScaffold(state, actions, content, accent, background, scene3d, onDialPlaced = { dialCenterY = it })
+        FinderScaffold(state, actions, content, accent, background, scene3d, dialSlot)
     }
 }
 
@@ -289,7 +288,7 @@ private fun FinderScaffold(
     accent: Color,
     background: Color,
     sceneBehind: Boolean,
-    onDialPlaced: (Float) -> Unit,
+    dialSlot: SceneSlot,
 ) {
     Scaffold(
         containerColor = Color.Transparent,
@@ -331,7 +330,7 @@ private fun FinderScaffold(
                         .weight(1f)
                         .fillMaxWidth()
                         .padding(vertical = 12.dp)
-                        .sceneSlot(onDialPlaced),
+                        .sceneSlot(dialSlot),
                     contentAlignment = Alignment.Center,
                 ) {
                     CompositionLocalProvider(LocalContentColor provides accent) {

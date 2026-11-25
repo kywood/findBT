@@ -502,6 +502,14 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
                 if (fades) state.fadeClearY else -2f,
                 if (fades) state.fadeFullY else -1f,
             )
+            // From the top: gone above the state text's lower edge, whole a little below it.
+            val top = state.topFade
+            val clearY = if (top >= 0f) (1f - top) * viewportHeight else NO_TOP_FADE
+            GLES20.glUniform2f(
+                GLES20.glGetUniformLocation(flatProgram, "uTop"),
+                clearY - TOP_FADE_BAND * viewportHeight,
+                clearY,
+            )
         }
         // Radial: clear at the centre, full colour at the rim (the direction sector).
         GLES20.glUniform1f(GLES20.glGetUniformLocation(flatProgram, "uRadial"), if (radial) 1f / SECTOR_RADIUS else 0f)
@@ -606,6 +614,8 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         val STILL_ALPHAS = floatArrayOf(0.85f, 0.45f)
         const val EDGE_FADE = 0.12f
         const val NO_EDGE_FADE = 0.0001f
+        const val NO_TOP_FADE = 12_000f
+        const val TOP_FADE_BAND = 0.06f
 
         // Full-bleed floor (design find-flow-3d v1.1, the designer's scene values): the ring at
         // 45 % with a 7 % fill, a ring at 1.76 R (30 %), a dashed one at 2.64 R (48 dashes, 55 %
@@ -746,6 +756,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
             uniform vec4 uColor;
             uniform vec2 uViewport;
             uniform vec2 uFade;
+            uniform vec2 uTop;
             uniform float uEdge;
             varying float vFade;
             void main() {
@@ -754,6 +765,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
                     vec2 p = gl_FragCoord.xy / uViewport;
                     float edge = min(min(p.x, 1.0 - p.x), min(p.y, 1.0 - p.y));
                     fade *= smoothstep(0.0, uEdge, edge) * smoothstep(uFade.x, uFade.y, gl_FragCoord.y);
+                    fade *= 1.0 - smoothstep(uTop.x, uTop.y, gl_FragCoord.y);
                 }
                 gl_FragColor = uColor * fade;
             }

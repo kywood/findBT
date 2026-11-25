@@ -87,12 +87,16 @@ internal fun FinderUiState.showsScene(): Boolean =
  */
 val LocalArFindScene = staticCompositionLocalOf { true }
 
+/** The 3D scene's camera follows how the phone is held; off for demo screenshots. */
+val LocalFindScenePose = staticCompositionLocalOf { true }
+
 /**
  * The real 3D arrow on its floor, across the screen; the camera follows how the phone is held.
- * [centerY] is where the middle of the floor sits in this layer (0 = top).
+ * [centerY] is where the middle of the floor sits in this layer (0 = top); above [topFade] the
+ * far floor is faded out so it does not lie under the state text.
  */
 @Composable
-internal fun ArrowScene(state: FinderUiState, centerY: Float, onUnavailable: () -> Unit) {
+internal fun ArrowScene(state: FinderUiState, centerY: Float, topFade: Float, onUnavailable: () -> Unit) {
     val context = LocalContext.current
     val poseFeed = remember(context) {
         val sensor = PoseSensor(context.applicationContext)
@@ -118,6 +122,7 @@ internal fun ArrowScene(state: FinderUiState, centerY: Float, onUnavailable: () 
             rightHere = state.stage == FinderStage.RIGHT_HERE,
             fullBleed = true,
             centerY = centerY,
+            topFade = topFade,
             // The device marker needs a direction worth pointing at, like the sector.
             showTarget = state.arrowDegrees != null && state.confidence != ArrowConfidence.NONE,
             accentColor = NearoTheme.colors.found.rings,
@@ -129,7 +134,8 @@ internal fun ArrowScene(state: FinderUiState, centerY: Float, onUnavailable: () 
             reduceMotion = reduceMotion,
         ),
         modifier = Modifier.fillMaxSize(),
-        poseFeed = poseFeed,
+        // Demo captures use the design's camera, however the phone happens to lie on the desk.
+        poseFeed = if (LocalFindScenePose.current) poseFeed else null,
         onUnavailable = onUnavailable,
     )
 }

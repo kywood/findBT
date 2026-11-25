@@ -48,6 +48,7 @@ import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
 import com.gamenuri.btscanner24.demo.DemoMode
 import com.gamenuri.btscanner24.feature.finder.FinderScreen
 import com.gamenuri.btscanner24.feature.finder.LocalArFindScene
+import com.gamenuri.btscanner24.feature.finder.LocalFindScenePose
 import com.gamenuri.btscanner24.feature.onboarding.OnboardingActions
 import com.gamenuri.btscanner24.feature.onboarding.OnboardingContent
 import com.gamenuri.btscanner24.feature.onboarding.OnboardingPage
@@ -77,7 +78,10 @@ class MainActivity : ComponentActivity() {
                 NearoTheme {
                     val findState = demo?.findState
                     val onboardingPage = demo?.onboardingPage
-                    CompositionLocalProvider(LocalArFindScene provides (demo?.arScene != false)) {
+                    CompositionLocalProvider(
+                        LocalArFindScene provides (demo?.arScene != false),
+                        LocalFindScenePose provides (demo?.findState == null),
+                    ) {
                         when {
                             findState != null -> DemoMode.FindScreen(findState, onClose = ::finish)
                             onboardingPage != null -> DemoOnboarding(onboardingPage)

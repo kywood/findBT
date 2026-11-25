@@ -48,6 +48,12 @@ internal class SceneState {
      */
     @Volatile var fullBleed: Boolean = false
 
+    /**
+     * The far floor (rings, sector, marker, pulses) is gone above this share of the view's height
+     * (0 = top edge) and whole a little below it, so it never lies under the state text. Negative: no fade.
+     */
+    @Volatile var topFade: Float = -1f
+
     /** Where the middle of the floor sits in the view, 0 = top edge, 1 = bottom edge. */
     @Volatile var centerY: Float = 0.5f
 

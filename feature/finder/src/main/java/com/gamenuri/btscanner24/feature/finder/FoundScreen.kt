@@ -34,7 +34,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -95,7 +94,7 @@ fun FoundContent(
     }
     var sceneFailed by remember { mutableStateOf(false) }
     val scene3d = LocalArFindScene.current && !sceneFailed && !LocalInspectionMode.current
-    var heroCenterY by remember { mutableFloatStateOf(Float.NaN) }
+    val heroSlot = remember { SceneSlot() }
     val context = LocalContext.current
     val reduceMotion = remember(context) {
         val scale = Settings.Global.ANIMATOR_DURATION_SCALE
@@ -109,7 +108,7 @@ fun FoundContent(
         ) {
             // The same full-width 3D layer as the find screen; the layout below keeps its place free.
             if (scene3d) {
-                FindSceneLayer(heroCenterY, pop) { centerY ->
+                FindSceneLayer(heroSlot, pop) { centerY, _ ->
                     FindScene3d(
                         spec = FindSceneSpec(
                             found = true,
@@ -132,7 +131,7 @@ fun FoundContent(
                             .weight(1f, fill = false)
                             .sizeIn(maxWidth = HERO_SLOT, maxHeight = HERO_SLOT)
                             .aspectRatio(1f)
-                            .sceneSlot { heroCenterY = it },
+                            .sceneSlot(heroSlot),
                     )
                 } else {
                     CheckHero(colors, pop)
