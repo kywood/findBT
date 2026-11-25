@@ -41,17 +41,28 @@ class PlayPremiumStore(context: Context, private val productId: String = DEFAULT
         .build()
 
     override fun refresh() {
-        if (client.isReady) {
+        connect { connected ->
+            if (!connected) return@connect
             loadProduct()
             queryOwned { }
+        }
+    }
+
+    /** Calls [onDone] once Play Billing is connected (true) or the connection failed (false). */
+    private fun connect(onDone: (Boolean) -> Unit) {
+        if (client.isReady) {
+            onDone(true)
             return
         }
         client.startConnection(
             object : BillingClientStateListener {
+                private var answered = false
+
                 override fun onBillingSetupFinished(result: BillingResult) {
-                    if (result.responseCode != BillingClient.BillingResponseCode.OK) return
-                    loadProduct()
-                    queryOwned { }
+                    // Auto reconnection can report again later; only the first answer is ours.
+                    if (answered) return
+                    answered = true
+                    onDone(result.responseCode == BillingClient.BillingResponseCode.OK)
                 }
 
                 override fun onBillingServiceDisconnected() {
@@ -75,10 +86,17 @@ class PlayPremiumStore(context: Context, private val productId: String = DEFAULT
     }
 
     override suspend fun restore(): RestoreResult {
-        if (!client.isReady) refresh()
+        // Wait for the connection first: asking right after starting it always failed (#125).
         return suspendCancellableCoroutine { continuation ->
-            queryOwned { result ->
-                if (continuation.isActive) continuation.resume(result)
+            connect { connected ->
+                if (!connected) {
+                    if (continuation.isActive) continuation.resume(RestoreResult.FAILED)
+                    return@connect
+                }
+                if (product == null) loadProduct()
+                queryOwned { result ->
+                    if (continuation.isActive) continuation.resume(result)
+                }
             }
         }
     }
