@@ -5,6 +5,7 @@ import android.opengl.Matrix
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.exp
 import kotlin.math.roundToInt
@@ -102,6 +103,11 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
     /** Seconds since the medal started to rise. */
     private var foundTime = 0f
     private var markerFit = 1f
+    private var markerX = 0f
+    private var markerZ = -1f
+    private var markerRadius = FAR_RING
+    private var markerSide = 1f
+    private var markerAside = 0f
 
     /** 0..1: how much of the device marker on the far ring shows. */
     private var marker = 0f
@@ -192,6 +198,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         val showArrow = here < 1f - HERE_EPSILON && gone < 1f - HERE_EPSILON
         val showPuck = here > HERE_EPSILON
 
+        if (state.fullBleed) placeMarker(yaw)
         drawFloor(yaw)
         if (state.fullBleed) drawRims()
         // Both shadows first (blended onto the floor), then the solids.
@@ -207,7 +214,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         } else if (showPuck) {
             drawSolid(puckBuffer, puckVertices, markerModel, state.accentColor)
         }
-        if (state.fullBleed) drawMarker(yaw)
+        if (state.fullBleed) drawMarker()
     }
 
     /**
@@ -463,15 +470,16 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
                 GLES20.glDrawArrays(GLES20.GL_TRIANGLES, (SECTOR_MAX_HALF - half) * 3, half * 2 * 3)
             }
         }
-        if (state.fullBleed && markerSeen > HERE_EPSILON) drawTargetRing(position, yaw, ringVertices)
+        if (state.fullBleed && markerSeen > HERE_EPSILON) drawTargetRing(position, ringVertices)
         if (here > HERE_EPSILON) drawPulses(position, ringVertices)
         GLES20.glDisableVertexAttribArray(position)
     }
 
     /** A mint ring on the floor round the far marker's stand: the only mint on it (v1.3). */
-    private fun drawTargetRing(position: Int, yaw: Float, ringVertices: Int) {
-        val (x, z) = floorDirection(yaw)
-        val radius = targetRadius(x, z)
+    private fun drawTargetRing(position: Int, ringVertices: Int) {
+        val x = markerX
+        val z = markerZ
+        val radius = markerRadius
         Matrix.translateM(shadowModel, 0, viewProjection, 0, x * radius, stepHeight(radius), z * radius)
         Matrix.scaleM(mvp, 0, shadowModel, 0, TARGET_HALO * markerSeen, 1f, TARGET_HALO * markerSeen)
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, haloBuffer)
@@ -485,9 +493,30 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
      * find-flow-3d v1.2): it is what the arrow is pointing at. It shrinks away when it would stand
      * under the texts (behind the viewer, or too far up), so it never shows through them.
      */
-    private fun drawMarker(yaw: Float) {
-        val (x, z) = floorDirection(yaw)
-        val radius = targetRadius(x, z)
+    /**
+     * Where the marker stands this frame. Nearly straight ahead and close in, the arrow's tip would
+     * hide its stand, so there it steps aside (design find-flow v1.4 shows it beside the arrow's line);
+     * the side is kept until the arrow has clearly turned to the other one, so it does not flicker.
+     */
+    private fun placeMarker(yaw: Float) {
+        val (aheadX, aheadZ) = floorDirection(yaw)
+        val near = targetRadius(aheadX, aheadZ)
+        val turned = wrap(yaw)
+        if (abs(turned) > MARKER_SIDE_SWITCH_DEGREES) markerSide = if (turned < 0f) -1f else 1f
+        val ahead = (1f - abs(turned) / MARKER_ASIDE_WITHIN_DEGREES).coerceIn(0f, 1f)
+        val close = ((MARKER_ASIDE_WITHIN - near) / MARKER_ASIDE_BAND).coerceIn(0f, 1f)
+        val wanted = markerSide * MARKER_ASIDE_DEGREES * ahead * close
+        markerAside = if (state.reduceMotion) wanted else markerAside + (wanted - markerAside) * MARKER_EASE
+        val (x, z) = floorDirection(yaw + markerAside)
+        markerX = x
+        markerZ = z
+        markerRadius = targetRadius(x, z)
+    }
+
+    private fun drawMarker() {
+        val x = markerX
+        val z = markerZ
+        val radius = markerRadius
         val floor = stepHeight(radius)
         probe[0] = x * radius
         probe[1] = floor
@@ -1046,6 +1075,11 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         const val MARKER_MODEL = 0.44f
         const val MARKER_FLOAT = 0.064f
         const val MARKER_MIN_FIT = 0.8f
+        const val MARKER_ASIDE_DEGREES = 24f
+        const val MARKER_ASIDE_WITHIN_DEGREES = 30f
+        const val MARKER_SIDE_SWITCH_DEGREES = 8f
+        const val MARKER_ASIDE_WITHIN = 1.7f * RING_OUTER
+        const val MARKER_ASIDE_BAND = 0.3f * RING_OUTER
 
         /** The marker's height over its floor in ring radii: stand, gap, model and its bob. */
         const val MARKER_TALL = PEDESTAL_THICKNESS + MARKER_FLOAT + MARKER_MODEL + 0.03f

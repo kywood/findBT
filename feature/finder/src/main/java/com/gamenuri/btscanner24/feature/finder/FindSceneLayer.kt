@@ -28,6 +28,8 @@ internal fun BoxScope.FindSceneLayer(
     slot: SceneSlot,
     modifier: Modifier = Modifier,
     fadeOutsideSlot: Boolean = false,
+    /** Where in the slot the floor's middle sits: 0 its top, 1 its bottom. */
+    centerBias: Float = 0.5f,
     scene: @Composable (centerY: Float, topFade: Float, bottomFade: Float) -> Unit,
 ) {
     var top by remember { mutableFloatStateOf(0f) }
@@ -44,7 +46,8 @@ internal fun BoxScope.FindSceneLayer(
             },
     ) {
         val placed = !slot.centerY.isNaN() && height > 0f
-        val center = if (placed) ((slot.centerY - top) / height).coerceIn(MIN_CENTER, MAX_CENTER) else DEFAULT_CENTER
+        val middle = slot.topY + (slot.bottomY - slot.topY) * centerBias
+        val center = if (placed) ((middle - top) / height).coerceIn(MIN_CENTER, MAX_CENTER) else DEFAULT_CENTER
         val topFade = if (placed && fadeOutsideSlot) ((slot.topY - top) / height).coerceIn(0f, 1f) else NO_FADE
         val bottomFade = if (placed && fadeOutsideSlot) ((slot.bottomY - top) / height).coerceIn(0f, 1f) else NO_FADE
         scene(center, topFade, bottomFade)
