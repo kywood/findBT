@@ -5,6 +5,7 @@ import com.gamenuri.btscanner24.core.sensors.MotionSample
 import kotlin.math.cos
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -133,6 +134,28 @@ class FinderEngineTest {
             engine.onSighting(sighting(-35, now), now)
         }
         assertEquals(FinderStage.RIGHT_HERE, engine.state(now, true).stage)
+    }
+
+    @Test
+    fun `within 1 m on screen for two seconds is right here`() {
+        val engine = FinderEngine(buds, startMs = 0, hasCompass = true)
+        var now = 0L
+        repeat(25) {
+            now += 100
+            engine.onSighting(sighting(-70, now).copy(distanceMeters = 0.8), now)
+        }
+        assertEquals(FinderStage.RIGHT_HERE, engine.state(now, true).stage)
+    }
+
+    @Test
+    fun `further than 1 m on screen is not right here`() {
+        val engine = FinderEngine(buds, startMs = 0, hasCompass = true)
+        var now = 0L
+        repeat(40) {
+            now += 100
+            engine.onSighting(sighting(-70, now).copy(distanceMeters = 2.5), now)
+        }
+        assertNotEquals(FinderStage.RIGHT_HERE, engine.state(now, true).stage)
     }
 
     @Test
