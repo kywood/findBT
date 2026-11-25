@@ -72,4 +72,6 @@
     <string name="finder_sound_ear_body">이 기기에서 큰 소리가 점점 커지며 납니다. 끼고 있다면 먼저 빼 주세요.</string>
     <string name="finder_sound_ear_confirm">소리 울리기</string>
     <string name="finder_sound_ear_cancel">취소</string>
+    <string name="finder_sound_output_note">연결돼 있지만 소리가 다른 곳으로 나가고 있어요. 소리 출력을 이 기기로 바꾸면 소리를 울릴 수 있어요.</string>
+    <string name="finder_sound_output_button">소리 출력 바꾸기</string>
 </resources>

@@ -67,4 +67,6 @@
     <string name="finder_sound_ear_body">このデバイスから大きな音が鳴り、だんだん大きくなります。着けている場合は先に外してください。</string>
     <string name="finder_sound_ear_confirm">音を鳴らす</string>
     <string name="finder_sound_ear_cancel">キャンセル</string>
+    <string name="finder_sound_output_note">接続されていますが、音は別の出力先から出ています。出力先をこのデバイスに切り替えると音を鳴らせます。</string>
+    <string name="finder_sound_output_button">音の出力先を切り替える</string>
 </resources>

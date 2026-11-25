@@ -87,6 +87,10 @@ class FinderViewModel(
     @Volatile
     private var viaPhone = false
 
+    /** Connected for audio, but media goes somewhere else: the user has to switch the output first (#153). */
+    @Volatile
+    private var needsOutput = false
+
     // "Play sound" (#28): support is learned once (advertised 0x1802 or a short GATT probe) and sticks.
     private var support: AlertSupport? = null
     private var probeJob: Job? = null
@@ -123,6 +127,7 @@ class FinderViewModel(
                     connectedDevices.watch(repository, { listOf(paired) }) {
                         isConnected = it.isNotEmpty()
                         viaPhone = isConnected && tone?.isOutput(paired.address, connectedDevices) == true
+                        needsOutput = tone != null && !viaPhone && paired.address in connectedDevices.audioAddresses()
                     }
                 }
             }
@@ -288,7 +293,13 @@ class FinderViewModel(
             }
         }
         checkSoundSupport(state)
-        _uiState.value = state.copy(sound = sound.value, isConnected = isConnected, soundViaPhone = offeredViaPhone)
+        _uiState.value = state.copy(
+            sound = sound.value,
+            isConnected = isConnected,
+            soundViaPhone = offeredViaPhone,
+            // Only when the device has no sound of its own to offer.
+            soundNeedsOutput = needsOutput && sound.value == SoundState.UNAVAILABLE,
+        )
     }
 
     override fun onCleared() {

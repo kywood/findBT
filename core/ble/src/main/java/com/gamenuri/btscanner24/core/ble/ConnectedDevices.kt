@@ -83,6 +83,17 @@ open class ConnectedDevices(context: Context) {
         }
     }
 
+    /** Addresses connected for any audio (media or calls): the phone could play through them (#153). */
+    @SuppressLint("MissingPermission") // checked by hasPermission()
+    open fun audioAddresses(): Set<String> {
+        if (!hasPermission()) return emptySet()
+        return try {
+            proxies.values.flatMapTo(HashSet()) { proxy -> proxy.connectedDevices.map { it.address } }
+        } catch (_: SecurityException) {
+            emptySet()
+        }
+    }
+
     /**
      * Signal strength of the link to a connected device, about once a second. Opens a GATT client
      * on the link and reads its RSSI; ends when that cannot be done (many earbuds only connect over
