@@ -41,9 +41,11 @@ import com.gamenuri.btscanner24.core.ble.BleScanner
 import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
 import com.gamenuri.btscanner24.demo.DemoMode
 import com.gamenuri.btscanner24.feature.finder.FINDER_EXIT_HOLD_MS
+import com.gamenuri.btscanner24.feature.finder.FindEntryCover
 import com.gamenuri.btscanner24.feature.finder.FinderScreen
 import com.gamenuri.btscanner24.feature.finder.LocalArFindScene
 import com.gamenuri.btscanner24.feature.finder.LocalFindScenePose
+import com.gamenuri.btscanner24.feature.finder.rememberFindEntryWater
 import com.gamenuri.btscanner24.feature.onboarding.OnboardingActions
 import com.gamenuri.btscanner24.feature.onboarding.OnboardingContent
 import com.gamenuri.btscanner24.feature.onboarding.OnboardingPage
@@ -130,6 +132,8 @@ private fun AppNavHost(start: String, startOnMyDevices: Boolean, openPaywall: Bo
             if (size.width > 0) tapX[0] = down.position.x / size.width
         }
     }
+    // The find screen's water starts in the tap itself, over Home, before the navigation is done (#107).
+    val findEntry = rememberFindEntryWater()
     val activity = LocalActivity.current
     val ads = remember(activity) { activity?.let { NearoAds.from(it) } }
     val rewardedReady by (ads?.rewardedReady ?: NoRewardedAd).collectAsStateWithLifecycle()
@@ -153,7 +157,10 @@ private fun AppNavHost(start: String, startOnMyDevices: Boolean, openPaywall: Bo
                 // Consent (UMP) and the ads SDK start with Home, never during onboarding (#31).
                 LaunchedEffect(ads, activity) { if (ads != null && activity != null) ads.start(activity) }
                 HomeScreen(
-                    onFind = { address -> navController.navigate(Routes.finder(address)) { launchSingleTop = true } },
+                    onFind = { address ->
+                        findEntry.start(tapX[0])
+                        navController.navigate(Routes.finder(address)) { launchSingleTop = true }
+                    },
                     onOpenSettings = { navController.navigate(Routes.SETTINGS) },
                     startOnMyDevices = startOnMyDevices,
                     rewarded = ads?.let { nearoAds ->
@@ -196,9 +203,11 @@ private fun AppNavHost(start: String, startOnMyDevices: Boolean, openPaywall: Bo
                     // Full-screen ad only here, after a finished find, and only when the rules allow (#81 ③).
                     onFoundDone = { if (ads != null && activity != null) ads.onFoundDone(activity) },
                     entryTapX = entryTapX,
+                    entryWater = findEntry,
                 )
             }
         }
+        FindEntryCover(findEntry)
     }
 }
 
