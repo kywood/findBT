@@ -445,7 +445,10 @@ private fun ActionRow(state: FinderUiState, actions: FinderActions, content: Col
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         // "Spin again" shares the sound button's row, half each (design find-flow v1.4, #138).
-        val canRespin = state.stage == FinderStage.WALK || state.stage == FinderStage.TURN_AROUND
+        // Also while locked: a lock can be wrong, and the design keeps the way back to a new sweep.
+        val canRespin = state.stage == FinderStage.WALK ||
+            state.stage == FinderStage.TURN_AROUND ||
+            state.stage == FinderStage.LOCKED
         val respin: (@Composable (Modifier) -> Unit)? = if (canRespin) {
             { modifier -> SpinAgainButton(actions.onSpinAgain, content, modifier) }
         } else {
