@@ -40,6 +40,7 @@ import com.gamenuri.btscanner24.core.designsystem.component.drawRoundedArrow
 import com.gamenuri.btscanner24.core.designsystem.component.nearoArrowPath
 import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
 import com.gamenuri.btscanner24.core.sensors.PoseSensor
+import com.gamenuri.btscanner24.core.ui.arrow3d.DeviceModel
 import com.gamenuri.btscanner24.core.ui.arrow3d.FindScene3d
 import com.gamenuri.btscanner24.core.ui.arrow3d.FindSceneSpec
 import com.gamenuri.btscanner24.core.ui.arrow3d.PoseFeed
@@ -128,6 +129,7 @@ internal fun ArrowScene(state: FinderUiState, centerY: Float, fades: SceneFades,
             topFade = fades.top,
             bottomFade = fades.bottom,
             // The device marker needs a direction worth pointing at, like the sector.
+            model = DeviceModel.of(state.category),
             showTarget = state.arrowDegrees != null && state.confidence != ArrowConfidence.NONE,
             accentColor = NearoTheme.colors.found.rings,
             progress = state.sweepProgress,

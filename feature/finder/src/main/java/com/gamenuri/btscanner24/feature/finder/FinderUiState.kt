@@ -39,6 +39,8 @@ enum class ArrowConfidence { HIGH, MEDIUM, NONE }
 
 data class FinderUiState(
     val deviceLabel: DeviceLabel = DeviceLabel.Generic(maker = null, category = DeviceCategory.UNKNOWN, suffix = ""),
+    /** What kind of device it is, for its 3D model in the find scene (#133). */
+    val category: DeviceCategory = DeviceCategory.UNKNOWN,
     val stage: FinderStage = FinderStage.WAITING,
     /** Arrow angle relative to the top of the phone, clockwise. Null hides the arrow. */
     val arrowDegrees: Float? = null,
