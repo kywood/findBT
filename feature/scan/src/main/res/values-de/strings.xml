@@ -40,6 +40,7 @@
     <!-- Other devices: close and explanation (#142) -->
     <string name="nearby_other_close">Schließen</string>
     <string name="nearby_other_close_section">Andere Geräte schließen</string>
+    <string name="nearby_other_order">%1$s · neue unten</string>
     <string name="nearby_other_info">Über andere Geräte</string>
     <string name="other_info_title">Andere Geräte</string>
     <string name="other_info_what">Bluetooth-Signale in der Nähe ohne Namen oder von schwer erkennbarer Art. Das können Geräte von Nachbarn, Haushaltsgeräte, Fernseher oder Beacons sein.</string>
