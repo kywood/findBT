@@ -60,7 +60,12 @@ internal object DemoMode {
     @Composable
     fun FindScreen(state: String, onClose: () -> Unit) {
         if (state == "found") {
-            FoundContent(label = DemoData.findState("here").deviceLabel, elapsedSeconds = 102, onDone = onClose)
+            FoundContent(
+                label = DemoData.findState("here").deviceLabel,
+                elapsedSeconds = 102,
+                onDone = onClose,
+                category = DemoData.findState("here").category,
+            )
             return
         }
         FinderContent(state = DemoData.findState(state), actions = FinderActions(onClose = onClose, onFound = onClose))
