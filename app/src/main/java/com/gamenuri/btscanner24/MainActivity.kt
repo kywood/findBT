@@ -43,6 +43,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.gamenuri.btscanner24.core.ads.NearoAds
+import com.gamenuri.btscanner24.core.analytics.Analytics
 import com.gamenuri.btscanner24.core.ble.BleScanner
 import com.gamenuri.btscanner24.core.designsystem.component.WATER_PRESS_MS
 import com.gamenuri.btscanner24.core.designsystem.component.WATER_TOTAL_MS
@@ -131,6 +132,9 @@ private fun AppNavHost(start: String, startOnMyDevices: Boolean, openPaywall: Bo
     val activity = LocalActivity.current
     val ads = remember(activity) { activity?.let { NearoAds.from(it) } }
     val rewardedReady by (ads?.rewardedReady ?: NoRewardedAd).collectAsStateWithLifecycle()
+    // Usage statistics and crash reports follow the consent state (#33); off without ads (demo).
+    val analytics = (LocalContext.current.applicationContext as Analytics.Provider).analytics
+    LaunchedEffect(ads, analytics) { ads?.statisticsAllowed?.collect { analytics.setCollectionEnabled(it) } }
     Box(Modifier.fillMaxSize()) {
         NavHost(navController = navController, startDestination = start) {
             composable(Routes.ONBOARDING) {

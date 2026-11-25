@@ -22,3 +22,7 @@
 # WorkManager (pulled in by play-services-ads) builds its Room database by reflection
 # (WorkDatabase_Impl). Without this R8 renames it and the app crashes at startup (#31).
 -keep class * extends androidx.room.RoomDatabase { <init>(); }
+
+# Crash reports (#33) need line numbers; the file names stay hidden.
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile

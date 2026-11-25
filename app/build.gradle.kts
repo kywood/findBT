@@ -5,6 +5,16 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     // Open-source licenses screen (#56): writes res/raw/aboutlibraries.json from the real dependencies.
     alias(libs.plugins.aboutlibraries.android)
+    alias(libs.plugins.google.services) apply false
+    alias(libs.plugins.firebase.crashlytics) apply false
+}
+
+// Firebase (#33) is optional: google-services.json is not in git, and without it the app builds and
+// runs with analytics and crash reporting simply absent.
+val hasFirebase = file("google-services.json").exists()
+if (hasFirebase) {
+    apply(plugin = libs.plugins.google.services.get().pluginId)
+    apply(plugin = libs.plugins.firebase.crashlytics.get().pluginId)
 }
 
 // Values kept out of git (#56, #31, #35). Missing keys fall back to empty, and the screens hide the row.
@@ -92,6 +102,7 @@ android {
 
 dependencies {
     implementation(projects.core.ads)
+    implementation(projects.core.analytics)
     implementation(projects.core.ble)
     implementation(projects.core.billing)
     implementation(projects.core.data)

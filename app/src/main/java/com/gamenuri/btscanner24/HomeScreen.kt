@@ -23,6 +23,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gamenuri.btscanner24.core.ads.AdBanner
 import com.gamenuri.btscanner24.core.ads.NativeAdCard
+import com.gamenuri.btscanner24.core.analytics.Analytics
+import com.gamenuri.btscanner24.core.analytics.AnalyticsEvent
+import com.gamenuri.btscanner24.core.analytics.FindSource
 import com.gamenuri.btscanner24.core.billing.PremiumStore
 import com.gamenuri.btscanner24.core.ui.R as UiR
 import com.gamenuri.btscanner24.feature.devices.DevicesScreen
@@ -37,8 +40,9 @@ private enum class HomeTab(@param:StringRes val label: Int) {
 @Composable
 fun HomeScreen(onFind: (address: String) -> Unit, onOpenSettings: () -> Unit, startOnMyDevices: Boolean = false) {
     var tab by rememberSaveable { mutableStateOf(if (startOnMyDevices) HomeTab.MY_DEVICES else HomeTab.NEARBY) }
-    val premium by (LocalContext.current.applicationContext as PremiumStore.Provider).premium.state
-        .collectAsStateWithLifecycle()
+    val app = LocalContext.current.applicationContext
+    val premium by (app as PremiumStore.Provider).premium.state.collectAsStateWithLifecycle()
+    val analytics = (app as Analytics.Provider).analytics
     // "★ 24h" next to the title while a rewarded day pass runs (#81 ⑥).
     val dayPass = premium.dayPassUntil != null && !premium.isPurchased
     Scaffold(
@@ -69,7 +73,10 @@ fun HomeScreen(onFind: (address: String) -> Unit, onOpenSettings: () -> Unit, st
         when (tab) {
             HomeTab.NEARBY -> ScanScreen(
                 title = stringResource(R.string.app_name) + if (dayPass) DAY_PASS_BADGE else "",
-                onDeviceClick = { onFind(it.address) },
+                onDeviceClick = {
+                    analytics.log(AnalyticsEvent.FindStarted(FindSource.NEARBY))
+                    onFind(it.address)
+                },
                 modifier = content,
                 onOpenSettings = onOpenSettings,
                 // The one native card, after the last row (#81 ②).
@@ -78,7 +85,10 @@ fun HomeScreen(onFind: (address: String) -> Unit, onOpenSettings: () -> Unit, st
             // Saving unpaired trackers comes with device storage; until then "Add a tracker" opens Nearby.
             HomeTab.MY_DEVICES ->
                 DevicesScreen(
-                    onDeviceClick = onFind,
+                    onDeviceClick = {
+                        analytics.log(AnalyticsEvent.FindStarted(FindSource.MY_DEVICES))
+                        onFind(it)
+                    },
                     modifier = content,
                     onAddTracker = { tab = HomeTab.NEARBY },
                     onOpenSettings = onOpenSettings,
