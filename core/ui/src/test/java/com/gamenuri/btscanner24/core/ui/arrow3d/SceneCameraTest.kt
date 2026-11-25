@@ -22,7 +22,7 @@ class SceneCameraTest {
     fun `lying flat keeps depth`() {
         assertEquals(SceneCamera.FLAT, SceneCamera.elevationFor(90f), 0.001f)
         assertEquals(SceneCamera.FLAT, SceneCamera.elevationFor(120f), 0.001f)
-        assertTrue(SceneCamera.FLAT < 65f)
+        assertTrue(SceneCamera.FLAT <= 50f)
     }
 
     @Test

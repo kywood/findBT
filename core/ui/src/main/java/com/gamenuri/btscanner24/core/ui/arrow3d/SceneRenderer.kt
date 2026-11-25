@@ -309,7 +309,10 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         val e = radians(elevation)
         // Per pixel of R: how far the arrow's tip and top reach above the middle, the ring's near edge below.
         val above = ARROW_REACH * sin(e) + ARROW_TOP * cos(e)
-        val below = NEAR_EDGE * sin(e)
+        // The steeper the view, the more the near edge grows with perspective (#130: lying flat it came
+        // within 10 px of the distance label).
+        val steeper = (sin(e) - sin(radians(SceneCamera.TYPICAL))).coerceAtLeast(0f)
+        val below = (NEAR_EDGE + NEAR_EDGE_STEEP * steeper) * sin(e)
         val room = FIT_MARGIN * viewportHeight
         val fits = minOf((center - top) * room / above, (bottom - center) * room / below)
         return minOf(wanted, fits).coerceAtLeast(MIN_RING_FRACTION * viewportWidth)
@@ -633,6 +636,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         const val ARROW_REACH = 0.75f
         const val ARROW_TOP = 0.36f
         const val NEAR_EDGE = 1.08f
+        const val NEAR_EDGE_STEEP = 0.5f
         const val FIT_MARGIN = 0.94f
         const val NEAR = 0.5f
         const val FAR = 30f

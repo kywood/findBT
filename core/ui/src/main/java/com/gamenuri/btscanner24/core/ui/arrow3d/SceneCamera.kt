@@ -15,8 +15,11 @@ internal object SceneCamera {
     /** Camera height of the design renders; also used while the pose is unknown. */
     const val TYPICAL = 34f
 
-    /** Camera height with the phone lying flat: still clearly a floor seen at an angle. */
-    const val FLAT = 62f
+    /**
+     * Camera height with the phone lying flat. Capped well below top-down (#130): higher than this the
+     * floor rings turn into circles and the arrow's sides and shadow hide under it, so it reads as 2D.
+     */
+    const val FLAT = 48f
 
     /** The phone pose (90 = lying flat, 0 = upright) that shows [TYPICAL]. */
     const val TYPICAL_POSE = 45f
