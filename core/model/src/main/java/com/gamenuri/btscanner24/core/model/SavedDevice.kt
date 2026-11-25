@@ -27,11 +27,7 @@ data class SavedDevice(
  * device of a model, so anything that is written down about a saved device heard under a new address
  * (its last-seen place, #162) needs these to agree as well.
  */
-data class AdvertSignature(
-    val companyId: Int?,
-    val serviceUuids16: Set<Int>,
-    val category: DeviceCategory,
-) {
+data class AdvertSignature(val companyId: Int?, val serviceUuids16: Set<Int>, val category: DeviceCategory) {
     /** Nothing to tell devices of the same name apart by. */
     val isBlank: Boolean
         get() = companyId == null && serviceUuids16.isEmpty() && category == DeviceCategory.UNKNOWN
