@@ -63,6 +63,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -103,6 +104,7 @@ import java.util.Locale
 import kotlin.math.roundToInt
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 /** Entry point: owns the ViewModel, lifecycle, haptics and keep-screen-on. Visuals are in [FinderContent]. */
@@ -115,6 +117,8 @@ fun FinderScreen(
     onFoundDone: () -> Unit = {},
     /** Where the row was tapped, 0..1 across the screen: the water gets its first push there. */
     entryTapX: Float = 0.5f,
+    /** The water the opening tap set off already; without it the screen starts its own once drawn. */
+    entryWater: FindEntryWater? = null,
     viewModel: FinderViewModel = viewModel(key = "finder-$address", factory = FinderViewModel.factory(address)),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -131,24 +135,37 @@ fun FinderScreen(
     // underneath for the length of the navigation transition, and drains away the same way.
     var entered by rememberSaveable { mutableStateOf(false) }
     var leaving by remember { mutableStateOf(false) }
-    val entry = remember { WaterMotion(full = entered) }
+    val ownWater = remember { WaterMotion(full = entered) }
+    val entry = entryWater?.motion ?: ownWater
     val context = LocalContext.current
     val reduceMotion = remember(context) { context.animationsOff() }
     val slope = rememberWaterSlope()
     // The live screen is slow to compose for the first time (230 to 480 ms on a Galaxy A50, #107), so
-    // the water starts on this screen's first, empty frame and the content joins it one frame later,
-    // while the waterline is still low.
+    // this screen's first frame is empty and the content joins the water a few frames later, while the
+    // waterline is still low and the cover hides what is under it.
     var live by remember { mutableStateOf(entered) }
     LaunchedEffect(Unit) {
-        if (entered) return@LaunchedEffect
+        entryWater?.slope = slope
+        if (entered) {
+            // Restored (rotation, process death): no water, and a shared one may not know it is full.
+            if (!entry.isFull) entry.fill()
+            entryWater?.covering = false
+            return@LaunchedEffect
+        }
+        // One empty frame: this screen now draws under the water, so the cover over the list can go.
+        withFrameNanos { }
+        entryWater?.covering = false
         coroutineScope {
-            // One empty frame so the water knows its size, then two of water before the content comes.
-            withFrameNanos { }
-            val rising = launch { entry.rise(kickAt = entryTapX, reduceMotion = reduceMotion, slope = slope) }
+            // The opening tap has the water rising already; opened any other way, it starts here.
+            val rising = if (!entry.isEmpty) {
+                null
+            } else {
+                launch { entry.rise(kickAt = entryTapX, reduceMotion = reduceMotion, slope = slope) }
+            }
             withFrameNanos { }
             withFrameNanos { }
             live = true
-            rising.join()
+            rising?.join() ?: snapshotFlow { entry.isFull }.first { it }
         }
         entered = true
     }
@@ -323,7 +340,7 @@ fun FinderContent(
     }
 }
 
-private fun FindStateColors.brush(): Brush = Brush.verticalGradient(listOf(background, backgroundBottom))
+internal fun FindStateColors.brush(): Brush = Brush.verticalGradient(listOf(background, backgroundBottom))
 
 /** Background colour of the last stage and the rise of the new one; quick back-and-forth just snaps. */
 private class StageRise(initial: FindStateColors) {

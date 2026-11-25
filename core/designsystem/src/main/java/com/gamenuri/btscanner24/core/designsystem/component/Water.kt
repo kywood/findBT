@@ -46,6 +46,9 @@ class WaterMotion(full: Boolean = false) {
     /** True once the content is fully shown and nothing moves. */
     val isFull: Boolean get() = phase == Phase.FULL
 
+    /** True while nothing is shown and nothing has been started. */
+    val isEmpty: Boolean get() = phase == Phase.EMPTY
+
     /** True while the water is rising or draining; pause other continuous animations meanwhile. */
     val isMoving: Boolean get() = phase == Phase.RISING || phase == Phase.DRAINING
 
@@ -191,6 +194,21 @@ fun Modifier.water(motion: WaterMotion, cover: Brush? = null, glint: Float = 1f)
                 motion.frame
                 if (sim != null) drawUnderSurface(sim, motion.phase == WaterMotion.Phase.RISING, cover, glint)
             }
+        }
+    }
+
+/**
+ * Only the rising water of [motion], filled with [cover], on something that has no content of its
+ * own (#107): it stands in over the old screen until the new one is there to draw under the same
+ * water. Draws while [visible] returns true, and tells [motion] its size either way.
+ */
+fun Modifier.waterCover(motion: WaterMotion, cover: Brush, visible: () -> Boolean): Modifier = this
+    .onSizeChanged { motion.size = it }
+    .drawWithContent {
+        if (visible() && motion.phase == WaterMotion.Phase.RISING) {
+            // Reading the frame counter redraws this every simulated frame.
+            motion.frame
+            motion.sim?.let { drawUnderSurface(it, rising = true, cover = cover, glint = 1f) }
         }
     }
 
