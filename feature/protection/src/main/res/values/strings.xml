@@ -39,6 +39,7 @@
     <string name="protection_point_tracker">Tells you when a tracker that is not yours keeps moving with you</string>
     <string name="protection_section_trackers">Trackers</string>
     <string name="protection_tracker_setting">Unknown tracker detection</string>
+    <string name="protection_tracker_test_feature">Test feature</string>
     <string name="protection_tracker_how">Whether it moves with you is judged from your phone\'s movement and the time passed.</string>
     <string name="protection_tracker_unavailable">This phone has no motion sensor, so tracker detection is not available</string>
     <string name="protection_channel_trackers">Unknown tracker alerts</string>

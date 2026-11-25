@@ -38,6 +38,7 @@
     <string name="protection_point_tracker">내 것이 아닌 트래커가 계속 함께 이동하면 알려 드려요</string>
     <string name="protection_section_trackers">트래커</string>
     <string name="protection_tracker_setting">모르는 트래커 감지</string>
+    <string name="protection_tracker_test_feature">시험 기능</string>
     <string name="protection_tracker_how">폰의 움직임과 지난 시간으로 함께 이동했는지 판단해요.</string>
     <string name="protection_tracker_unavailable">이 폰에는 움직임 센서가 없어 트래커 감지를 쓸 수 없어요</string>
     <string name="protection_channel_trackers">모르는 트래커 알림</string>

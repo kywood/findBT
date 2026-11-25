@@ -353,6 +353,12 @@ private fun WatchedDevices(
                         stringResource(R.string.protection_tracker_setting),
                         style = MaterialTheme.typography.titleMedium,
                     )
+                    // Not yet checked against real tags and real walks (#79), so it says so (#199).
+                    Text(
+                        text = stringResource(R.string.protection_tracker_test_feature),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
                     Text(
                         text = stringResource(R.string.protection_point_tracker),
                         style = MaterialTheme.typography.bodySmall,

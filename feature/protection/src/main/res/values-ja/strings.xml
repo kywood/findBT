@@ -38,6 +38,7 @@
     <string name="protection_point_tracker">自分のものではないトラッカーが一緒に移動し続けるとお知らせします</string>
     <string name="protection_section_trackers">トラッカー</string>
     <string name="protection_tracker_setting">知らないトラッカーの検出</string>
+    <string name="protection_tracker_test_feature">試験機能</string>
     <string name="protection_tracker_how">一緒に移動しているかどうかは、スマートフォンの動きと経過時間から判断します。</string>
     <string name="protection_tracker_unavailable">このスマートフォンにはモーションセンサーがないため、トラッカーの検出は使えません</string>
     <string name="protection_channel_trackers">知らないトラッカーのアラート</string>

@@ -39,6 +39,7 @@
     <string name="protection_point_tracker">Avisa quando um rastreador que não é seu continua se movendo com você</string>
     <string name="protection_section_trackers">Rastreadores</string>
     <string name="protection_tracker_setting">Detecção de rastreadores estranhos</string>
+    <string name="protection_tracker_test_feature">Recurso em teste</string>
     <string name="protection_tracker_how">Se ele se move com você é avaliado pelo movimento do celular e pelo tempo que passou.</string>
     <string name="protection_tracker_unavailable">Este celular não tem sensor de movimento, então a detecção de rastreadores não está disponível</string>
     <string name="protection_channel_trackers">Alertas de rastreadores estranhos</string>

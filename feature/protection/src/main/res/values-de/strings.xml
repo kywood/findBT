@@ -39,6 +39,7 @@
     <string name="protection_point_tracker">Sagt dir Bescheid, wenn ein Tracker, der dir nicht gehört, sich länger mit dir bewegt</string>
     <string name="protection_section_trackers">Tracker</string>
     <string name="protection_tracker_setting">Fremde Tracker erkennen</string>
+    <string name="protection_tracker_test_feature">Testfunktion</string>
     <string name="protection_tracker_how">Ob er sich mit dir bewegt, wird aus der Bewegung des Handys und der vergangenen Zeit geschlossen.</string>
     <string name="protection_tracker_unavailable">Dieses Handy hat keinen Bewegungssensor, daher ist die Tracker-Erkennung nicht verfügbar</string>
     <string name="protection_channel_trackers">Hinweise auf fremde Tracker</string>

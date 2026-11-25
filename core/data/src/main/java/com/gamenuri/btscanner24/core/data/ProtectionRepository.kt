@@ -34,7 +34,7 @@ class ProtectionRepository(private val store: DataStore<Preferences>) {
             unwatched = preferences[UNWATCHED].orEmpty(),
             mutedUntil = TimesCodec.decode(preferences[MUTED].orEmpty()),
             alerts = TimesCodec.decode(preferences[ALERTS].orEmpty()),
-            trackers = preferences[TRACKERS] ?: true,
+            trackers = preferences[TRACKERS] ?: false,
             trackerAlerts = TrackerAlertCodec.decode(preferences[TRACKER_ALERTS].orEmpty())
                 .sortedByDescending { it.lastHeardAt },
             knownTrackers = TimesCodec.decode(preferences[KNOWN_TRACKERS].orEmpty()),

@@ -15,8 +15,8 @@ data class ProtectionSettings(
     val mutedUntil: Map<String, Long> = emptyMap(),
     /** Devices that may have been left behind, with the time each was last heard; gone when heard again. */
     val alerts: Map<String, Long> = emptyMap(),
-    /** Whether trackers that are not the user's are looked for (#79). */
-    val trackers: Boolean = true,
+    /** Whether trackers that are not the user's are looked for (#79). Off until the user turns it on: a test feature in 2.0 (#199). */
+    val trackers: Boolean = false,
     /** Trackers that may be moving with the user, newest first; none is kept beyond [TrackerWatch.KEEP_MS]. */
     val trackerAlerts: List<TrackerAlert> = emptyList(),
     /** Trackers the user said they know, with when they said so: never alerted about again. */
