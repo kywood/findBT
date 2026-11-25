@@ -266,7 +266,7 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
         Matrix.multiplyMM(viewProjection, 0, projection, 0, view, 0)
     }
 
-    /** How far measured devices are turned round the middle: with the phone, or not at all when the view stands still. */
+    /** How far measured devices are turned round the middle: with the phone, or not at all in a still view. */
     private fun worldTurn(): Float = if (state.hasPose && !state.reduceMotion) heading else 0f
 
     /** The three slabs and their rims, tinted from the screen's blue: lighter towards the middle. */
