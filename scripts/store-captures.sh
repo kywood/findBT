@@ -6,7 +6,8 @@
 #   adb -s R59N300DBHH install -r app/build/outputs/apk/debug/app-debug.apk
 #   scripts/store-captures.sh [out-dir]
 #
-# Default out-dir: shots/store. Files: <out>/<lang>/{find,mydevices,found,nearby,spin,map}.png, with the
+# Default out-dir: ../findBT-shots/store, next to the repository, because git holds code only (#191):
+# captures never go into the repo. Files: <out>/<lang>/{find,mydevices,found,nearby,spin,map}.png, with the
 # language folders named as in design/store-v3/copy.json (en ko ja es pt de).
 #
 # - Runs on the Galaxy A50 only and says so: every adb call names its serial. Never `gradlew installDebug`.
@@ -19,7 +20,7 @@
 set -euo pipefail
 
 SERIAL="R59N300DBHH" # Galaxy A50. The Z Flip3 is the owner's own phone and is never used.
-OUT="${1:-shots/store}"
+OUT="${1:-../findBT-shots/store}"
 PKG="com.gamenuri.btscanner24.debug"
 ACTIVITY="$PKG/com.gamenuri.btscanner24.MainActivity"
 WAIT_SECONDS="${WAIT_SECONDS:-4}"
