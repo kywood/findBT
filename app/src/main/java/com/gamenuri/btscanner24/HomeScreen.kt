@@ -4,8 +4,6 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -22,7 +20,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gamenuri.btscanner24.core.ads.AdBanner
-import com.gamenuri.btscanner24.core.ads.NativeAdCard
 import com.gamenuri.btscanner24.core.analytics.Analytics
 import com.gamenuri.btscanner24.core.analytics.AnalyticsEvent
 import com.gamenuri.btscanner24.core.analytics.FindSource
@@ -57,8 +54,8 @@ fun HomeScreen(onFind: (address: String) -> Unit, onOpenSettings: () -> Unit, st
                             onClick = { tab = item },
                             icon = {
                                 when (item) {
-                                    HomeTab.NEARBY -> Icon(painterResource(UiR.drawable.ic_device_beacon), null)
-                                    HomeTab.MY_DEVICES -> Icon(Icons.Filled.Star, null)
+                                    HomeTab.NEARBY -> Icon(painterResource(UiR.drawable.ic_tab_nearby), null)
+                                    HomeTab.MY_DEVICES -> Icon(painterResource(UiR.drawable.ic_tab_mine), null)
                                 }
                             },
                             label = { Text(stringResource(item.label)) },
@@ -79,8 +76,6 @@ fun HomeScreen(onFind: (address: String) -> Unit, onOpenSettings: () -> Unit, st
                 },
                 modifier = content,
                 onOpenSettings = onOpenSettings,
-                // The one native card, after the last row (#81 ②).
-                listFooter = { NativeAdCard() },
             )
             // Saving unpaired trackers comes with device storage; until then "Add a tracker" opens Nearby.
             HomeTab.MY_DEVICES ->

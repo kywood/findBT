@@ -40,6 +40,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -56,6 +57,8 @@ import com.gamenuri.btscanner24.core.designsystem.theme.BrandIconGradientBottom
 import com.gamenuri.btscanner24.core.designsystem.theme.BrandIconGradientTop
 import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
 import com.gamenuri.btscanner24.core.ui.R as UiR
+import com.gamenuri.btscanner24.core.ui.arrow3d.FindScene3d
+import com.gamenuri.btscanner24.core.ui.arrow3d.FindSceneSpec
 import com.gamenuri.btscanner24.core.ui.permission.openAppSettings
 import com.gamenuri.btscanner24.core.ui.permission.rememberBlePermissionState
 
@@ -205,12 +208,22 @@ private fun IntroHero(modifier: Modifier = Modifier) {
             .clip(RoundedCornerShape(26.dp))
             .background(Brush.radialGradient(listOf(BrandIconGradientTop, BrandIconGradientBottom))),
     ) {
-        Canvas(Modifier.fillMaxSize()) {
-            val ring = Color.White.copy(alpha = 0.14f)
-            val stroke = Stroke(1.5.dp.toPx())
-            for (radius in listOf(56.dp, 92.dp, 128.dp)) drawCircle(ring, radius = radius.toPx(), style = stroke)
+        // The same 3D scene as the find screen (#76); the drawn arrow only where GL is not available.
+        var sceneFailed by remember { mutableStateOf(false) }
+        if (LocalInspectionMode.current || sceneFailed) {
+            Canvas(Modifier.fillMaxSize()) {
+                val ring = Color.White.copy(alpha = 0.14f)
+                val stroke = Stroke(1.5.dp.toPx())
+                for (radius in listOf(56.dp, 92.dp, 128.dp)) drawCircle(ring, radius = radius.toPx(), style = stroke)
+            }
+            FloorArrowIllustration(color = Color.White, modifier = Modifier.size(190.dp).align(Alignment.Center))
+        } else {
+            FindScene3d(
+                spec = FindSceneSpec(relativeDegrees = HERO_ARROW_DEGREES, locked = true),
+                modifier = Modifier.size(HeroSceneSize).align(Alignment.Center),
+                onUnavailable = { sceneFailed = true },
+            )
         }
-        FloorArrowIllustration(color = Color.White, modifier = Modifier.size(190.dp).align(Alignment.Center))
         Row(
             modifier = Modifier
                 .align(Alignment.TopStart)
@@ -264,6 +277,10 @@ private fun IntroHero(modifier: Modifier = Modifier) {
 }
 
 private val HeroMuted = Color(0xFF44474F)
+private val HeroSceneSize = 236.dp
+
+/** Turned a little to the side so the arrow's thickness and shadow show. */
+private const val HERO_ARROW_DEGREES = -24f
 
 @Composable
 private fun CheckLine(text: Int) {

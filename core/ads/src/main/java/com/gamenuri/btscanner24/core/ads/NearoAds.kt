@@ -3,18 +3,13 @@ package com.gamenuri.btscanner24.core.ads
 import android.app.Activity
 import android.app.Application
 import android.content.Context
-import android.os.SystemClock
 import com.gamenuri.btscanner24.core.billing.PremiumStore
-import com.google.android.gms.ads.AdListener
-import com.google.android.gms.ads.AdLoader
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.FullScreenContentCallback
 import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
-import com.google.android.gms.ads.nativead.NativeAd
-import com.google.android.gms.ads.nativead.NativeAdOptions
 import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import com.google.android.ump.ConsentInformation
@@ -32,9 +27,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * AdMob for Nearo (#31, placements #81 ads v2): a banner above the tabs, one native card at the end
- * of the Nearby list, a full-screen ad after "Found it" → Done, and the opt-in rewarded ad for a
- * 24 h day pass. Nothing loads before the UMP consent step, and nothing shows to Premium users.
+ * AdMob for Nearo (#31, placements #124 ads v3): a banner above the tabs, one full-screen ad after
+ * "Found it" → Done, and the opt-in rewarded ad for a 24 h day pass. No ad sits inside a list. Nothing loads before the UMP consent step, and nothing shows to Premium users.
  *
  * Requests are plain [AdRequest]s: no keywords, content URLs or extras, so no scan data (device
  * names, MAC, RSSI, makers, UUIDs, location) ever reaches AdMob (#19).
@@ -57,7 +51,7 @@ class NearoAds(
     private var started = false
     private var initializing = false
 
-    /** Banner and native card may show: consent done, SDK ready, not Premium (a day pass counts). */
+    /** The banner may show: consent done, SDK ready, not Premium (a day pass counts). */
     val showsAds: StateFlow<Boolean> = combine(ready, premium.state) { ready, state -> ready && !state.isPremium }
         .stateIn(scope, SharingStarted.Eagerly, false)
 
@@ -65,13 +59,6 @@ class NearoAds(
 
     /** A rewarded ad is loaded; the "Watch an ad" button hides until then (#81 ④⑤). */
     val rewardedReady: StateFlow<Boolean> = _rewardedReady.asStateFlow()
-
-    private val _nativeAd = MutableStateFlow<NativeAd?>(null)
-
-    /** The end-of-list card's ad, kept here so scrolling the list does not load a new one each time. */
-    val nativeAd: StateFlow<NativeAd?> = _nativeAd.asStateFlow()
-    private var nativeLoadedAt = 0L
-    private var nativeLoading = false
 
     private var interstitial: InterstitialAd? = null
     private var interstitialLoading = false
@@ -147,7 +134,6 @@ class NearoAds(
     private fun preload() {
         loadInterstitial()
         loadRewarded()
-        loadNative()
     }
 
     /** "Found it" → Done (#81 ③). Shows a preloaded ad when the rules allow; never waits for one. */
@@ -179,11 +165,6 @@ class NearoAds(
             override fun onAdFailedToShowFullScreenContent(error: com.google.android.gms.ads.AdError) = loadRewarded()
         }
         ad.show(activity) { premium.grantDayPass()?.let(onDayPass) }
-    }
-
-    /** Asks for a fresh card when the one shown is older than [NATIVE_MAX_AGE_MS]. */
-    fun refreshNativeIfStale() {
-        if (SystemClock.elapsedRealtime() - nativeLoadedAt > NATIVE_MAX_AGE_MS) loadNative()
     }
 
     private fun loadInterstitial() {
@@ -227,33 +208,7 @@ class NearoAds(
         )
     }
 
-    private fun loadNative() {
-        if (!showsAds.value || nativeLoading) return
-        nativeLoading = true
-        AdLoader.Builder(app, units.native)
-            .forNativeAd { ad ->
-                _nativeAd.value?.destroy()
-                _nativeAd.value = ad
-                nativeLoadedAt = SystemClock.elapsedRealtime()
-                nativeLoading = false
-            }
-            .withAdListener(
-                object : AdListener() {
-                    override fun onAdFailedToLoad(error: LoadAdError) {
-                        nativeLoading = false
-                    }
-                },
-            )
-            .withNativeAdOptions(
-                NativeAdOptions.Builder().setAdChoicesPlacement(NativeAdOptions.ADCHOICES_TOP_RIGHT).build(),
-            )
-            .build()
-            .loadAd(request())
-    }
-
     companion object {
-        private const val NATIVE_MAX_AGE_MS = 60 * 60 * 1000L
-
         /** IAB TCF v2 key in the default shared preferences, written by the UMP consent form. */
         private const val TCF_PURPOSES = "IABTCF_PurposeConsents"
 
