@@ -27,6 +27,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
     private val puck = DiscMesh.build(PUCK_RADIUS, PUCK_THICKNESS, PUCK_BEVEL)
     private val medal = DiscMesh.build(MEDAL_RADIUS, MEDAL_THICKNESS, MEDAL_BEVEL)
     private val ball = BallMesh.build(BALL_RADIUS)
+    private val rims = Array(STEP_RADII.size) { RimMesh.build(STEP_RADII[it] / RING_OUTER, RIM_WIDTH, RIM_HEIGHT) }
     private val pedestal = DiscMesh.build(PEDESTAL_RADIUS, PEDESTAL_THICKNESS, PEDESTAL_BEVEL)
     private val check = CheckMesh.build(base = MEDAL_THICKNESS / 2)
 
@@ -43,10 +44,11 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
     private var thinBuffer = 0
     private var dashBuffer = 0
     private var haloBuffer = 0
-    private var rimBuffer = 0
     private var riserBuffer = 0
     private var ballBuffer = 0
     private var pedestalBuffer = 0
+    private val rimBuffers = IntArray(STEP_RADII.size)
+    private val rimModel = FloatArray(16)
     private val meshVertices = mesh.size / ObjMesh.FLOATS_PER_VERTEX
     private val puckVertices = puck.size / ObjMesh.FLOATS_PER_VERTEX
     private val medalVertices = medal.size / ObjMesh.FLOATS_PER_VERTEX
@@ -112,10 +114,13 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         thinBuffer = buffers[8]
         dashBuffer = buffers[9]
         haloBuffer = buffers[10]
-        rimBuffer = buffers[11]
         riserBuffer = buffers[12]
         ballBuffer = buffers[13]
         pedestalBuffer = buffers[14]
+        for (step in rims.indices) {
+            rimBuffers[step] = buffers[15 + step]
+            upload(rimBuffers[step], rims[step])
+        }
         upload(meshBuffer, mesh)
         upload(puckBuffer, puck)
         upload(medalBuffer, medal)
@@ -126,7 +131,6 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         upload(thinBuffer, ringStrip(1f - THIN_RING_WIDTH, 1f))
         upload(dashBuffer, dashedRing())
         upload(haloBuffer, ringStrip(TARGET_HALO_INNER, 1f))
-        upload(rimBuffer, ringStrip(1f - RIM_WIDTH, 1f))
         upload(riserBuffer, riserStrip())
         upload(ballBuffer, ball)
         upload(pedestalBuffer, pedestal)
@@ -165,6 +169,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         val showPuck = here > HERE_EPSILON
 
         drawFloor(yaw)
+        if (state.fullBleed) drawRims()
         // Both shadows first (blended onto the floor), then the solids.
         if (showArrow) drawShadow(meshBuffer, meshVertices, model)
         if (showPuck) drawShadow(puckBuffer, puckVertices, markerModel)
@@ -213,6 +218,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, ringVertices)
         GLES20.glDisableVertexAttribArray(position)
 
+        if (state.fullBleed) drawRims()
         drawShadow(medalBuffer, medalVertices, markerModel)
         drawSolid(medalBuffer, medalVertices, markerModel, state.arrowColor)
         drawSolid(checkBuffer, checkVertices, markerModel, accent)
@@ -372,7 +378,10 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
             // Sweep progress, clockwise from straight ahead.
             val segments = (state.progress.coerceIn(0f, 1f) * RING_SEGMENTS).roundToInt()
             if (segments > 0) {
-                flat(viewProjection, color, 1f)
+                // Across the screen the lit rim stands on the ring's place: the sweep runs just inside it.
+                val inside = if (state.fullBleed) SWEEP_INSIDE else 1f
+                Matrix.scaleM(mvp, 0, viewProjection, 0, inside, 1f, inside)
+                flat(mvp, color, 1f)
                 GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, (segments + 1) * 2)
             }
         } else if (here < 1f - HERE_EPSILON) {
@@ -458,21 +467,17 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         }
         // Three steps (design find-flow-3d v1.2), far and low ones first: each a lightly filled top with
         // a light rim, and a darker riser down to the next one on the side that faces the viewer.
-        val stripVertices = ringVertices
         for (step in STEP_RADII.indices.reversed()) {
             val radius = STEP_RADII[step]
             val y = -step * STEP_HEIGHT
             val outer = step > 0
             val below = y - STEP_HEIGHT
             floorPart(position, riserBuffer, RISER_VERTICES, below, radius, STEP_HEIGHT, RISER_COLOR, RISER_ALPHA)
-            floorPart(position, discBuffer, stripVertices, y, radius, 1f, color, STEP_FILL_ALPHAS[step], soft = outer)
-            if (outer) floorPart(position, rimBuffer, stripVertices, y, radius, 1f, color, STEP_RIM_ALPHAS[step])
+            floorPart(position, discBuffer, ringVertices, y, radius, 1f, color, STEP_FILL_ALPHAS[step], soft = outer)
         }
-        // The main ring last, on top of its step; the sweep progress is drawn from this buffer too.
+        // The rims are lit solids drawn later ([drawRims]); the sweep progress is drawn from this buffer.
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, ringBuffer)
         GLES20.glVertexAttribPointer(position, 3, GLES20.GL_FLOAT, false, 0, 0)
-        flat(viewProjection, color, WIDE_RING_ALPHA)
-        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, ringVertices)
     }
 
     /** One piece of the stepped floor: a unit strip scaled to [radius] (and [height] upwards) at height [y]. */
@@ -561,10 +566,19 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
     }
 
     /** A lit mesh; [stretch] is how much wider than its model it is drawn (the low-confidence arrow). */
-    private fun drawSolid(buffer: Int, vertices: Int, model: FloatArray, color: Int, stretch: Float = 1f) {
+    private fun drawSolid(
+        buffer: Int,
+        vertices: Int,
+        model: FloatArray,
+        color: Int,
+        stretch: Float = 1f,
+        soft: Boolean = false,
+    ) {
         GLES20.glEnable(GLES20.GL_DEPTH_TEST)
-        GLES20.glDisable(GLES20.GL_BLEND)
+        // [soft] solids (the floor's rims) fade out towards the texts like the flat floor does.
+        if (soft) GLES20.glEnable(GLES20.GL_BLEND) else GLES20.glDisable(GLES20.GL_BLEND)
         GLES20.glUseProgram(arrowProgram)
+        fadeUniforms(arrowProgram, soft)
         val position = GLES20.glGetAttribLocation(arrowProgram, "aPos")
         val normal = GLES20.glGetAttribLocation(arrowProgram, "aNormal")
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, buffer)
@@ -597,6 +611,35 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         GLES20.glDisableVertexAttribArray(position)
         GLES20.glDisableVertexAttribArray(normal)
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0)
+    }
+
+    /** The rims of the three steps: lit, so their tops and walls read as solid edges of a real floor. */
+    private fun drawRims() {
+        for (step in rims.indices.reversed()) {
+            Matrix.setIdentityM(rimModel, 0)
+            Matrix.translateM(rimModel, 0, 0f, -step * STEP_HEIGHT, 0f)
+            Matrix.scaleM(rimModel, 0, MESH_SCALE, MESH_SCALE, MESH_SCALE)
+            val vertices = rims[step].size / ObjMesh.FLOATS_PER_VERTEX
+            // The middle rim is always whole (the layout keeps it clear of the texts); the far ones fade.
+            drawSolid(rimBuffers[step], vertices, rimModel, state.floorColor, soft = step > 0)
+        }
+        // Back to the floor pass's state for the shadows that follow.
+        GLES20.glDisable(GLES20.GL_DEPTH_TEST)
+        GLES20.glEnable(GLES20.GL_BLEND)
+    }
+
+    /**
+     * Where a [soft] lit solid fades out, in window pixels from the bottom: (gone, whole) at the
+     * lower edge and (whole, gone) at the upper one. Not soft: far outside the view, so nothing fades.
+     */
+    private fun fadeUniforms(program: Int, soft: Boolean) {
+        val bottom = state.bottomFade
+        val top = state.topFade
+        val band = FADE_BAND * viewportHeight
+        val goneY = if (soft && bottom >= 0f) (1f - bottom) * viewportHeight else -2f * band
+        val clearY = if (soft && top >= 0f) (1f - top) * viewportHeight else NO_TOP_FADE
+        GLES20.glUniform2f(GLES20.glGetUniformLocation(program, "uFade"), goneY, goneY + band)
+        GLES20.glUniform2f(GLES20.glGetUniformLocation(program, "uTop"), clearY - band, clearY)
     }
 
     /** [soft]: fades towards the edges of the view and below the middle of the screen (the pulses). */
@@ -774,7 +817,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         const val TARGET_HALO_ALPHA = 0.6f
         const val TARGET_MIN_RADIUS = 1.25f * RING_OUTER
         const val TARGET_STEP = 0.05f * RING_OUTER
-        const val TARGET_CLEARANCE = 0.07f
+        const val TARGET_CLEARANCE = 0.045f
         const val HERE_EPSILON = 0.01f
 
         // Stepped floor (design find-flow-3d v1.2, #132): three round steps at R, 1.76 R and 2.64 R,
@@ -783,10 +826,12 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         // ball (0.12 R) on a white stand (0.17 R wide, 0.06 R high) on the step it falls on.
         const val STEP_HEIGHT = 0.10f * RING_OUTER
         val STEP_RADII = floatArrayOf(RING_OUTER, MID_RING, FAR_RING)
-        val STEP_FILL_ALPHAS = floatArrayOf(0.09f, 0.06f, 0.05f)
-        val STEP_RIM_ALPHAS = floatArrayOf(0f, 0.55f, 0.40f)
+        val STEP_FILL_ALPHAS = floatArrayOf(0.13f, 0.05f, 0.03f)
         const val STEP_SECTOR_ALPHA = 0.09f
-        const val RIM_WIDTH = 0.014f
+        // Rims, in R like the meshes: 0.04 wide and 0.05 high, white like the arrow.
+        const val RIM_WIDTH = 0.04f
+        const val RIM_HEIGHT = 0.05f
+        const val SWEEP_INSIDE = 0.95f
         const val RISER_COLOR = 0x0B2A8A
         const val RISER_ALPHA = 0.30f
         const val RISER_VERTICES = (RING_SEGMENTS / 2 + 1) * 2
@@ -811,7 +856,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         const val FOUND_RING = 1.25f * RING_OUTER
         const val FOUND_DISC_ALPHA = 0.16f
         const val ACCENT_RING_WIDTH = 0.07f / 1.25f
-        const val BUFFERS = 15
+        const val BUFFERS = 18
 
         // Shadow: #0B2A8A, never black, about 28 % where all three copies overlap.
         const val SHADOW_RED = 0.043f
@@ -973,9 +1018,13 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
             uniform vec3 uLight;
             uniform vec3 uCamera;
             uniform float uGloss;
+            uniform vec2 uFade;
+            uniform vec2 uTop;
             varying vec3 vNormal;
             varying vec3 vWorld;
             void main() {
+                float fade = smoothstep(uFade.x, uFade.y, gl_FragCoord.y);
+                fade *= 1.0 - smoothstep(uTop.x, uTop.y, gl_FragCoord.y);
                 vec3 n = normalize(vNormal);
                 vec3 v = normalize(uCamera - vWorld);
                 float diffuse = max(dot(n, uLight), 0.0);
@@ -984,7 +1033,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
                 float highlight = pow(max(dot(n, normalize(uLight + v)), 0.0), 48.0) * uGloss;
                 float rim = pow(1.0 - max(dot(n, v), 0.0), 3.0);
                 color += vec3(highlight) + vec3(0.40, 0.58, 1.0) * rim * 0.12;
-                gl_FragColor = vec4(min(color, vec3(1.0)), 1.0);
+                gl_FragColor = vec4(min(color, vec3(1.0)) * fade, fade);
             }
         """
     }

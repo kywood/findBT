@@ -69,4 +69,16 @@ class FoundMeshesTest {
             assertEquals(0.12f, outwards, 0.0001f)
         }
     }
+
+    @Test
+    fun `rim stands on the floor between its two radii`() {
+        val mesh = RimMesh.build(outer = 1.76f, width = 0.04f, height = 0.05f)
+        assertUnitNormals(mesh)
+        for (vertex in 0 until mesh.size / stride) {
+            val o = vertex * stride
+            val distance = sqrt(mesh[o] * mesh[o] + mesh[o + 2] * mesh[o + 2])
+            assertTrue(distance in 1.7199f..1.7601f)
+            assertTrue(mesh[o + 1] in 0f..0.05f)
+        }
+    }
 }
