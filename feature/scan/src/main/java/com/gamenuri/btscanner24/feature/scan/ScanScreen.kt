@@ -285,26 +285,28 @@ fun ScanContent(
     ) { innerPadding ->
         if (mapShown) {
             DeviceMap(state, actions, Modifier.fillMaxSize().padding(innerPadding), followPose)
-        } else Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
-        ) {
-            ControlRow(state, actions, onSortNow, onOpenFilters = { filtersOpen = true })
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+            ) {
+                ControlRow(state, actions, onSortNow, onOpenFilters = { filtersOpen = true })
 
-            // Nothing to show and the radio (or Location on Android 11) is off: a full empty state (#30).
-            val radioOff = error == ScanFailure.BLUETOOTH_OFF || error == ScanFailure.LOCATION_OFF
-            if (error != null && radioOff && state.items.isEmpty()) {
-                RadioOffState(error, actions, Modifier.fillMaxWidth().weight(1f))
-            } else {
-                DeviceList(
-                    state = state,
-                    permissionBanner = permissionBanner,
-                    error = error,
-                    actions = actions,
-                    listState = listState,
-                    modifier = Modifier.fillMaxWidth().weight(1f),
-                )
+                // Nothing to show and the radio (or Location on Android 11) is off: a full empty state (#30).
+                val radioOff = error == ScanFailure.BLUETOOTH_OFF || error == ScanFailure.LOCATION_OFF
+                if (error != null && radioOff && state.items.isEmpty()) {
+                    RadioOffState(error, actions, Modifier.fillMaxWidth().weight(1f))
+                } else {
+                    DeviceList(
+                        state = state,
+                        permissionBanner = permissionBanner,
+                        error = error,
+                        actions = actions,
+                        listState = listState,
+                        modifier = Modifier.fillMaxWidth().weight(1f),
+                    )
+                }
             }
         }
     }

@@ -628,8 +628,10 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
         val top = bottom + tag.height
         for (other in 0 until kept) {
             val at = other * RECT_FLOATS
-            val apart = left - TAG_PADDING >= rects[at + 2] || right + TAG_PADDING <= rects[at] ||
-                bottom - TAG_PADDING >= rects[at + 3] || top + TAG_PADDING <= rects[at + 1]
+            val apart = left - TAG_PADDING >= rects[at + 2] ||
+                right + TAG_PADDING <= rects[at] ||
+                bottom - TAG_PADDING >= rects[at + 3] ||
+                top + TAG_PADDING <= rects[at + 1]
             if (!apart) return false
         }
         val at = kept * RECT_FLOATS
