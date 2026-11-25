@@ -2,6 +2,7 @@ package com.gamenuri.btscanner24.feature.devices
 
 import com.gamenuri.btscanner24.core.ble.ScanFailure
 import com.gamenuri.btscanner24.core.model.BleDevice
+import com.gamenuri.btscanner24.core.model.LastSeen
 import com.gamenuri.btscanner24.core.model.PairedDevice
 
 /** One paired or saved device on the My Devices tab. */
@@ -16,6 +17,8 @@ data class MyDeviceItem(
     val isSaved: Boolean = false,
     /** Connected to this phone right now (#119): it is close even when the scan does not hear it. */
     val isConnected: Boolean = false,
+    /** When and where it was last heard, kept from earlier sessions too (#162). */
+    val lastSeen: LastSeen? = null,
 ) {
     /** Address to open find mode with: the live (possibly rotated) one when known. */
     val findAddress: String get() = sighting?.address ?: paired.address
@@ -34,4 +37,16 @@ data class MyDevicesUiState(
     val isEmpty: Boolean = false,
     /** The scan cannot run (Bluetooth or Location off…), so "nearby" cannot be known right now. */
     val scanFailure: ScanFailure? = null,
-)
+) {
+    /** The same lists with each device's kept record, by the address it is listed under. */
+    fun withLastSeen(records: Map<String, LastSeen>): MyDevicesUiState {
+        if (records.isEmpty()) return this
+        fun List<MyDeviceItem>.marked() = map { it.copy(lastSeen = records[it.paired.address]) }
+        return copy(
+            saved = saved.marked(),
+            nearby = nearby.marked(),
+            notNearby = notNearby.marked(),
+            others = others.marked(),
+        )
+    }
+}

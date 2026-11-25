@@ -100,6 +100,7 @@ dependencies {
     implementation(projects.core.billing)
     implementation(projects.core.data)
     implementation(projects.core.designsystem)
+    implementation(projects.core.sensors)
     implementation(projects.core.ui)
     implementation(projects.feature.devices)
     implementation(projects.feature.finder)

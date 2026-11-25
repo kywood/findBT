@@ -28,4 +28,16 @@
     <string name="devices_saved_edit">Change name or type</string>
     <string name="devices_saved_remove">Remove from saved</string>
     <string name="devices_saved_not_seen">Saved · not seen yet</string>
+    <!-- Last seen (#162) -->
+    <string name="devices_last_detected">Last seen · %1$s</string>
+    <string name="devices_last_detected_map">Last seen · %1$s · View map</string>
+    <string name="last_seen_menu">Last seen</string>
+    <string name="last_seen_place">Where this phone last picked up its signal</string>
+    <string name="last_seen_open_map">Open in Maps</string>
+    <string name="last_seen_note">This is where this phone last detected it, not where the device is now. The location stays on this phone.</string>
+    <string name="last_seen_no_permission">Place not recorded because location access is off</string>
+    <string name="last_seen_no_fix">The place could not be read at that moment</string>
+    <string name="last_seen_turn_on">Turn on place recording</string>
+    <string name="last_seen_find">Start finding</string>
+    <string name="last_seen_no_map_app">No maps app found</string>
 </resources>

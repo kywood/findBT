@@ -17,11 +17,20 @@ import com.gamenuri.btscanner24.core.ble.MediaFindTone
 import com.gamenuri.btscanner24.core.data.AppStateRepository
 import com.gamenuri.btscanner24.core.data.DataDependenciesProvider
 import com.gamenuri.btscanner24.core.data.HiddenDevicesRepository
+import com.gamenuri.btscanner24.core.data.LastSeenRepository
 import com.gamenuri.btscanner24.core.data.ListPreferencesRepository
 import com.gamenuri.btscanner24.core.data.SavedDevicesRepository
+import com.gamenuri.btscanner24.core.model.LastSeen
+import com.gamenuri.btscanner24.core.sensors.PhoneLocation
 import com.gamenuri.btscanner24.demo.DemoMode
 import com.gamenuri.btscanner24.demo.ScanCensus
+import com.gamenuri.btscanner24.feature.devices.LastSeenRecorder
 import kotlin.concurrent.thread
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 class BtScannerApp :
     Application(),
@@ -62,6 +71,32 @@ class BtScannerApp :
     // A demo launch (debug screenshots) keeps its saves apart from the user's own list.
     override val savedDevices: SavedDevicesRepository
         get() = if (demo != null) demoSavedDevices else userSavedDevices
+
+    private val userLastSeen by lazy { LastSeenRepository(this) }
+    private val demoLastSeen by lazy { LastSeenRepository(this, demo = true) }
+
+    override val lastSeen: LastSeenRepository
+        get() = if (demo != null) demoLastSeen else userLastSeen
+
+    private var lastSeenRecorder: Job? = null
+
+    /**
+     * Starts writing down where the user's own devices were last heard (#162). Called once the
+     * launch is known not to be a demo; it only listens to scans the screens run, so it does nothing
+     * while the app is in the background.
+     */
+    internal fun startLastSeenRecorder() {
+        if (lastSeenRecorder != null || demo != null) return
+        val location = PhoneLocation(this)
+        val recorder = LastSeenRecorder(
+            devices = bleDependencies.repository,
+            bondedDevices = bleDependencies.bondedDevices,
+            savedDevices = savedDevices,
+            store = lastSeen,
+            locate = { location.current()?.let { LastSeen.Place(it.latitude, it.longitude, it.accuracyMeters) } },
+        )
+        lastSeenRecorder = CoroutineScope(SupervisorJob() + Dispatchers.Default).launch { recorder.run() }
+    }
 
     val appState: AppStateRepository by lazy { AppStateRepository(this) }
 

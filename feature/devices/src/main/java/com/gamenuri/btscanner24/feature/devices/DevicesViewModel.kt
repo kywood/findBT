@@ -16,6 +16,7 @@ import com.gamenuri.btscanner24.core.ble.scanContinuously
 import com.gamenuri.btscanner24.core.ble.watch
 import com.gamenuri.btscanner24.core.data.DataDependenciesProvider
 import com.gamenuri.btscanner24.core.data.HiddenDevicesRepository
+import com.gamenuri.btscanner24.core.data.LastSeenRepository
 import com.gamenuri.btscanner24.core.data.SavedDevicesRepository
 import com.gamenuri.btscanner24.core.model.PairedDevice
 import kotlinx.coroutines.Dispatchers
@@ -41,6 +42,7 @@ class DevicesViewModel(
     private val connectedDevices: ConnectedDevices,
     private val hiddenDevices: HiddenDevicesRepository,
     private val savedDevices: SavedDevicesRepository,
+    private val lastSeen: LastSeenRepository,
     private val clock: () -> Long = System::currentTimeMillis,
 ) : ViewModel() {
 
@@ -51,7 +53,7 @@ class DevicesViewModel(
     private var scanJob: Job? = null
     private var connectedJob: Job? = null
 
-    val uiState: StateFlow<MyDevicesUiState> = combine(
+    private val listed = combine(
         paired,
         repository.devices.sample(UI_REFRESH_MS),
         hiddenDevices.hidden,
@@ -60,6 +62,10 @@ class DevicesViewModel(
     ) { pairedList, seen, hidden, (permitted, failure, linked), saved ->
         MyDevices.build(pairedList, seen.values, hidden, clock(), saved, linked) { it.distanceMeters }
             .copy(hasPermission = permitted, scanFailure = failure)
+    }
+
+    val uiState: StateFlow<MyDevicesUiState> = combine(listed, lastSeen.lastSeen) { state, records ->
+        state.withLastSeen(records)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MyDevicesUiState())
 
     /** Called when the tab becomes visible: re-read paired devices (the user may have paired one) and scan. */
@@ -102,7 +108,11 @@ class DevicesViewModel(
 
     /** Takes a saved device off the list for good (#108); paired ones are hidden instead. */
     fun remove(item: MyDeviceItem) {
-        viewModelScope.launch { savedDevices.remove(item.paired.address) }
+        viewModelScope.launch {
+            savedDevices.remove(item.paired.address)
+            // Its last place goes with it: nothing is kept about a device the user took off the list.
+            lastSeen.remove(item.paired.address)
+        }
     }
 
     override fun onCleared() {
@@ -124,6 +134,7 @@ class DevicesViewModel(
                     ble.connectedDevices,
                     data.hiddenDevices,
                     data.savedDevices,
+                    data.lastSeen,
                 )
             }
         }

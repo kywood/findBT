@@ -28,4 +28,16 @@
     <string name="devices_saved_edit">Alterar nome ou tipo</string>
     <string name="devices_saved_remove">Remover dos salvos</string>
     <string name="devices_saved_not_seen">Salvo · ainda não detectado</string>
+    <!-- Last seen (#162) -->
+    <string name="devices_last_detected">Visto pela última vez · %1$s</string>
+    <string name="devices_last_detected_map">Visto pela última vez · %1$s · Ver mapa</string>
+    <string name="last_seen_menu">Visto pela última vez</string>
+    <string name="last_seen_place">Onde este telefone captou o sinal dele pela última vez</string>
+    <string name="last_seen_open_map">Abrir no Mapas</string>
+    <string name="last_seen_note">É onde este telefone o detectou pela última vez, não onde o dispositivo está agora. A localização fica neste telefone.</string>
+    <string name="last_seen_no_permission">O lugar não foi registrado porque o acesso à localização está desativado</string>
+    <string name="last_seen_no_fix">Não foi possível ler o lugar naquele momento</string>
+    <string name="last_seen_turn_on">Ativar o registro do lugar</string>
+    <string name="last_seen_find">Começar a procurar</string>
+    <string name="last_seen_no_map_app">Nenhum app de mapas encontrado</string>
 </resources>

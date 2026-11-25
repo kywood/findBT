@@ -84,4 +84,5 @@ interface DataDependenciesProvider {
     val listPreferences: ListPreferencesRepository
     val hiddenDevices: HiddenDevicesRepository
     val savedDevices: SavedDevicesRepository
+    val lastSeen: LastSeenRepository
 }

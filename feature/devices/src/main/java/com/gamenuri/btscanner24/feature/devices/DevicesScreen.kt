@@ -294,6 +294,20 @@ private fun PairedRow(
     saved: SavedActions,
 ) {
     var menuOpen by remember { mutableStateOf(false) }
+    var lastSeenOpen by remember { mutableStateOf(false) }
+    val record = item.lastSeen
+    if (lastSeenOpen && record != null) {
+        LastSeenSheet(
+            title = item.paired.name?.takeIf { it.isNotBlank() } ?: item.paired.category.label(),
+            record = record,
+            now = now,
+            onFind = {
+                lastSeenOpen = false
+                onClick(item)
+            },
+            onDismiss = { lastSeenOpen = false },
+        )
+    }
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -352,6 +366,15 @@ private fun PairedRow(
                 Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.devices_more_for, title))
             }
             DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                if (record != null) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.last_seen_menu)) },
+                        onClick = {
+                            menuOpen = false
+                            lastSeenOpen = true
+                        },
+                    )
+                }
                 if (item.isSaved) {
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.devices_saved_edit)) },
@@ -384,6 +407,7 @@ private fun PairedRow(
 @Composable
 private fun subtitle(item: MyDeviceItem, now: Long): String {
     val sighting = item.sighting
+    val record = item.lastSeen
     val heard = sighting != null && now - sighting.lastSeen <= MyDevices.ACTIVE_WINDOW_MS
     return when {
         // Connected but silent: say so instead of "not seen", which reads as lost (#119).
@@ -395,6 +419,12 @@ private fun subtitle(item: MyDeviceItem, now: Long): String {
             }
                 ?: item.paired.category.label()
         }
+        // Not here now, but heard before, in this session or an earlier one (#162).
+        record != null && record.seenAt >= (sighting?.lastSeen ?: Long.MIN_VALUE) - RECORD_SLACK_MS &&
+            now - record.seenAt >= RECORD_SHOWN_AFTER_MS -> stringResource(
+            if (record.place != null) R.string.devices_last_detected_map else R.string.devices_last_detected,
+            lastSeenTime(LocalContext.current, record.seenAt, now),
+        )
         sighting == null ->
             stringResource(if (item.isSaved) R.string.devices_saved_not_seen else R.string.devices_not_seen)
         else -> {
@@ -407,6 +437,12 @@ private fun subtitle(item: MyDeviceItem, now: Long): String {
         }
     }
 }
+
+/** The kept record is written at most once a minute, so it may trail the live sighting by that much. */
+private const val RECORD_SLACK_MS = 2 * 60_000L
+
+/** Up to here "Last seen: n min" from the live scan reads better than a date. */
+private const val RECORD_SHOWN_AFTER_MS = 60 * 60_000L
 
 @Composable
 private fun signalLabel(level: SignalLevel): String = stringResource(

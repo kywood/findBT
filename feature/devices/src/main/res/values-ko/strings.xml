@@ -28,4 +28,16 @@
     <string name="devices_saved_edit">이름·종류 바꾸기</string>
     <string name="devices_saved_remove">저장 해제</string>
     <string name="devices_saved_not_seen">저장됨 · 아직 감지 안 됨</string>
+    <!-- Last seen (#162) -->
+    <string name="devices_last_detected">마지막 감지 · %1$s</string>
+    <string name="devices_last_detected_map">마지막 감지 · %1$s · 지도 보기</string>
+    <string name="last_seen_menu">마지막 감지</string>
+    <string name="last_seen_place">이 폰이 마지막으로 신호를 받은 곳</string>
+    <string name="last_seen_open_map">지도에서 열기</string>
+    <string name="last_seen_note">기기의 현재 위치가 아니라, 이 폰이 마지막으로 감지한 위치예요. 위치는 이 폰에만 저장돼요.</string>
+    <string name="last_seen_no_permission">위치 권한이 없어 장소는 기록하지 못했어요</string>
+    <string name="last_seen_no_fix">그때는 위치를 읽지 못했어요</string>
+    <string name="last_seen_turn_on">위치 기록 켜기</string>
+    <string name="last_seen_find">찾기 시작</string>
+    <string name="last_seen_no_map_app">지도 앱을 찾지 못했어요</string>
 </resources>

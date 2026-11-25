@@ -73,6 +73,7 @@ class MainActivity : ComponentActivity() {
         val demo = DemoMode.request(intent)
         val app = application as BtScannerApp
         if (demo != null) app.demo = demo
+        app.startLastSeenRecorder()
         val showOnboarding = demo == null && needsOnboarding(app)
         setContent {
             // Locale outside the theme, so locale-dependent typography (#75) follows demo languages too.

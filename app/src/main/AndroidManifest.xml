@@ -15,6 +15,13 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"
         android:maxSdkVersion="30" />
 
+    <!--
+        The approximate place where one of the user's own devices was last heard (#162). Asked for only
+        when the user turns that on; on Android 11 and older the scan's own location permission covers
+        it. The scan itself still never derives a location (neverForLocation above).
+    -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
     <uses-feature android:name="android.hardware.bluetooth_le" android:required="true"/>
 
     <application

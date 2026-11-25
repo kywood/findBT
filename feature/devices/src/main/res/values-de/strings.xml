@@ -28,4 +28,16 @@
     <string name="devices_saved_edit">Name oder Typ ändern</string>
     <string name="devices_saved_remove">Aus Gespeicherten entfernen</string>
     <string name="devices_saved_not_seen">Gespeichert · noch nicht gesehen</string>
+    <!-- Last seen (#162) -->
+    <string name="devices_last_detected">Zuletzt gesehen · %1$s</string>
+    <string name="devices_last_detected_map">Zuletzt gesehen · %1$s · Karte ansehen</string>
+    <string name="last_seen_menu">Zuletzt gesehen</string>
+    <string name="last_seen_place">Wo dieses Telefon sein Signal zuletzt empfangen hat</string>
+    <string name="last_seen_open_map">In Karten öffnen</string>
+    <string name="last_seen_note">Hier hat dieses Telefon es zuletzt erkannt, nicht wo das Gerät jetzt ist. Der Standort bleibt auf diesem Telefon.</string>
+    <string name="last_seen_no_permission">Der Ort wurde nicht gespeichert, weil der Standortzugriff aus ist</string>
+    <string name="last_seen_no_fix">Der Ort konnte in dem Moment nicht gelesen werden</string>
+    <string name="last_seen_turn_on">Ortsaufzeichnung einschalten</string>
+    <string name="last_seen_find">Suche starten</string>
+    <string name="last_seen_no_map_app">Keine Karten-App gefunden</string>
 </resources>
