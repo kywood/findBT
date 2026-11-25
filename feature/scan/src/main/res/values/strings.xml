@@ -24,7 +24,7 @@
     <!-- Filter screen and other devices (#85, #82) -->
     <string name="filter_close">Close</string>
     <string name="filter_section_show">Show</string>
-    <string name="filter_show_other_body">Beacons, TVs, sensors and more · %1$d</string>
+    <string name="filter_show_other_body">Signals with no name or of a kind that is hard to tell · %1$d</string>
     <string name="filter_show_unnamed">Show unnamed devices</string>
     <string name="filter_distance">Distance</string>
     <string name="filter_distance_within_5">Within 5 m</string>
@@ -37,6 +37,16 @@
     <string name="filter_no_results">No results</string>
     <string name="nearby_other_show">Show</string>
     <string name="nearby_other_section">Other devices · %1$d</string>
+    <!-- Other devices: close and explanation (#142) -->
+    <string name="nearby_other_close">Close</string>
+    <string name="nearby_other_close_section">Close other devices</string>
+    <string name="nearby_other_order">%1$s · new ones at the bottom</string>
+    <string name="nearby_other_info">About other devices</string>
+    <string name="other_info_title">Other devices</string>
+    <string name="other_info_what">Nearby Bluetooth signals with no name, or of a kind that is hard to tell. They can be a neighbour’s devices, home appliances, TVs or beacons.</string>
+    <string name="other_info_why">They start hidden because there are usually many of them and most are not yours.</string>
+    <string name="other_info_mine">If one of them is yours, tap it to start finding it. Watch whether the distance drops as you walk towards it.</string>
+    <string name="other_info_ok">Got it</string>
     <string name="nearby_empty_personal">No carried devices nearby</string>
     <plurals name="filter_show_results">
         <item quantity="one">Show %1$d device</item>
