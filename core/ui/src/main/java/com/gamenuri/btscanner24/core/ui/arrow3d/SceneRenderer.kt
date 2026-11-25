@@ -56,6 +56,8 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
     private val shadowModel = FloatArray(16)
     private val mvp = FloatArray(16)
     private val shadow = FloatArray(16)
+    private val probe = FloatArray(4)
+    private val projected = FloatArray(4)
     private var viewportWidth = 1f
     private var viewportHeight = 1f
 
@@ -261,7 +263,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         // One floor unit is the same number of pixels whatever the view's shape: the ring is
         // [SceneState.ringFraction] of the width, and a wider or taller view only sees more floor.
         // The floor's middle sits at [SceneState.centerY] of the height, not always in the centre.
-        val unitsPerPixel = RING_OUTER / (state.ringFraction.coerceAtLeast(MIN_RING_FRACTION) * viewportWidth)
+        val unitsPerPixel = RING_OUTER / ringPixels()
         val nearPerPixel = unitsPerPixel * NEAR / CAMERA_DISTANCE
         val above = state.centerY.coerceIn(0f, 1f) * viewportHeight
         Matrix.frustumM(
@@ -285,6 +287,49 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         Matrix.setRotateM(rollMatrix, 0, -roll, 0f, 0f, 1f)
         Matrix.multiplyMM(view, 0, rollMatrix, 0, lookAt, 0)
         Matrix.multiplyMM(viewProjection, 0, projection, 0, view, 0)
+    }
+
+    /**
+     * The floor ring's radius in pixels: [SceneState.ringFraction] of the width, or less when the
+     * place the layout keeps free (between the two fades) is too low for it. The steeper the camera
+     * looks down (phone lying flat), the taller the ring is on screen and the more it has to shrink,
+     * so it never reaches the state text above or the distance below (#121).
+     */
+    private fun ringPixels(): Float {
+        val wanted = state.ringFraction.coerceAtLeast(MIN_RING_FRACTION) * viewportWidth
+        val top = state.topFade
+        val bottom = state.bottomFade
+        val center = state.centerY
+        if (top < 0f || bottom < 0f || center <= top || bottom <= center) return wanted
+        val e = radians(elevation)
+        // Per pixel of R: how far the arrow's tip and top reach above the middle, the ring's near edge below.
+        val above = ARROW_REACH * sin(e) + ARROW_TOP * cos(e)
+        val below = NEAR_EDGE * sin(e)
+        val room = FIT_MARGIN * viewportHeight
+        val fits = minOf((center - top) * room / above, (bottom - center) * room / below)
+        return minOf(wanted, fits).coerceAtLeast(MIN_RING_FRACTION * viewportWidth)
+    }
+
+    /**
+     * How far out the device marker sits: on the far ring, or closer in when the far ring is hidden
+     * under the fade at the top, so the marker stays in sight instead of vanishing there (#121).
+     */
+    private fun targetRadius(x: Float, z: Float): Float {
+        val top = state.topFade
+        if (top < 0f) return FAR_RING
+        // Normalised height (−1 bottom, +1 top) of the line below which the far floor is whole.
+        val limit = 1f - 2f * (top + FADE_BAND)
+        var radius = FAR_RING
+        while (radius > TARGET_MIN_RADIUS) {
+            probe[0] = x * radius
+            probe[1] = 0f
+            probe[2] = z * radius
+            probe[3] = 1f
+            Matrix.multiplyMV(projected, 0, viewProjection, 0, probe, 0)
+            if (projected[3] > 0f && projected[1] / projected[3] <= limit) return radius
+            radius -= TARGET_STEP
+        }
+        return TARGET_MIN_RADIUS
     }
 
     private fun drawFloor(yaw: Float) {
@@ -332,7 +377,8 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         val (x, z) = floorDirection(yaw)
         val color = state.accentColor
         val alpha = marker * (1f - here)
-        Matrix.translateM(shadowModel, 0, viewProjection, 0, x * FAR_RING, 0f, z * FAR_RING)
+        val radius = targetRadius(x, z)
+        Matrix.translateM(shadowModel, 0, viewProjection, 0, x * radius, 0f, z * radius)
         Matrix.scaleM(mvp, 0, shadowModel, 0, TARGET_DOT, 1f, TARGET_DOT)
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, discBuffer)
         GLES20.glVertexAttribPointer(position, 3, GLES20.GL_FLOAT, false, 0, 0)
@@ -567,6 +613,14 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
 
         // Camera.
         const val MIN_RING_FRACTION = 0.05f
+
+        // Fitting the ring between the texts (#121), in units of R: the arrow's tip is 0.75 ahead of
+        // the middle and its top face 0.36 above the floor; the ring's near edge looks about 8 %
+        // bigger than R because it is closer to the camera.
+        const val ARROW_REACH = 0.75f
+        const val ARROW_TOP = 0.36f
+        const val NEAR_EDGE = 1.08f
+        const val FIT_MARGIN = 0.94f
         const val NEAR = 0.5f
         const val FAR = 30f
         const val CAMERA_DISTANCE = 6.6f
@@ -644,6 +698,8 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         const val TARGET_HALO = 0.21f * RING_OUTER
         const val TARGET_HALO_INNER = 0.18f / 0.21f
         const val TARGET_HALO_ALPHA = 0.6f
+        const val TARGET_MIN_RADIUS = 1.25f * RING_OUTER
+        const val TARGET_STEP = 0.1f * RING_OUTER
         const val HERE_EPSILON = 0.01f
 
         // "Found it" (same design): a white medal of radius 0.6 and thickness 0.13 with rounded
