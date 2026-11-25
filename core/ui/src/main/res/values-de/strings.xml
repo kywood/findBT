@@ -37,6 +37,7 @@
     <string name="device_distance">~%1$s m</string>
     <string name="device_name_with_suffix">%1$s · %2$s</string>
     <string name="device_generic_maker_type">%1$s-%2$s</string>
+    <string name="device_generic_apple_find_my">Apple „Wo ist?“-Gerät</string>
     <string name="device_generic_maker">%1$s-Gerät</string>
     <string name="device_generic">Bluetooth-Gerät</string>
     <string name="badge_paired">Meins</string>

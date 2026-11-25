@@ -80,7 +80,10 @@ fun DeviceCard(
             .padding(horizontal = 16.dp, vertical = if (compact) 4.dp else 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (compact) DeviceIcon(device.category, size = 34.dp, muted = true) else DeviceIcon(device.category)
+        // An unnamed Apple Find My signal can be any Apple device, so it gets the neutral icon (#144).
+        val findMy = label is DeviceLabel.Generic && label.appleFindMy
+        val iconCategory = if (findMy) DeviceCategory.UNKNOWN else device.category
+        if (compact) DeviceIcon(iconCategory, size = 34.dp, muted = true) else DeviceIcon(iconCategory)
         Spacer(Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
