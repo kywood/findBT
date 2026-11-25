@@ -29,6 +29,8 @@ data class FindSceneSpec(
     /** Low confidence: wider arrow and sector. */
     val wide: Boolean = false,
     val locked: Boolean = false,
+    /** Within reach: a marker with rings pulsing over the floor instead of the arrow. */
+    val rightHere: Boolean = false,
     val arrowColor: Color = Color.White,
     val floorColor: Color = Color.White,
     /** Animations are off in the system settings: no bobbing. */
@@ -73,6 +75,7 @@ fun FindScene3d(
                 progress = spec.progress
                 wide = spec.wide
                 locked = spec.locked
+                rightHere = spec.rightHere
                 arrowColor = spec.arrowColor.toArgb()
                 floorColor = spec.floorColor.toArgb()
                 reduceMotion = spec.reduceMotion

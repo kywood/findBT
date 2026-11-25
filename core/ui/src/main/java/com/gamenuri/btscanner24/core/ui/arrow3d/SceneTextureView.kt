@@ -26,6 +26,7 @@ internal class SceneTextureView(context: Context) :
     var onUnavailable: (() -> Unit)? = null
 
     private val mesh: FloatArray by lazy { ArrowMesh.build() }
+    private val marker: FloatArray by lazy { MarkerMesh.build() }
     private var thread: RenderThread? = null
 
     init {
@@ -122,7 +123,7 @@ internal class SceneTextureView(context: Context) :
                 check(eglSurface != EGL14.EGL_NO_SURFACE) { "EGL surface" }
                 check(EGL14.eglMakeCurrent(display, eglSurface, eglSurface, context)) { "EGL current" }
 
-                val renderer = SceneRenderer(mesh, this@SceneTextureView.state)
+                val renderer = SceneRenderer(mesh, marker, this@SceneTextureView.state)
                 renderer.onSurfaceCreated()
                 var last = System.nanoTime()
                 while (running) {

@@ -14,20 +14,28 @@ import kotlin.math.sqrt
 /**
  * Draws the find arrow as a real 3D object on a floor (#76): the mesh with a matte two-tone light
  * and a faint blue rim, a planar shadow, a floor ring and the confidence sector, seen through a
- * perspective camera that follows how the phone is held. OpenGL ES 2.0 only, so every test phone
+ * perspective camera that follows how the phone is held. Within reach ("right here") the arrow
+ * shrinks away, a ball takes its place and rings pulse out over the same floor. OpenGL ES 2.0 only, so every test phone
  * (the Android 11 A50 too) runs the same shaders.
  *
  * The scene is heading-relative: −Z is where the phone points, +X its right, +Y up. All easing
  * happens here on the GL thread, so the UI thread only sets targets in [SceneState].
  */
-internal class SceneRenderer(private val mesh: FloatArray, private val state: SceneState) {
+internal class SceneRenderer(
+    private val mesh: FloatArray,
+    private val marker: FloatArray,
+    private val state: SceneState,
+) {
 
     private var arrowProgram = 0
     private var flatProgram = 0
     private var meshBuffer = 0
     private var ringBuffer = 0
     private var sectorBuffer = 0
+    private var markerBuffer = 0
+    private var pulseBuffer = 0
     private val meshVertices = mesh.size / ObjMesh.FLOATS_PER_VERTEX
+    private val markerVertices = marker.size / ObjMesh.FLOATS_PER_VERTEX
 
     private val projection = FloatArray(16)
     private val lookAt = FloatArray(16)
@@ -35,6 +43,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
     private val view = FloatArray(16)
     private val viewProjection = FloatArray(16)
     private val model = FloatArray(16)
+    private val markerModel = FloatArray(16)
     private val shadowModel = FloatArray(16)
     private val mvp = FloatArray(16)
     private val shadow = FloatArray(16)
@@ -53,16 +62,23 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
     private var width = 1f
     private var sectorHalf = SECTOR_NARROW
 
+    /** 0 = the arrow, 1 = the "right here" marker. */
+    private var here = 0f
+
     fun onSurfaceCreated() {
         arrowProgram = program(ARROW_VERTEX, ARROW_FRAGMENT)
         flatProgram = program(FLAT_VERTEX, FLAT_FRAGMENT)
-        val buffers = IntArray(3)
-        GLES20.glGenBuffers(3, buffers, 0)
+        val buffers = IntArray(5)
+        GLES20.glGenBuffers(5, buffers, 0)
         meshBuffer = buffers[0]
         ringBuffer = buffers[1]
         sectorBuffer = buffers[2]
+        markerBuffer = buffers[3]
+        pulseBuffer = buffers[4]
         upload(meshBuffer, mesh)
-        upload(ringBuffer, ringStrip())
+        upload(markerBuffer, marker)
+        upload(ringBuffer, ringStrip(RING_INNER, RING_OUTER))
+        upload(pulseBuffer, ringStrip(1f - PULSE_WIDTH, 1f))
         upload(sectorBuffer, sectorTriangles())
         GLES20.glClearColor(0f, 0f, 0f, 0f)
         // Premultiplied alpha: the layer under this view (the find screen's blue) shows through.
@@ -84,11 +100,20 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         Matrix.setIdentityM(model, 0)
         Matrix.translateM(model, 0, 0f, hover, 0f)
         Matrix.rotateM(model, 0, -yaw, 0f, 1f, 0f)
-        Matrix.scaleM(model, 0, width * MESH_SCALE, MESH_SCALE, MESH_SCALE)
+        val arrowScale = (1f - here) * MESH_SCALE
+        Matrix.scaleM(model, 0, width * arrowScale, arrowScale, arrowScale)
+        Matrix.setIdentityM(markerModel, 0)
+        Matrix.translateM(markerModel, 0, 0f, hover, 0f)
+        Matrix.scaleM(markerModel, 0, here * MESH_SCALE, here * MESH_SCALE, here * MESH_SCALE)
+        val showArrow = here < 1f - HERE_EPSILON
+        val showMarker = here > HERE_EPSILON
 
         drawFloor(yaw)
-        drawShadow()
-        drawArrow()
+        // Both shadows first (blended onto the floor), then the solids.
+        if (showArrow) drawShadow(meshBuffer, meshVertices, model)
+        if (showMarker) drawShadow(markerBuffer, markerVertices, markerModel)
+        if (showArrow) drawSolid(meshBuffer, meshVertices, model, stretch = width)
+        if (showMarker) drawSolid(markerBuffer, markerVertices, markerModel, stretch = 1f)
     }
 
     /** Moves every eased value one step and returns the arrow's yaw (clockwise from "ahead"). */
@@ -124,6 +149,8 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
             else -> SECTOR_NARROW
         }
         sectorHalf += (targetSector - sectorHalf) * slow
+        val targetHere = if (state.rightHere) 1f else 0f
+        here = if (state.reduceMotion) targetHere else here + (targetHere - here) * slow
 
         val spinning = state.spinning
         if (spinning) {
@@ -188,26 +215,45 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
                 flat(viewProjection, color, 1f)
                 GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, (segments + 1) * 2)
             }
-        } else {
+        } else if (here < 1f - HERE_EPSILON) {
             // "Somewhere this way": the sector turns with the arrow and widens as confidence drops.
             GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, sectorBuffer)
             GLES20.glVertexAttribPointer(position, 3, GLES20.GL_FLOAT, false, 0, 0)
             Matrix.rotateM(mvp, 0, viewProjection, 0, -yaw, 0f, 1f, 0f)
-            flat(mvp, color, SECTOR_ALPHA, radial = true)
+            flat(mvp, color, SECTOR_ALPHA * (1f - here), radial = true)
             val half = sectorHalf.roundToInt().coerceIn(1, SECTOR_MAX_HALF)
             GLES20.glDrawArrays(GLES20.GL_TRIANGLES, (SECTOR_MAX_HALF - half) * 3, half * 2 * 3)
         }
+        if (here > HERE_EPSILON) drawPulses(position, color, ringVertices)
         GLES20.glDisableVertexAttribArray(position)
     }
 
+    /** "Right here": rings spread from the marker over the floor and fade towards the rim. */
+    private fun drawPulses(position: Int, color: Int, ringVertices: Int) {
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, pulseBuffer)
+        GLES20.glVertexAttribPointer(position, 3, GLES20.GL_FLOAT, false, 0, 0)
+        for (ring in 1..PULSE_RINGS) {
+            // With animations off the rings stand still, evenly spaced out to the rim.
+            val spread = if (state.reduceMotion) {
+                ring.toFloat() / PULSE_RINGS
+            } else {
+                (time / PULSE_PERIOD_SECONDS + ring.toFloat() / PULSE_RINGS) % 1f
+            }
+            val radius = spread * RING_OUTER
+            Matrix.scaleM(mvp, 0, viewProjection, 0, radius, 1f, radius)
+            flat(mvp, color, PULSE_ALPHA * (1f - spread * PULSE_FADE) * here)
+            GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, ringVertices)
+        }
+    }
+
     /**
-     * The mesh dropped straight onto the floor, nudged towards the viewer. Three faint copies of
+     * A mesh dropped straight onto the floor, nudged towards the viewer. Three faint copies of
      * growing size stand in for a blur; the stencil keeps each copy from doubling up on itself.
      */
-    private fun drawShadow() {
+    private fun drawShadow(buffer: Int, vertices: Int, model: FloatArray) {
         GLES20.glUseProgram(flatProgram)
         val position = GLES20.glGetAttribLocation(flatProgram, "aPos")
-        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, meshBuffer)
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, buffer)
         GLES20.glEnableVertexAttribArray(position)
         GLES20.glVertexAttribPointer(position, 3, GLES20.GL_FLOAT, false, STRIDE_BYTES, 0)
         GLES20.glEnable(GLES20.GL_STENCIL_TEST)
@@ -231,19 +277,20 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
             Matrix.multiplyMM(shadowModel, 0, shadow, 0, model, 0)
             Matrix.multiplyMM(mvp, 0, viewProjection, 0, shadowModel, 0)
             GLES20.glUniformMatrix4fv(GLES20.glGetUniformLocation(flatProgram, "uMvp"), 1, false, mvp, 0)
-            GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, meshVertices)
+            GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, vertices)
         }
         GLES20.glDisable(GLES20.GL_STENCIL_TEST)
         GLES20.glDisableVertexAttribArray(position)
     }
 
-    private fun drawArrow() {
+    /** A lit mesh; [stretch] is how much wider than its model it is drawn (the low-confidence arrow). */
+    private fun drawSolid(buffer: Int, vertices: Int, model: FloatArray, stretch: Float) {
         GLES20.glEnable(GLES20.GL_DEPTH_TEST)
         GLES20.glDisable(GLES20.GL_BLEND)
         GLES20.glUseProgram(arrowProgram)
         val position = GLES20.glGetAttribLocation(arrowProgram, "aPos")
         val normal = GLES20.glGetAttribLocation(arrowProgram, "aNormal")
-        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, meshBuffer)
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, buffer)
         GLES20.glEnableVertexAttribArray(position)
         GLES20.glEnableVertexAttribArray(normal)
         GLES20.glVertexAttribPointer(position, 3, GLES20.GL_FLOAT, false, STRIDE_BYTES, 0)
@@ -253,7 +300,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         GLES20.glUniformMatrix4fv(GLES20.glGetUniformLocation(arrowProgram, "uMvp"), 1, false, mvp, 0)
         GLES20.glUniformMatrix4fv(GLES20.glGetUniformLocation(arrowProgram, "uModel"), 1, false, model, 0)
         // Normals of a mesh stretched sideways: divide by the stretch twice (inverse transpose).
-        GLES20.glUniform3f(GLES20.glGetUniformLocation(arrowProgram, "uInvScale"), 1f / (width * width), 1f, 1f)
+        GLES20.glUniform3f(GLES20.glGetUniformLocation(arrowProgram, "uInvScale"), 1f / (stretch * stretch), 1f, 1f)
         val color = state.arrowColor
         GLES20.glUniform3f(
             GLES20.glGetUniformLocation(arrowProgram, "uBase"),
@@ -270,7 +317,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
             CAMERA_DISTANCE * cos(e),
         )
         GLES20.glUniform1f(GLES20.glGetUniformLocation(arrowProgram, "uGloss"), GLOSS)
-        GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, meshVertices)
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, vertices)
         GLES20.glDisableVertexAttribArray(position)
         GLES20.glDisableVertexAttribArray(normal)
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0)
@@ -363,6 +410,14 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         const val SECTOR_WIDE = 35f
         const val SECTOR_ALPHA = 0.22f
 
+        // "Right here": three rings spread from the marker to the floor ring, each taking 1.6 s.
+        const val PULSE_RINGS = 3
+        const val PULSE_PERIOD_SECONDS = 1.6f
+        const val PULSE_WIDTH = 0.045f
+        const val PULSE_ALPHA = 0.6f
+        const val PULSE_FADE = 0.85f
+        const val HERE_EPSILON = 0.01f
+
         // Shadow: #0B2A8A, never black, about 28 % where all three copies overlap.
         const val SHADOW_RED = 0.043f
         const val SHADOW_GREEN = 0.165f
@@ -396,12 +451,13 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
             return sin(a) to -cos(a)
         }
 
-        fun ringStrip(): FloatArray {
+        /** A flat ring on the floor between two radii, as a triangle strip. */
+        fun ringStrip(inner: Float, outer: Float): FloatArray {
             val out = FloatArray((RING_SEGMENTS + 1) * 2 * 3)
             var i = 0
             for (segment in 0..RING_SEGMENTS) {
                 val (x, z) = floorDirection(segment * 360f / RING_SEGMENTS)
-                for (radius in floatArrayOf(RING_INNER, RING_OUTER)) {
+                for (radius in floatArrayOf(inner, outer)) {
                     out[i++] = x * radius
                     out[i++] = 0f
                     out[i++] = z * radius

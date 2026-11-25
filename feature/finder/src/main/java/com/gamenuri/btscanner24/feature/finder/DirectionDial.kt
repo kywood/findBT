@@ -69,10 +69,12 @@ internal fun DirectionDial(state: FinderUiState, modifier: Modifier = Modifier) 
         // The 3D scene (#76) needs working GL; without it the Canvas arrow below is drawn.
         var sceneFailed by remember { mutableStateOf(false) }
         val scene3d = LocalArFindScene.current && !sceneFailed
+        val rightHere = state.stage == FinderStage.RIGHT_HERE
         when {
-            state.stage == FinderStage.RIGHT_HERE -> RightHereRings()
-            scene3d && (arrow != null || spinning) ->
+            // "Right here" stays in the same 3D scene, so the last step does not turn flat.
+            scene3d && (rightHere || arrow != null || spinning) ->
                 ArrowScene(state, spinning, onUnavailable = { sceneFailed = true })
+            rightHere -> RightHereRings()
             arrow != null -> FloorArrow(arrow, state.confidence, locked = state.stage == FinderStage.LOCKED)
             spinning -> SpinningNeedle(state.sweepProgress)
             else -> HeatRing(state.heat)
@@ -111,6 +113,7 @@ private fun ArrowScene(state: FinderUiState, spinning: Boolean, onUnavailable: (
             relativeDegrees = state.arrowDegrees ?: 0f,
             worldBearingDegrees = state.bearingDegrees,
             spinning = spinning && state.arrowDegrees == null,
+            rightHere = state.stage == FinderStage.RIGHT_HERE,
             progress = state.sweepProgress,
             wide = state.confidence != ArrowConfidence.HIGH,
             locked = state.stage == FinderStage.LOCKED,

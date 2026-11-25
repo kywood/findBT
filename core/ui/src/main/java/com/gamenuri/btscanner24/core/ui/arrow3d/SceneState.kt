@@ -24,6 +24,9 @@ internal class SceneState {
     /** Direction locked: the arrow settles with a small overshoot. */
     @Volatile var locked: Boolean = false
 
+    /** Within reach: the arrow gives way to a marker with rings pulsing out over the floor. */
+    @Volatile var rightHere: Boolean = false
+
     @Volatile var arrowColor: Int = 0xFFFFFFFF.toInt()
 
     @Volatile var floorColor: Int = 0xFFFFFFFF.toInt()
