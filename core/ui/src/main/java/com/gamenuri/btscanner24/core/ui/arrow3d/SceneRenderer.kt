@@ -97,6 +97,9 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
     /** 0 = the arrow, 1 = the "right here" puck. */
     private var here = 0f
 
+    /** 1 = no arrow at all (no signal to point at). */
+    private var gone = 0f
+
     /** Seconds since the medal started to rise. */
     private var foundTime = 0f
     private var markerFit = 1f
@@ -184,7 +187,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         Matrix.setIdentityM(model, 0)
         Matrix.translateM(model, 0, 0f, hover, 0f)
         Matrix.rotateM(model, 0, -yaw, 0f, 1f, 0f)
-        val arrowScale = (1f - here) * MESH_SCALE
+        val arrowScale = (1f - here) * (1f - gone) * MESH_SCALE
         // Across the screen the arrow is smaller on its floor (#134) and only a little thinner (v1.3).
         val across = if (state.fullBleed) FULL_BLEED_ARROW else 1f
         val thick = if (state.fullBleed) FULL_BLEED_ARROW_THICKNESS else 1f
@@ -192,7 +195,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         Matrix.setIdentityM(markerModel, 0)
         Matrix.translateM(markerModel, 0, 0f, PUCK_HEIGHT + bob, 0f)
         Matrix.scaleM(markerModel, 0, here * MESH_SCALE, here * MESH_SCALE, here * MESH_SCALE)
-        val showArrow = here < 1f - HERE_EPSILON
+        val showArrow = here < 1f - HERE_EPSILON && gone < 1f - HERE_EPSILON
         val showPuck = here > HERE_EPSILON
 
         if (state.fullBleed) placeMarker(yaw)
@@ -300,6 +303,8 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         marker += (targetMarker - marker) * slow
         val targetHere = if (state.rightHere) 1f else 0f
         here = if (state.reduceMotion) targetHere else here + (targetHere - here) * slow
+        val targetGone = if (state.noArrow) 1f else 0f
+        gone = if (state.reduceMotion) targetGone else gone + (targetGone - gone) * slow
 
         val spinning = state.spinning
         if (spinning) {
@@ -364,9 +369,11 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
     private fun ringPixels(): Float {
         val wanted = state.ringFraction.coerceAtLeast(MIN_RING_FRACTION) * viewportWidth
         val top = state.topFade
-        val bottom = state.bottomFade
+        // Without a distance block under it (no signal) the ring's place reaches down to the layer's own
+        // lower edge, which cuts it off straight: that edge is the limit then (#115).
+        val bottom = state.bottomFade.let { if (it < 0f) 1f else minOf(it, 1f) }
         val center = state.centerY
-        if (top < 0f || bottom < 0f || center <= top || bottom <= center) return wanted
+        if (top < 0f || center <= top || bottom <= center) return wanted
         val e = radians(elevation)
         // Per pixel of R: how far the arrow's tip and top reach above the middle, the ring's near edge below.
         val arrow = ARROW_REACH * sin(e) + ARROW_TOP * cos(e)
@@ -441,7 +448,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
                 flat(mvp, color, 1f)
                 GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, (segments + 1) * 2)
             }
-        } else if (here < 1f - HERE_EPSILON) {
+        } else if (here < 1f - HERE_EPSILON && !state.noArrow) {
             // "Somewhere this way": the sector turns with the arrow and widens as confidence drops.
             GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, sectorBuffer)
             GLES20.glVertexAttribPointer(position, 3, GLES20.GL_FLOAT, false, 0, 0)
@@ -597,12 +604,12 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
      */
     private fun drawLeavingModel() {
         if (modelVertices == 0 || state.reduceMotion) return
-        val gone = foundTime / (MEDAL_RISE_SECONDS * MODEL_EXIT_SHARE)
-        if (gone >= 1f) return
-        val size = (1f - gone) * HERE_MODEL * MESH_SCALE
+        val away = foundTime / (MEDAL_RISE_SECONDS * MODEL_EXIT_SHARE)
+        if (away >= 1f) return
+        val size = (1f - away) * HERE_MODEL * MESH_SCALE
         Matrix.setIdentityM(deviceModel, 0)
-        Matrix.translateM(deviceModel, 0, 0f, (HERE_MODEL_FLOAT + MODEL_EXIT_RISE * gone) * MESH_SCALE, 0f)
-        Matrix.rotateM(deviceModel, 0, HERE_MODEL_STILL_DEGREES + MODEL_EXIT_DEGREES * gone, 0f, 1f, 0f)
+        Matrix.translateM(deviceModel, 0, 0f, (HERE_MODEL_FLOAT + MODEL_EXIT_RISE * away) * MESH_SCALE, 0f)
+        Matrix.rotateM(deviceModel, 0, HERE_MODEL_STILL_DEGREES + MODEL_EXIT_DEGREES * away, 0f, 1f, 0f)
         Matrix.scaleM(deviceModel, 0, size, size, size)
         drawModel(deviceModel)
     }

@@ -52,6 +52,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -85,6 +86,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.gamenuri.btscanner24.core.ble.ScanFailure
 import com.gamenuri.btscanner24.core.ble.proximity.ProximityBand
 import com.gamenuri.btscanner24.core.ble.proximity.ProximityTrend
 import com.gamenuri.btscanner24.core.designsystem.component.WATER_RISE_MS
@@ -171,6 +173,7 @@ fun FinderScreen(
             onToggleVibration = viewModel::toggleVibration,
             onSpinAgain = viewModel::spinAgain,
             onToggleSound = viewModel::toggleSound,
+            onRetry = viewModel::retry,
         ),
     )
 }
@@ -181,6 +184,7 @@ data class FinderActions(
     val onToggleVibration: () -> Unit = {},
     val onSpinAgain: () -> Unit = {},
     val onToggleSound: () -> Unit = {},
+    val onRetry: () -> Unit = {},
 )
 
 /**
@@ -355,7 +359,18 @@ private fun FinderScaffold(
                 // One fixed-height slot under the gauge for the confirm hint when very close (#94). It
                 // always takes its space, so the rows above keep their place (#60).
                 Box(Modifier.fillMaxWidth().heightIn(min = BOTTOM_SLOT), contentAlignment = Alignment.Center) {
-                    if (state.showConfirmHint) {
+                    val noSignal = state.stage == FinderStage.NOT_FOUND || state.stage == FinderStage.SIGNAL_LOST
+                    if (noSignal) {
+                        // Never a dead end (#117): scan afresh, or leave for the list.
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            TextButton(onClick = actions.onRetry) {
+                                Text(stringResource(R.string.finder_retry), color = content)
+                            }
+                            TextButton(onClick = actions.onClose) {
+                                Text(stringResource(R.string.finder_back_to_list), color = content)
+                            }
+                        }
+                    } else if (state.showConfirmHint) {
                         // Names can be vague ("hiot0"); confirming by touch matters more than the name (#46).
                         Text(
                             text = stringResource(R.string.finder_confirm_hint),
@@ -420,7 +435,8 @@ private val FinderUiState.showSoundButton: Boolean
     get() = when (sound) {
         SoundState.UNAVAILABLE -> false
         SoundState.CONNECTING, SoundState.PLAYING, SoundState.NOT_SUPPORTED -> true
-        SoundState.READY, SoundState.FAILED -> stage != FinderStage.WAITING && stage != FinderStage.SIGNAL_LOST
+        SoundState.READY, SoundState.FAILED ->
+            stage != FinderStage.WAITING && stage != FinderStage.NOT_FOUND && stage != FinderStage.SIGNAL_LOST
     }
 
 @Composable
@@ -526,6 +542,13 @@ private fun MainActions(state: FinderUiState, actions: FinderActions, content: C
 private fun StageText(state: FinderUiState) {
     val (title, body) = when (state.stage) {
         FinderStage.WAITING -> R.string.finder_waiting_title to R.string.finder_waiting_body
+        FinderStage.NOT_FOUND -> when (state.scanFailure) {
+            null -> R.string.finder_not_found_title to R.string.finder_not_found_body
+            ScanFailure.BLUETOOTH_OFF -> R.string.finder_bluetooth_off_title to R.string.finder_bluetooth_off_body
+            ScanFailure.LOCATION_OFF -> R.string.finder_location_off_title to R.string.finder_location_off_body
+            ScanFailure.PERMISSION_MISSING -> R.string.finder_permission_title to R.string.finder_permission_body
+            else -> R.string.finder_scan_failed_title to R.string.finder_scan_failed_body
+        }
         FinderStage.SPIN -> R.string.finder_spin_title to R.string.finder_spin_body
         FinderStage.SPIN_AGAIN -> R.string.finder_spin_again_title to R.string.finder_spin_again_body
         FinderStage.WALK -> if (state.band == ProximityBand.VERY_CLOSE || state.band == ProximityBand.RIGHT_HERE) {
@@ -658,7 +681,7 @@ private fun findColorsFor(state: FinderUiState): FindStateColors {
     val colors = NearoTheme.colors
     return when (state.stage) {
         FinderStage.WAITING -> colors.findSearching
-        FinderStage.SIGNAL_LOST -> colors.findLost
+        FinderStage.SIGNAL_LOST, FinderStage.NOT_FOUND -> colors.findLost
         FinderStage.RIGHT_HERE -> colors.findHere
         else -> when (state.band) {
             ProximityBand.FAR, null -> colors.findFar
@@ -736,7 +759,7 @@ internal enum class Rhythm(val pulses: Int, val periodMs: Long) {
 }
 
 private fun rhythmFor(state: FinderUiState): Rhythm = when (state.stage) {
-    FinderStage.WAITING, FinderStage.SIGNAL_LOST -> Rhythm.NONE
+    FinderStage.WAITING, FinderStage.NOT_FOUND, FinderStage.SIGNAL_LOST -> Rhythm.NONE
     FinderStage.RIGHT_HERE -> Rhythm.RIGHT_HERE
     else -> when (state.band) {
         ProximityBand.FAR, null -> Rhythm.FAR

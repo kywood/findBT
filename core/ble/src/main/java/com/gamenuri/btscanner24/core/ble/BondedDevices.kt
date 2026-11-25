@@ -34,10 +34,15 @@ open class BondedDevices(context: Context) {
         }
         return bonded.map { device ->
             // The alias is what the user renamed it to in Bluetooth settings ("wood's Buds2"); API 30+.
-            val name = try {
-                (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) device.alias else null) ?: device.name
+            val ownName = try {
+                device.name
             } catch (_: SecurityException) {
                 null
+            }
+            val name = try {
+                (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) device.alias else null) ?: ownName
+            } catch (_: SecurityException) {
+                ownName
             }
             val btClass = try {
                 device.bluetoothClass
@@ -46,7 +51,12 @@ open class BondedDevices(context: Context) {
             }
             val fromClass = categoryOf(btClass)
             val category = if (fromClass == DeviceCategory.UNKNOWN) DeviceCategoryResolver.fromName(name) else fromClass
-            PairedDevice(address = device.address, name = name, category = category)
+            PairedDevice(
+                address = device.address,
+                name = name,
+                category = category,
+                advertisedName = ownName?.takeIf { it != name },
+            )
         }
     }
 
