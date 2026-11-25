@@ -303,9 +303,11 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
     private fun ringPixels(): Float {
         val wanted = state.ringFraction.coerceAtLeast(MIN_RING_FRACTION) * viewportWidth
         val top = state.topFade
-        val bottom = state.bottomFade
+        // Without a distance block under it (no signal) the ring's place reaches down to the layer's own
+        // lower edge, which cuts it off straight: that edge is the limit then (#115).
+        val bottom = state.bottomFade.let { if (it < 0f) 1f else minOf(it, 1f) }
         val center = state.centerY
-        if (top < 0f || bottom < 0f || center <= top || bottom <= center) return wanted
+        if (top < 0f || center <= top || bottom <= center) return wanted
         val e = radians(elevation)
         // Per pixel of R: how far the arrow's tip and top reach above the middle, the ring's near edge below.
         val above = ARROW_REACH * sin(e) + ARROW_TOP * cos(e)
