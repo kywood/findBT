@@ -1,5 +1,6 @@
 package com.gamenuri.btscanner24.feature.devices
 
+import com.gamenuri.btscanner24.core.ble.ScanFailure
 import com.gamenuri.btscanner24.core.model.BleDevice
 import com.gamenuri.btscanner24.core.model.PairedDevice
 
@@ -23,4 +24,6 @@ data class MyDevicesUiState(
     val others: List<MyDeviceItem> = emptyList(),
     val hasPermission: Boolean = true,
     val isEmpty: Boolean = false,
+    /** The scan cannot run (Bluetooth or Location off…), so "nearby" cannot be known right now. */
+    val scanFailure: ScanFailure? = null,
 )

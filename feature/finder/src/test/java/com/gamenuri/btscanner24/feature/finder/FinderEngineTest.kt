@@ -46,6 +46,23 @@ class FinderEngineTest {
     }
 
     @Test
+    fun `no signal for ten seconds is said plainly instead of waiting forever`() {
+        val engine = FinderEngine(buds, startMs = 0, hasCompass = true)
+        assertEquals(FinderStage.WAITING, engine.state(10_000, vibrationOn = true).stage)
+        assertEquals(FinderStage.NOT_FOUND, engine.state(10_001, vibrationOn = true).stage)
+    }
+
+    @Test
+    fun `trying again waits afresh, and a signal ends the not-found state`() {
+        val engine = FinderEngine(buds, startMs = 0, hasCompass = true)
+        engine.restartWaiting(20_000)
+        assertEquals(FinderStage.WAITING, engine.state(25_000, vibrationOn = true).stage)
+        assertEquals(FinderStage.NOT_FOUND, engine.state(31_000, vibrationOn = true).stage)
+        engine.onSighting(sighting(-70, 31_500), 31_500)
+        assertEquals(FinderStage.SPIN, engine.state(31_500, vibrationOn = true).stage)
+    }
+
+    @Test
     fun `first signal asks to spin, full turn shows an arrow`() {
         val engine = FinderEngine(buds, startMs = 0, hasCompass = true)
         engine.onSighting(sighting(-70, 100), 100)

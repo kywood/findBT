@@ -10,6 +10,7 @@ import com.gamenuri.btscanner24.core.ble.BleScanner
 import com.gamenuri.btscanner24.core.ble.BondedDevices
 import com.gamenuri.btscanner24.core.ble.DeviceRepository
 import com.gamenuri.btscanner24.core.ble.ScanEvent
+import com.gamenuri.btscanner24.core.ble.scanContinuously
 import com.gamenuri.btscanner24.core.data.DataDependenciesProvider
 import com.gamenuri.btscanner24.core.data.ListPreferencesRepository
 import com.gamenuri.btscanner24.core.model.BleDevice
@@ -108,11 +109,9 @@ class ScanViewModel(
         status.value = ScanStatus.Scanning
         // Parsing and the company-table lookup are too heavy for the main thread (cold-start jank, #34).
         scanJob = viewModelScope.launch(Dispatchers.Default) {
-            // Android allows 5 scan starts per 30 s. Switching tabs quickly can hit that; wait it out
-            // instead of showing an error, since scanning is automatic now (#62).
-            val cooldown = scanner.startCooldownMillis()
-            if (cooldown > 0) delay(cooldown)
-            scanner.scan().collect { event ->
+            // Android allows 5 scan starts per 30 s. Switching tabs quickly can hit that; the scan waits
+            // it out instead of showing an error (#62) and starts again when it dies quietly (#116).
+            scanner.scanContinuously().collect { event ->
                 when (event) {
                     is ScanEvent.Result -> repository.onScanResult(event.result)
                     is ScanEvent.Failed -> status.value = ScanStatus.Error(event.reason)

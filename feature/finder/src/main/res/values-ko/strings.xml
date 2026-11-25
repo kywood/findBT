@@ -23,6 +23,18 @@
     <string name="finder_right_here_body">손 닿는 거리에 있어요. 주변을 살펴보세요.</string>
     <string name="finder_signal_lost_title">신호 끊김</string>
     <string name="finder_signal_lost_body">%1$d초 전에 마지막으로 잡힘 · 신호가 강했던 곳으로 돌아가세요</string>
+    <string name="finder_not_found_title">신호를 못 찾았어요</string>
+    <string name="finder_not_found_body">더 가까이 가거나 기기가 켜져 있는지 확인해 주세요</string>
+    <string name="finder_bluetooth_off_title">블루투스가 꺼져 있어요</string>
+    <string name="finder_bluetooth_off_body">블루투스를 켠 뒤 다시 시도해 주세요</string>
+    <string name="finder_location_off_title">위치가 꺼져 있어요</string>
+    <string name="finder_location_off_body">이 Android 버전에서는 위치를 켜야 블루투스 검색이 돼요</string>
+    <string name="finder_permission_title">권한이 필요해요</string>
+    <string name="finder_permission_body">설정에서 근처 기기 권한을 허용한 뒤 다시 시도해 주세요</string>
+    <string name="finder_scan_failed_title">검색을 시작하지 못했어요</string>
+    <string name="finder_scan_failed_body">몇 초 뒤에 다시 시도해 주세요</string>
+    <string name="finder_retry">다시 시도</string>
+    <string name="finder_back_to_list">목록으로</string>
     <string name="finder_no_compass_title">가까워짐·멀어짐을 따라가세요</string>
     <string name="finder_no_compass_body">이 폰에는 방향 센서가 없어서 화살표를 보여줄 수 없어요</string>
 

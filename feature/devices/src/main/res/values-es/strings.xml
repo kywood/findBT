@@ -14,5 +14,9 @@
     <string name="devices_open_bluetooth_settings">Vincular en ajustes de Bluetooth</string>
     <string name="devices_permission_body">Permite \"Dispositivos cercanos\" para ver los dispositivos vinculados a este teléfono.</string>
     <string name="devices_permission_action">Permitir</string>
+    <string name="devices_scan_bluetooth_off">Bluetooth está desactivado, así que no se puede comprobar qué hay cerca.</string>
+    <string name="devices_scan_location_off">La ubicación está desactivada. En esta versión de Android, la búsqueda por Bluetooth necesita la ubicación activada.</string>
+    <string name="devices_scan_failed">No se pudo iniciar la búsqueda, así que no se puede comprobar qué hay cerca.</string>
+    <string name="devices_scan_retry">Reintentar</string>
     <string name="devices_add_tracker">Añadir un rastreador</string>
 </resources>

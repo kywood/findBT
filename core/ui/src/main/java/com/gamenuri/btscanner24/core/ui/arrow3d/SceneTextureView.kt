@@ -7,6 +7,7 @@ import android.opengl.EGLConfig
 import android.opengl.EGLContext
 import android.opengl.EGLDisplay
 import android.opengl.EGLSurface
+import android.util.Log
 import android.view.TextureView
 import android.view.View
 import android.view.ViewTreeObserver
@@ -194,8 +195,10 @@ internal class SceneTextureView(context: Context) :
                 }
             } catch (_: InterruptedException) {
                 // finish() was called.
-            } catch (_: RuntimeException) {
+            } catch (e: RuntimeException) {
                 // No usable GL here (or a shader this driver rejects): the caller draws the Canvas arrow.
+                // Logged so a flat arrow is never a silent surprise; the message holds no scan data.
+                Log.w("NearoScene", "3D scene unavailable, falling back to the flat arrow", e)
                 if (running) post { onUnavailable?.invoke() }
             } finally {
                 if (display != EGL14.EGL_NO_DISPLAY) {
