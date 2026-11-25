@@ -109,6 +109,7 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
     private var order = IntArray(0)
     private var ranks = FloatArray(0)
     private var rects = FloatArray(0)
+    private var modelRects = FloatArray(0)
     private var hitSpots = FloatArray(0)
 
     private val projection = FloatArray(16)
@@ -803,6 +804,7 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
             order = IntArray(pins.size)
             ranks = FloatArray(pins.size)
             rects = FloatArray(pins.size * RECT_FLOATS)
+            modelRects = FloatArray(pins.size * RECT_FLOATS)
         }
         val selected = state.selectedKey
         for (index in pins.indices) {
@@ -827,9 +829,10 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
             order[j + 1] = moved
         }
         measureMe()
+        for (index in pins.indices) measureModel(spots[pins[index].key], index * RECT_FLOATS)
         var kept = 0
         for (index in order) {
-            if (placeTag(pins[index], kept)) {
+            if (placeTag(pins[index], index, kept)) {
                 order[kept] = index
                 kept++
             }
@@ -869,10 +872,10 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
     /**
      * Finds the place of [pin]'s tag in whole pixels (left, bottom from the view's lower edge, right,
      * top) and writes it as rectangle number [kept]. Over the device first; where that lies on another
-     * tag, on "me" or past the visible band, beside the device, right then left. False when it has no
-     * tag, is out of sight, or no place is free.
+     * tag, on another device's model, on "me" or past the visible band, beside the device, right then
+     * left. False when it has no tag, is out of sight, or no place is free. [self] is the pin's index.
      */
-    private fun placeTag(pin: MapPin, kept: Int): Boolean {
+    private fun placeTag(pin: MapPin, self: Int, kept: Int): Boolean {
         val tag = tags[pin.label] ?: return false
         val spot = spots[pin.key] ?: return false
         project(spot.tagX, spot.tagHeight, spot.tagZ)
@@ -889,13 +892,13 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
         val middle = (projected[1] / middleW + 1f) / 2f * viewportHeight
         val beside = TAG_SIDE_GAP * viewportWidth / (2f * HALF_WIDTH_PER_DISTANCE * zoom * middleW)
         val sideBottom = middle - tag.height / 2f
-        return tryTag(tag, kept, anchor - tag.width / 2f, aboveBottom) ||
-            tryTag(tag, kept, anchor + beside, sideBottom) ||
-            tryTag(tag, kept, anchor - beside - tag.width, sideBottom)
+        return tryTag(tag, self, kept, anchor - tag.width / 2f, aboveBottom) ||
+            tryTag(tag, self, kept, anchor + beside, sideBottom) ||
+            tryTag(tag, self, kept, anchor - beside - tag.width, sideBottom)
     }
 
     /** Writes rectangle number [kept] at [left], [bottom] if it fits the visible band and lies on nothing. */
-    private fun tryTag(tag: Tag, kept: Int, left: Float, bottom: Float): Boolean {
+    private fun tryTag(tag: Tag, self: Int, kept: Int, left: Float, bottom: Float): Boolean {
         val edge = maxOf(0f, minOf(TAG_EDGE_MARGIN, (viewportWidth - tag.width) / 2f))
         val l = Math.round(left.coerceIn(edge, maxOf(edge, viewportWidth - tag.width - edge))).toFloat()
         val b = Math.round(bottom).toFloat()
@@ -906,6 +909,10 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
         val highest = (1f - state.clipTop.coerceIn(0f, 1f)) * viewportHeight - TAG_PADDING
         if (b < lowest || t > highest) return false
         if (overlaps(l, b, r, t, meRect, 0)) return false
+        // A tag never hides another device's model (design v2.2 collision panel, #193).
+        for (other in 0 until modelRects.size / RECT_FLOATS) {
+            if (other != self && overlaps(l, b, r, t, modelRects, other * RECT_FLOATS)) return false
+        }
         for (other in 0 until kept) {
             if (overlaps(l, b, r, t, rects, other * RECT_FLOATS)) return false
         }
@@ -923,6 +930,42 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
             bottom - TAG_PADDING >= other[at + 3] ||
             top + TAG_PADDING <= other[at + 1]
         )
+
+    /**
+     * Where [spot]'s stand and model lie on screen this frame, in pixels from the lower edge (left,
+     * bottom, right, top), written at [at] in [modelRects]; empty when it is not drawn or behind.
+     */
+    private fun measureModel(spot: Spot?, at: Int) {
+        modelRects.fill(0f, at, at + RECT_FLOATS)
+        if (spot == null || spot.shown <= 0f) return
+        val a = radians(spot.drawAngle)
+        val x = sin(a) * spot.drawRadius
+        val z = -cos(a) * spot.drawRadius
+        val floor = MapFloor.height(spot.drawRadius)
+        val size = pinSize(spot)
+        val half = size * PIN_HALF_WIDTH
+        var left = Float.MAX_VALUE
+        var right = -Float.MAX_VALUE
+        var bottom = Float.MAX_VALUE
+        var top = -Float.MAX_VALUE
+        for (lift in 0..1) {
+            for (side in SIDES) {
+                project(x + side * half, floor + lift * PIN_TOP * size, z)
+                val w = projected[3]
+                if (w <= 0f) return
+                val px = (projected[0] / w + 1f) / 2f * viewportWidth
+                val py = (projected[1] / w + 1f) / 2f * viewportHeight
+                left = minOf(left, px)
+                right = maxOf(right, px)
+                bottom = minOf(bottom, py)
+                top = maxOf(top, py)
+            }
+        }
+        modelRects[at] = left
+        modelRects[at + 1] = bottom
+        modelRects[at + 2] = right
+        modelRects[at + 3] = top
+    }
 
     /** Where "me" stands on screen this frame, from the floor to the top of the chevron; empty when behind. */
     private fun measureMe() {
