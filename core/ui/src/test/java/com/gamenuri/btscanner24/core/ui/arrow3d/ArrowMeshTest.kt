@@ -1,9 +1,9 @@
 package com.gamenuri.btscanner24.core.ui.arrow3d
 
+import kotlin.math.sqrt
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import kotlin.math.sqrt
 
 class ArrowMeshTest {
     private val mesh = ArrowMesh.build()

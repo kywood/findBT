@@ -28,7 +28,6 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
     private val medal = DiscMesh.build(MEDAL_RADIUS, MEDAL_THICKNESS, MEDAL_BEVEL)
     private val check = CheckMesh.build(base = MEDAL_THICKNESS / 2)
 
-
     private var arrowProgram = 0
     private var flatProgram = 0
     private var meshBuffer = 0
@@ -266,10 +265,14 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         val nearPerPixel = unitsPerPixel * NEAR / CAMERA_DISTANCE
         val above = state.centerY.coerceIn(0f, 1f) * viewportHeight
         Matrix.frustumM(
-            projection, 0,
-            -nearPerPixel * viewportWidth / 2, nearPerPixel * viewportWidth / 2,
-            -nearPerPixel * (viewportHeight - above), nearPerPixel * above,
-            NEAR, FAR,
+            projection,
+            0,
+            -nearPerPixel * viewportWidth / 2,
+            nearPerPixel * viewportWidth / 2,
+            -nearPerPixel * (viewportHeight - above),
+            nearPerPixel * above,
+            NEAR,
+            FAR,
         )
         val e = radians(elevation)
         Matrix.setLookAtM(
@@ -485,13 +488,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
     }
 
     /** [soft]: fades towards the edges of the view and below the middle of the screen (the pulses). */
-    private fun flat(
-        matrix: FloatArray,
-        color: Int,
-        alpha: Float,
-        radial: Boolean = false,
-        soft: Boolean = false,
-    ) {
+    private fun flat(matrix: FloatArray, color: Int, alpha: Float, radial: Boolean = false, soft: Boolean = false) {
         GLES20.glUniformMatrix4fv(GLES20.glGetUniformLocation(flatProgram, "uMvp"), 1, false, matrix, 0)
         // Across the whole screen the floor runs on to the edges; in a box it softens towards them.
         val edge = if (state.fullBleed) NO_EDGE_FADE else EDGE_FADE
@@ -561,6 +558,10 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         const val MAX_ROLL = 30f
         const val POSE_SMOOTH_SECONDS = 0.09f
 
+        // Ring radius R; declared first because the arrow constants below use it.
+        const val RING_OUTER = 1.36f
+        const val RING_INNER = RING_OUTER - 0.026f
+
         // Arrow.
         // Design #76, in units of the ring radius R (RING_OUTER). [ArrowMesh] is in R already; its
         // underside floats 0.22 R above the floor (centre 0.29 R), bobbing by ± 0.02 R.
@@ -578,9 +579,8 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
 
         // Floor.
         const val RING_SEGMENTS = 96
+
         // Outer ring about 2 dp wide at 35 %, inner ring at 0.62 R about 1 dp at 18 % (R = 108 dp).
-        const val RING_OUTER = 1.36f
-        const val RING_INNER = RING_OUTER - 0.026f
         const val INNER_RING = 0.62f
         const val RING_ALPHA = 0.35f
         const val INNER_RING_ALPHA = 0.18f
