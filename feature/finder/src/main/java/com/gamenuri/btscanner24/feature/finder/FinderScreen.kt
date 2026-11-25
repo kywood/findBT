@@ -435,7 +435,13 @@ private fun FinderScaffold(
                             )
                         }
                     }
-                    AdvancedMenu(state.advanced, tint = content, background = background)
+                    val label = state.deviceLabel
+                    AdvancedMenu(
+                        info = state.advanced,
+                        tint = content,
+                        background = background,
+                        appleFindMy = label is DeviceLabel.Generic && label.appleFindMy,
+                    )
                 },
             )
         },
@@ -941,7 +947,7 @@ private fun findColorsFor(state: FinderUiState): FindStateColors {
 
 /** Raw numbers for testers, behind the "⋯" button in the top bar. */
 @Composable
-private fun AdvancedMenu(info: AdvancedInfo, tint: Color, background: Color) {
+private fun AdvancedMenu(info: AdvancedInfo, tint: Color, background: Color, appleFindMy: Boolean = false) {
     var expanded by rememberSaveable { mutableStateOf(false) }
     Box {
         IconButton(onClick = { expanded = true }) {
@@ -959,6 +965,15 @@ private fun AdvancedMenu(info: AdvancedInfo, tint: Color, background: Color) {
                 style = MaterialTheme.typography.titleSmall,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             )
+            // "Apple device" on the list says little; here is what the signal is and what it may be (#147).
+            if (appleFindMy) {
+                Text(
+                    text = stringResource(R.string.finder_advanced_apple_find_my),
+                    color = tint,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).widthIn(max = 280.dp),
+                )
+            }
             Text(
                 text = stringResource(
                     R.string.finder_advanced_values,

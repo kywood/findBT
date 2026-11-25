@@ -47,6 +47,7 @@
     <string name="finder_trend_farther">▼ Frío</string>
     <string name="finder_trend_steady">Sigue</string>
     <string name="finder_advanced_values">MAC %1$s · RSSI %2$s dBm (suavizado %3$s) · rumbo %4$s° · orientación %5$s° · cambios de MAC %6$d · %7$d s</string>
+    <string name="finder_advanced_apple_find_my">Es una señal de Buscar de Apple. Puede ser unos AirPods, un AirTag, un iPhone u otro dispositivo Apple.</string>
     <string name="finder_confirm_hint">¿No sabes si es este? Acerca el teléfono justo a su lado. Si dice \"Aquí mismo\", lo encontraste.</string>
     <string name="found_title">¡Lo encontraste!</string>
     <string name="found_summary">%1$s · encontrado en %2$s</string>

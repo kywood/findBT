@@ -119,6 +119,12 @@ internal object DemoData {
             ).distance(1.2, ProximityBand.VERY_CLOSE)
             "here" -> base.copy(stage = FinderStage.RIGHT_HERE).distance(0.3, ProximityBand.RIGHT_HERE)
             "not_found" -> base.copy(stage = FinderStage.NOT_FOUND)
+            // A nameless Apple Find My signal: the ⋯ menu explains what it may be (#147).
+            "apple" -> base.copy(
+                deviceLabel = DeviceLabel.Generic("Apple", DeviceCategory.TRACKER, "0001", appleFindMy = true),
+                category = DeviceCategory.TRACKER,
+                stage = FinderStage.WALK,
+            ).distance(3.0, ProximityBand.NEAR)
             // Connected to the phone and silent: the connected text and the sound through the earbuds (#119, #153).
             "connected" -> base.copy(stage = FinderStage.NOT_FOUND, isConnected = true, soundViaPhone = true)
             // The tone is playing in the earbuds: the big stop and "louder" (#153). A still picture, no audio.
