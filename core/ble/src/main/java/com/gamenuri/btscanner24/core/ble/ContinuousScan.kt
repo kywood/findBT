@@ -1,14 +1,14 @@
 package com.gamenuri.btscanner24.core.ble
 
 import android.os.SystemClock
+import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import java.util.concurrent.atomic.AtomicLong
-import java.util.concurrent.atomic.AtomicReference
 
 /**
  * When a running platform scan should be thrown away and started again (#116, #117).
@@ -18,10 +18,7 @@ import java.util.concurrent.atomic.AtomicReference
  * minutes is quietly turned into one that only hears what other apps scan for. So a scan that has
  * been silent for [silenceMs], or has run for [maxRunMs], is restarted.
  */
-class ScanWatch(
-    val silenceMs: Long = SILENCE_MS,
-    val maxRunMs: Long = MAX_RUN_MS,
-) {
+class ScanWatch(val silenceMs: Long = SILENCE_MS, val maxRunMs: Long = MAX_RUN_MS) {
     fun shouldRestart(now: Long, startedAt: Long, lastResultAt: Long): Boolean =
         now - maxOf(startedAt, lastResultAt) > silenceMs || now - startedAt > maxRunMs
 

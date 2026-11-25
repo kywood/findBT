@@ -8,21 +8,17 @@ import org.junit.Test
 
 class AddressRotationTest {
 
-    private fun buds(
-        address: String,
-        lastSeen: Long,
-        name: String? = "Galaxy Buds2",
-        companyId: Int? = 0x0075,
-    ) = BleDevice(
-        address = address,
-        name = name,
-        rssi = -60,
-        firstSeen = 0,
-        lastSeen = lastSeen,
-        companyId = companyId,
-        category = DeviceCategory.EARBUDS,
-        serviceUuids16 = listOf(0xFD69),
-    )
+    private fun buds(address: String, lastSeen: Long, name: String? = "Galaxy Buds2", companyId: Int? = 0x0075) =
+        BleDevice(
+            address = address,
+            name = name,
+            rssi = -60,
+            firstSeen = 0,
+            lastSeen = lastSeen,
+            companyId = companyId,
+            category = DeviceCategory.EARBUDS,
+            serviceUuids16 = listOf(0xFD69),
+        )
 
     @Test
     fun `a silent row with the same name and data is the same device`() {
