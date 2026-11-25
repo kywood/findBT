@@ -10,11 +10,13 @@ import com.gamenuri.btscanner24.core.ble.BleDependencies
 import com.gamenuri.btscanner24.core.ble.ConnectedDevices
 import com.gamenuri.btscanner24.core.ble.DeviceRepository
 import com.gamenuri.btscanner24.core.ble.ImmediateAlert
+import com.gamenuri.btscanner24.core.ble.MeasuredBearings
 import com.gamenuri.btscanner24.core.ble.MediaFindTone
 import com.gamenuri.btscanner24.core.ble.RingResult
 import com.gamenuri.btscanner24.core.ble.ScanSession
 import com.gamenuri.btscanner24.core.ble.watch
 import com.gamenuri.btscanner24.core.model.BleDevice
+import com.gamenuri.btscanner24.core.model.MeasuredBearing
 import com.gamenuri.btscanner24.core.model.PairedDevice
 import com.gamenuri.btscanner24.core.sensors.MotionSensor
 import java.util.concurrent.atomic.AtomicInteger
@@ -46,6 +48,8 @@ class FinderViewModel(
     private val paired: PairedDevice? = null,
     /** Plays the find tone through the target when it is the phone's media output (#153). */
     private val tone: MediaFindTone? = null,
+    /** Where a measured direction is left for the Nearby map (#174); null leaves nothing. */
+    private val bearings: MeasuredBearings? = null,
     private val clock: () -> Long = System::currentTimeMillis,
 ) : ViewModel() {
 
@@ -291,6 +295,7 @@ class FinderViewModel(
             }
         }
         checkSoundSupport(state)
+        shareBearing(state)
         _uiState.value = state.copy(
             sound = sound.value,
             isConnected = isConnected,
@@ -298,6 +303,14 @@ class FinderViewModel(
             // Only when the device has no sound of its own to offer.
             soundNeedsOutput = needsOutput && sound.value == SoundState.UNAVAILABLE,
         )
+    }
+
+    /** While the arrow points somewhere it was measured, the map may show the same direction. */
+    private fun shareBearing(state: FinderUiState) {
+        val degrees = state.advanced.bearingDegrees ?: return
+        if (state.stage != FinderStage.WALK && state.stage != FinderStage.LOCKED) return
+        val certain = state.stage == FinderStage.LOCKED
+        bearings?.record(state.advanced.address, MeasuredBearing(degrees.toFloat(), certain, clock()))
     }
 
     override fun onCleared() {
@@ -327,6 +340,7 @@ class FinderViewModel(
                     connectedDevices = ble.connectedDevices,
                     paired = paired,
                     tone = ble.mediaFindTone,
+                    bearings = ble.measuredBearings,
                 )
             }
         }

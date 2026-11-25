@@ -79,6 +79,7 @@
     <string name="home_reorder_chip_description">목록 순서가 바뀌었어요. 눌러서 정렬</string>
     <!-- Device map (#86) -->
     <string name="map_arranged_by_distance">거리순으로 배치</string>
+    <string name="map_direction_measured">방향 확인됨</string>
     <string name="map_scanning">찾는 중</string>
     <string name="map_empty_title">주변에 기기가 없어요</string>
     <string name="map_empty_body">블루투스 기기를 켜고 가까이 가져오세요</string>

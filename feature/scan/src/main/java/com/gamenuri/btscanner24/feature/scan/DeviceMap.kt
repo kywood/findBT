@@ -50,8 +50,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
 import com.gamenuri.btscanner24.core.model.DistanceUnit
-import com.gamenuri.btscanner24.core.model.MapEntry
-import com.gamenuri.btscanner24.core.model.MapLayout
 import com.gamenuri.btscanner24.core.sensors.PoseSensor
 import com.gamenuri.btscanner24.core.ui.LocalDistanceUnit
 import com.gamenuri.btscanner24.core.ui.arrow3d.DeviceModel
@@ -87,7 +85,7 @@ internal fun DeviceMap(
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
 
-    val spots = MapLayout.arrange(items.map { MapEntry(it.device.address, it.distanceMeters) })
+    val spots = state.mapSpots
     val pins = items.mapNotNull { item ->
         val spot = spots[item.device.address] ?: return@mapNotNull null
         val name = item.label.text(withSuffix = item.showSuffix).shortened()
@@ -167,10 +165,14 @@ internal fun DeviceMap(
             }
             Column(modifier = Modifier.fillMaxWidth().onSizeChanged { chipsBottom = it.height }) {
                 val chip = if (items.isEmpty()) R.string.map_scanning else R.string.map_arranged_by_distance
-                MapChip(
-                    text = stringResource(chip),
-                    modifier = Modifier.padding(start = 16.dp, top = 8.dp, bottom = 8.dp),
-                )
+                Row(Modifier.padding(start = 16.dp, top = 8.dp, bottom = 8.dp)) {
+                    MapChip(text = stringResource(chip))
+                    // Only while a device really stands where the find screen measured it (#174).
+                    if (pins.any { it.measured }) {
+                        Spacer(Modifier.width(8.dp))
+                        MapChip(text = stringResource(R.string.map_direction_measured))
+                    }
+                }
             }
             when {
                 sceneUnavailable -> MapMessage(stringResource(R.string.map_unavailable), null)

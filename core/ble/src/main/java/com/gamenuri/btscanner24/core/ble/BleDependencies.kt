@@ -13,6 +13,8 @@ class BleDependencies(
     val mediaFindTone: MediaFindTone? = null,
     /** The scan the screens share (#177): they hold it instead of scanning themselves. */
     val scanSession: ScanSession = SharedScanSession(scanner, repository),
+    /** Directions the find screen measured, for the Nearby map (#174). */
+    val measuredBearings: MeasuredBearings = MeasuredBearings(),
 ) {
     /** Implemented by the Application; feature ViewModel factories read dependencies through it. */
     interface Provider {

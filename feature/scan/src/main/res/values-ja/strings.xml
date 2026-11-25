@@ -77,6 +77,7 @@
     <string name="home_reorder_chip_description">リストの順番が変わりました。タップで並べ替え</string>
     <!-- Device map (#86) -->
     <string name="map_arranged_by_distance">距離順に配置</string>
+    <string name="map_direction_measured">方向を確認済み</string>
     <string name="map_scanning">スキャン中</string>
     <string name="map_empty_title">近くにデバイスがありません</string>
     <string name="map_empty_body">Bluetoothデバイスの電源を入れて近づけてください</string>

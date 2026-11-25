@@ -81,6 +81,7 @@
     <string name="home_reorder_chip_description">List order changed. Tap to sort.</string>
     <!-- Device map (#86) -->
     <string name="map_arranged_by_distance">Arranged by distance</string>
+    <string name="map_direction_measured">Direction measured</string>
     <string name="map_scanning">Scanning</string>
     <string name="map_empty_title">No devices nearby</string>
     <string name="map_empty_body">Turn on a Bluetooth device and bring it closer</string>

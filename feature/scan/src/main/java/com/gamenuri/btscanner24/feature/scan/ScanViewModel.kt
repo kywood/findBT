@@ -17,6 +17,9 @@ import com.gamenuri.btscanner24.core.model.DeviceFilter
 import com.gamenuri.btscanner24.core.model.DeviceNaming
 import com.gamenuri.btscanner24.core.model.DeviceSort
 import com.gamenuri.btscanner24.core.model.ListPreferences
+import com.gamenuri.btscanner24.core.model.MapLayout
+import com.gamenuri.btscanner24.core.model.MapSpot
+import com.gamenuri.btscanner24.core.model.MeasuredBearing
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,6 +37,8 @@ class ScanViewModel(
     private val repository: DeviceRepository,
     private val listPreferences: ListPreferencesRepository,
     private val bondedDevices: BondedDevices? = null,
+    /** Directions the find screen measured (#174); the map shows the fresh ones. */
+    private val bearings: StateFlow<Map<String, MeasuredBearing>> = MutableStateFlow(emptyMap()),
     private val clock: () -> Long = System::currentTimeMillis,
 ) : ViewModel() {
 
@@ -95,7 +100,8 @@ class ScanViewModel(
     private val scanState = combine(status, paused) { status, paused -> status to paused }
 
     val uiState: StateFlow<ScanUiState> =
-        combine(scanState, throttledDevices, listInputs, ticker) { (status, paused), devices, inputs, _ ->
+        combine(scanState, throttledDevices, listInputs, bearings, ticker) { scanNow, devices, inputs, measured, _ ->
+            val (status, paused) = scanNow
             val now = clock()
             val (prefs, q, token, autoToken, aliases) = inputs
             val list = ordering.update(devices.values, prefs, q, token, now, aliases, autoToken)
@@ -110,8 +116,22 @@ class ScanViewModel(
                 isPaused = paused,
                 totalCount = devices.size,
                 census = DeviceListOrdering.census(devices.values, aliases.keys),
+                mapSpots = mapSpots(list.items, measured, now),
             )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ScanUiState())
+
+    /**
+     * Where each device that is still around stands on the map (#86): by distance, and by direction
+     * only for those the find screen measured a moment ago (#174).
+     */
+    private fun mapSpots(
+        items: List<DeviceListItem>,
+        measured: Map<String, MeasuredBearing>,
+        now: Long,
+    ): Map<String, MapSpot> {
+        val distances = items.filter { !it.isGone }.map { it.device.address to it.distanceMeters }
+        return MapLayout.arrange(MeasuredBearing.entries(distances, measured, now))
+    }
 
     fun startScan() {
         paused.value = false
@@ -226,7 +246,13 @@ class ScanViewModel(
                 val app = this[APPLICATION_KEY]
                 val ble = (app as BleDependencies.Provider).bleDependencies
                 val data = app as DataDependenciesProvider
-                ScanViewModel(ble.scanSession, ble.repository, data.listPreferences, ble.bondedDevices)
+                ScanViewModel(
+                    scan = ble.scanSession,
+                    repository = ble.repository,
+                    listPreferences = data.listPreferences,
+                    bondedDevices = ble.bondedDevices,
+                    bearings = ble.measuredBearings.bearings,
+                )
             }
         }
     }
