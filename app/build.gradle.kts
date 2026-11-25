@@ -15,6 +15,58 @@ val localProperties = Properties().apply {
 // The earbud find tone (#153, #189): null when local.properties does not set it.
 val earbudTone: String? = localProperties.getProperty("nearo.feature.earbudTone")
 
+// Release signing (#35): the keystore path and passwords come from local.properties or environment
+// variables only, never from git. Without them the release build is simply left unsigned.
+fun secret(property: String, environment: String): String? =
+    localProperties.getProperty(property)?.takeIf { it.isNotBlank() }
+        ?: System.getenv(environment)?.takeIf { it.isNotBlank() }
+
+val signingStoreFile = secret("nearo.signing.storeFile", "NEARO_SIGNING_STORE_FILE")
+val signingStorePassword = secret("nearo.signing.storePassword", "NEARO_SIGNING_STORE_PASSWORD")
+val signingKeyAlias = secret("nearo.signing.keyAlias", "NEARO_SIGNING_KEY_ALIAS")
+val signingKeyPassword = secret("nearo.signing.keyPassword", "NEARO_SIGNING_KEY_PASSWORD")
+val hasReleaseSigning =
+    listOf(signingStoreFile, signingStorePassword, signingKeyAlias, signingKeyPassword).all { it != null }
+
+// A release must never ship Google's test ads or go out unsigned (#35): building or bundling it stops
+// with the list of what is missing. Debug and benchmark builds keep the test IDs.
+val admobTestPublisher = "ca-app-pub-3940256099942544"
+
+// Google's public sample IDs: always fill, never pay, safe to tap. Only the debug and benchmark
+// build types fall back to them; release code and the release manifest have no fallback at all.
+val admobTestAppId = "$admobTestPublisher~3347511713"
+val admobTestUnits = mapOf(
+    "banner" to "$admobTestPublisher/9214589741",
+    "interstitial" to "$admobTestPublisher/1033173712",
+    "rewarded" to "$admobTestPublisher/5224354917",
+)
+
+fun admob(key: String): String = localProperties.getProperty("nearo.admob.$key", "").trim()
+val missingForRelease = listOf("appId", "banner", "interstitial", "rewarded")
+    .map { "nearo.admob.$it" }
+    .filter { key ->
+        val value = localProperties.getProperty(key)
+        value.isNullOrBlank() || value.startsWith(admobTestPublisher) || value.contains("XXXX")
+    } + if (hasReleaseSigning) {
+    emptyList()
+} else {
+    listOf("nearo.signing.* (storeFile, storePassword, keyAlias, keyPassword)")
+}
+
+gradle.taskGraph.whenReady {
+    val buildsRelease = allTasks.any { task ->
+        task.project == project &&
+            task.name.endsWith("Release") &&
+            (task.name.startsWith("assemble") || task.name.startsWith("bundle") || task.name.startsWith("package"))
+    }
+    if (buildsRelease && missingForRelease.isNotEmpty()) {
+        throw GradleException(
+            "Release build stopped. Missing in local.properties: " + missingForRelease.joinToString(", ") +
+                ". See docs/RELEASE.md.",
+        )
+    }
+}
+
 android {
     namespace = "com.gamenuri.btscanner24"
     compileSdk {
@@ -32,12 +84,11 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // AdMob (#31). Google's public test IDs unless local.properties has the real ones (release, #35).
-        manifestPlaceholders["admobAppId"] =
-            localProperties.getProperty("nearo.admob.appId", "ca-app-pub-3940256099942544~3347511713")
-        for (unit in listOf("banner", "interstitial", "rewarded")) {
-            val value = localProperties.getProperty("nearo.admob.$unit", "")
-            buildConfigField("String", "ADMOB_${unit.uppercase()}", "\"$value\"")
+        // AdMob (#31): what local.properties has, and nothing when it has nothing. The release build
+        // stops above without real IDs (#35); debug and benchmark put Google's test IDs in below.
+        manifestPlaceholders["admobAppId"] = admob("appId")
+        for (unit in admobTestUnits.keys) {
+            buildConfigField("String", "ADMOB_${unit.uppercase()}", "\"${admob(unit)}\"")
         }
 
         // The find tone through connected earbuds (#153). Off in release until the user has tested it
@@ -48,6 +99,17 @@ android {
         buildConfigField("String", "PRIVACY_POLICY_URL", "\"https://kywood.github.io/findBT/privacy/\"")
     }
 
+    signingConfigs {
+        if (hasReleaseSigning) {
+            create("release") {
+                storeFile = file(signingStoreFile!!)
+                storePassword = signingStorePassword
+                keyAlias = signingKeyAlias
+                keyPassword = signingKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         debug {
             // Installs next to the Play Store build on test phones; release applicationId is unchanged.
@@ -55,6 +117,10 @@ android {
             versionNameSuffix = "-debug"
             // On in debug so the user can try it on the test phone; `=false` turns it off.
             buildConfigField("boolean", "EARBUD_TONE", (earbudTone ?: "true").toBoolean().toString())
+            manifestPlaceholders["admobAppId"] = admob("appId").ifBlank { admobTestAppId }
+            for ((unit, testId) in admobTestUnits) {
+                buildConfigField("String", "ADMOB_${unit.uppercase()}", "\"${admob(unit).ifBlank { testId }}\"")
+            }
         }
         release {
             // R8 drops the unused part of material-icons-extended and friends; a much smaller dex
@@ -65,6 +131,8 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+            // The existing upload key (the package stays com.gamenuri.btscanner24); null = unsigned.
+            signingConfig = signingConfigs.findByName("release")
         }
         // Release code, debug signing, profileable: for measuring start-up on test phones (#34).
         create("benchmark") {
@@ -74,6 +142,11 @@ android {
             isProfileable = true
             applicationIdSuffix = ".benchmark"
             versionNameSuffix = "-benchmark"
+            // Not a release: measured on test phones with test ads, like debug.
+            manifestPlaceholders["admobAppId"] = admob("appId").ifBlank { admobTestAppId }
+            for ((unit, testId) in admobTestUnits) {
+                buildConfigField("String", "ADMOB_${unit.uppercase()}", "\"${admob(unit).ifBlank { testId }}\"")
+            }
         }
     }
     sourceSets {
