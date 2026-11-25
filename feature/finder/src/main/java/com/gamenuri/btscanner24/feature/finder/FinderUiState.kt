@@ -46,6 +46,11 @@ data class FinderUiState(
     val stage: FinderStage = FinderStage.WAITING,
     /** Arrow angle relative to the top of the phone, clockwise. Null hides the arrow. */
     val arrowDegrees: Float? = null,
+    /**
+     * The same direction in the heading's own frame (0..360), for the world-anchored 3D arrow (#76),
+     * which subtracts the live heading itself at sensor rate. Null when [arrowDegrees] is null.
+     */
+    val bearingDegrees: Float? = null,
     val confidence: ArrowConfidence = ArrowConfidence.NONE,
     val sweepProgress: Float = 0f,
     val distanceMeters: Double? = null,

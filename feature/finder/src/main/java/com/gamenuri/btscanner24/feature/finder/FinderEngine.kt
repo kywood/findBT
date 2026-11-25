@@ -105,6 +105,7 @@ internal class FinderEngine(
             deviceLabel = label,
             stage = stage,
             arrowDegrees = relative?.takeIf { showArrow }?.toFloat(),
+            bearingDegrees = est?.bearingDegrees?.takeIf { showArrow && relative != null }?.toFloat(),
             confidence = if (showArrow) confidenceFor(est, current) else ArrowConfidence.NONE,
             sweepProgress = est?.sweepProgress ?: 0f,
             distanceMeters = shownDistance(nowMs, listDistance ?: current?.distanceMeters),

@@ -32,14 +32,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Badge
@@ -71,6 +66,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -296,18 +292,19 @@ private fun ScanTopBar(
                     onSearchOpenChange(!searchOpen)
                 },
             ) {
-                Icon(
-                    imageVector = if (searchOpen) Icons.Default.Close else Icons.Default.Search,
-                    contentDescription = stringResource(
-                        if (searchOpen) R.string.action_close_search else R.string.action_search,
-                    ),
-                )
+                val searchLabel =
+                    stringResource(if (searchOpen) R.string.action_close_search else R.string.action_search)
+                if (searchOpen) {
+                    Icon(Icons.Default.Close, contentDescription = searchLabel)
+                } else {
+                    Icon(painterResource(UiR.drawable.ic_search), contentDescription = searchLabel)
+                }
             }
             if (!searchOpen) {
                 val scanning = state.isScanning
                 IconButton(onClick = if (scanning) actions.onPause else actions.onResume) {
                     Icon(
-                        imageVector = if (scanning) Icons.Default.Pause else Icons.Default.PlayArrow,
+                        painter = painterResource(if (scanning) UiR.drawable.ic_pause else UiR.drawable.ic_play),
                         contentDescription = stringResource(
                             if (scanning) R.string.action_pause_scan else R.string.action_resume_scan,
                         ),
@@ -469,7 +466,7 @@ private fun FilterButton(count: Int, onClick: () -> Unit) {
         // The count sits inside the button in primary colours; red would read as an error (#89).
         Box(Modifier.size(FILTER_BUTTON)) {
             FilledTonalIconButton(onClick = onClick, modifier = Modifier.fillMaxSize()) {
-                Icon(Icons.Default.Tune, contentDescription = description)
+                Icon(painterResource(UiR.drawable.ic_filter), contentDescription = description)
             }
             Badge(
                 modifier = Modifier.align(Alignment.TopEnd).padding(top = 2.dp, end = 2.dp).size(15.dp),
@@ -481,7 +478,7 @@ private fun FilterButton(count: Int, onClick: () -> Unit) {
         }
     } else {
         IconButton(onClick = onClick, modifier = Modifier.size(40.dp)) {
-            Icon(Icons.Default.Tune, contentDescription = description)
+            Icon(painterResource(UiR.drawable.ic_filter), contentDescription = description)
         }
     }
 }
@@ -636,7 +633,7 @@ private fun SortMenu(selected: DeviceSort, onSelect: (DeviceSort) -> Unit) {
             colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurface),
         ) {
             Icon(
-                Icons.AutoMirrored.Filled.Sort,
+                painterResource(UiR.drawable.ic_sort),
                 contentDescription = stringResource(R.string.sort_menu),
                 modifier = Modifier.size(18.dp),
             )
