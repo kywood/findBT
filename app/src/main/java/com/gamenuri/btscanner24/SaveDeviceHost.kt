@@ -10,9 +10,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.gamenuri.btscanner24.core.ble.BleDependencies
 import com.gamenuri.btscanner24.core.billing.PremiumState
 import com.gamenuri.btscanner24.core.billing.PremiumStore
+import com.gamenuri.btscanner24.core.ble.BleDependencies
 import com.gamenuri.btscanner24.core.data.DataDependenciesProvider
 import com.gamenuri.btscanner24.core.data.SavedDevicesRepository
 import com.gamenuri.btscanner24.core.model.BleDevice
