@@ -166,7 +166,7 @@ class ProtectionService : Service() {
         settings = next
         val bonded = ble.bondedDevices
         val paired = if (bonded.hasPermission()) bonded.list() else emptyList()
-        val listed = WatchList.build(next.watched, saved, paired)
+        val listed = WatchList.build(next, saved, paired)
         val gone = devices.map { it.address } - listed.mapTo(HashSet()) { it.address }
         for (address in gone) {
             watch.forget(address)

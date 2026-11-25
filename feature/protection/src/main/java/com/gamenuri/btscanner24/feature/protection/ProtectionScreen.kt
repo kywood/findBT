@@ -67,7 +67,13 @@ import com.gamenuri.btscanner24.core.ui.label
 import kotlinx.coroutines.launch
 
 /** One of the user's devices that can be watched. */
-internal data class ProtectionChoice(val address: String, val name: String?, val category: DeviceCategory)
+internal data class ProtectionChoice(
+    val address: String,
+    val name: String?,
+    val category: DeviceCategory,
+    /** Saved devices are watched until switched off; paired ones only once switched on. */
+    val isSaved: Boolean,
+)
 
 /** Saved devices first, then the paired ones people lose; the same devices My devices lists up front. */
 internal fun protectionChoices(
@@ -76,10 +82,10 @@ internal fun protectionChoices(
     hidden: Set<String>,
 ): List<ProtectionChoice> {
     val savedAddresses = saved.mapTo(HashSet()) { it.address }
-    return saved.map { ProtectionChoice(it.address, it.name.takeIf(String::isNotBlank), it.category) } +
+    return saved.map { ProtectionChoice(it.address, it.name.takeIf(String::isNotBlank), it.category, isSaved = true) } +
         paired
             .filter { it.isPriority && it.address !in hidden && it.address !in savedAddresses }
-            .map { ProtectionChoice(it.address, it.name?.takeIf(String::isNotBlank), it.category) }
+            .map { ProtectionChoice(it.address, it.name?.takeIf(String::isNotBlank), it.category, isSaved = false) }
 }
 
 /**
@@ -104,11 +110,7 @@ fun ProtectionScreen(onBack: () -> Unit, turnOnNow: Boolean = false) {
     var refused by rememberSaveable { mutableStateOf(false) }
     fun start() {
         refused = false
-        scope.launch {
-            // The first time, every device offered is watched; after that the switches decide.
-            data.protection.watchIfUnset(choices.mapTo(HashSet()) { it.address })
-            Protection.turnOn(app)
-        }
+        Protection.turnOn(app)
     }
     val permissions = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
         if (context.hasAll(neededPermissions())) {
@@ -315,7 +317,7 @@ private fun WatchedDevices(
                     modifier = Modifier.weight(1f),
                 )
                 Switch(
-                    checked = choice.address in settings.watched,
+                    checked = settings.watches(choice.address, choice.isSaved),
                     onCheckedChange = { actions.onWatch(choice.address, it) },
                 )
             }
@@ -339,10 +341,10 @@ private fun Note(text: String) {
 private fun ProtectionOnPreview() {
     NearoTheme {
         ProtectionContent(
-            settings = ProtectionSettings(enabled = true, watched = setOf("A")),
+            settings = ProtectionSettings(enabled = true),
             choices = listOf(
-                ProtectionChoice("A", "Keys Tag", DeviceCategory.TRACKER),
-                ProtectionChoice("B", "Running Watch", DeviceCategory.WATCH),
+                ProtectionChoice("A", "Keys Tag", DeviceCategory.TRACKER, isSaved = true),
+                ProtectionChoice("B", "Running Watch", DeviceCategory.WATCH, isSaved = false),
             ),
             refused = false,
             actions = ProtectionActions(),

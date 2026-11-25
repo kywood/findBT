@@ -28,6 +28,7 @@ class ProtectionRepository(private val store: DataStore<Preferences>) {
         ProtectionSettings(
             enabled = preferences[ENABLED] ?: false,
             watched = preferences[WATCHED].orEmpty(),
+            unwatched = preferences[UNWATCHED].orEmpty(),
             mutedUntil = TimesCodec.decode(preferences[MUTED].orEmpty()),
             alerts = TimesCodec.decode(preferences[ALERTS].orEmpty()),
         )
@@ -43,15 +44,12 @@ class ProtectionRepository(private val store: DataStore<Preferences>) {
 
     suspend fun setWatched(address: String, watched: Boolean) {
         store.edit { preferences ->
-            val current = preferences[WATCHED].orEmpty()
-            preferences[WATCHED] = if (watched) current + address else current - address
+            val on = preferences[WATCHED].orEmpty()
+            val off = preferences[UNWATCHED].orEmpty()
+            preferences[WATCHED] = if (watched) on + address else on - address
+            preferences[UNWATCHED] = if (watched) off - address else off + address
             if (!watched) preferences.dropTimes(address)
         }
-    }
-
-    /** The first time protection is turned on every device offered is watched; later the user's choice stands. */
-    suspend fun watchIfUnset(addresses: Set<String>) {
-        store.edit { preferences -> if (preferences[WATCHED] == null) preferences[WATCHED] = addresses }
     }
 
     suspend fun mute(address: String, until: Long) {
@@ -80,6 +78,7 @@ class ProtectionRepository(private val store: DataStore<Preferences>) {
     suspend fun forget(address: String) {
         store.edit { preferences ->
             preferences[WATCHED]?.let { preferences[WATCHED] = it - address }
+            preferences[UNWATCHED]?.let { preferences[UNWATCHED] = it - address }
             preferences.dropTimes(address)
         }
     }
@@ -92,6 +91,7 @@ class ProtectionRepository(private val store: DataStore<Preferences>) {
     private companion object {
         val ENABLED = booleanPreferencesKey("enabled")
         val WATCHED = stringSetPreferencesKey("watched")
+        val UNWATCHED = stringSetPreferencesKey("unwatched")
         val MUTED = stringPreferencesKey("muted")
         val ALERTS = stringPreferencesKey("alerts")
     }

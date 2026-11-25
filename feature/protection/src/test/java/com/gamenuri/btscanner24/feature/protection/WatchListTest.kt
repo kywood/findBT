@@ -3,6 +3,7 @@ package com.gamenuri.btscanner24.feature.protection
 import com.gamenuri.btscanner24.core.ble.WatchTarget
 import com.gamenuri.btscanner24.core.model.DeviceCategory
 import com.gamenuri.btscanner24.core.model.PairedDevice
+import com.gamenuri.btscanner24.core.model.ProtectionSettings
 import com.gamenuri.btscanner24.core.model.SavedDevice
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -15,15 +16,22 @@ class WatchListTest {
     private val budsSaved = SavedDevice(buds.address, "Buds", DeviceCategory.EARBUDS, "Galaxy Buds FE", 6L)
 
     private val devices = WatchList.build(
-        watched = setOf(buds.address, keys.address, "CC:00:00:00:00:09"),
+        settings = ProtectionSettings(watched = setOf("CC:00:00:00:00:09")),
         saved = listOf(keys, budsSaved),
         paired = listOf(buds, car),
     )
 
     @Test
-    fun `only watched devices still on My devices are listed, a paired and saved one once`() {
+    fun `saved devices still on My devices are watched from the start, a paired and saved one once`() {
         assertEquals(listOf(buds.address, keys.address), devices.map { it.address })
         assertEquals(listOf("Min's buds", "My keys"), devices.map { it.name })
+    }
+
+    @Test
+    fun `a paired device is watched once switched on and a saved one not once switched off`() {
+        val settings = ProtectionSettings(watched = setOf(car.address), unwatched = setOf(keys.address))
+        val chosen = WatchList.build(settings, saved = listOf(keys, budsSaved), paired = listOf(buds, car))
+        assertEquals(listOf(buds.address, car.address), chosen.map { it.address })
     }
 
     @Test

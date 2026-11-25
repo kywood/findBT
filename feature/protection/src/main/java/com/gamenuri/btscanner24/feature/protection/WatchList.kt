@@ -3,6 +3,7 @@ package com.gamenuri.btscanner24.feature.protection
 import com.gamenuri.btscanner24.core.ble.WatchTarget
 import com.gamenuri.btscanner24.core.model.OwnDevices
 import com.gamenuri.btscanner24.core.model.PairedDevice
+import com.gamenuri.btscanner24.core.model.ProtectionSettings
 import com.gamenuri.btscanner24.core.model.SavedDevice
 
 /** One of the user's devices protection mode watches (#163). */
@@ -24,15 +25,22 @@ internal data class WatchedDevice(
  */
 internal object WatchList {
 
-    /** The watched devices that are still on My devices; a device that is both paired and saved counts once. */
-    fun build(watched: Set<String>, saved: List<SavedDevice>, paired: List<PairedDevice>): List<WatchedDevice> =
-        OwnDevices.list(paired, saved).filter { it.device.address in watched }.map { own ->
-            WatchedDevice(
-                address = own.device.address,
-                name = own.device.name?.takeIf { it.isNotBlank() },
-                advertisedNames = own.matchNames.filterTo(LinkedHashSet()) { it.isNotBlank() },
-            )
-        }
+    /**
+     * The watched devices that are still on My devices; a device that is both paired and saved counts
+     * once. Saved devices are watched unless switched off, paired ones only when switched on.
+     */
+    fun build(settings: ProtectionSettings, saved: List<SavedDevice>, paired: List<PairedDevice>): List<WatchedDevice> {
+        val savedAddresses = saved.mapTo(HashSet()) { it.address }
+        return OwnDevices.list(paired, saved)
+            .filter { settings.watches(it.device.address, isSaved = it.device.address in savedAddresses) }
+            .map { own ->
+                WatchedDevice(
+                    address = own.device.address,
+                    name = own.device.name?.takeIf { it.isNotBlank() },
+                    advertisedNames = own.matchNames.filterTo(LinkedHashSet()) { it.isNotBlank() },
+                )
+            }
+    }
 
     /** What the filtered scan asks Android for: each address and each name on its own. */
     fun targets(devices: List<WatchedDevice>): List<WatchTarget> = devices.flatMap { device ->

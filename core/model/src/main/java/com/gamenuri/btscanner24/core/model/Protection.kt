@@ -6,13 +6,21 @@ package com.gamenuri.btscanner24.core.model
  */
 data class ProtectionSettings(
     val enabled: Boolean = false,
-    /** Addresses, as listed on My devices, of the devices that are watched. */
+    /** Addresses, as listed on My devices, of the devices the user switched on. */
     val watched: Set<String> = emptySet(),
+    /** The devices the user switched off, e.g. one that stays at home on purpose. */
+    val unwatched: Set<String> = emptySet(),
     /** No alert for a device before this time. */
     val mutedUntil: Map<String, Long> = emptyMap(),
     /** Devices that may have been left behind, with the time each was last heard; gone when heard again. */
     val alerts: Map<String, Long> = emptyMap(),
-)
+) {
+    /**
+     * Whether [address] raises a left-behind alert. Until the user touches its switch a device they
+     * saved is watched and one that is only paired with the phone is not.
+     */
+    fun watches(address: String, isSaved: Boolean): Boolean = address in watched || (isSaved && address !in unwatched)
+}
 
 /** Address-to-time pairs as text for storage: one per line, tab-separated. */
 object TimesCodec {
