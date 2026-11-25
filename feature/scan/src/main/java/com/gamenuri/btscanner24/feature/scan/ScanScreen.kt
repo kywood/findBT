@@ -11,6 +11,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -44,6 +45,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -496,6 +498,7 @@ private fun FilterButton(count: Int, onClick: () -> Unit) {
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun DeviceList(
     state: ScanUiState,
@@ -568,12 +571,26 @@ private fun DeviceList(
             }
         }
         if (other.isNotEmpty()) {
-            item(key = "other-header") {
-                OtherHeader(other.size, onClose = actions.onHideOther, onInfo = { otherInfoOpen = true })
+            // A clear break between the user's own kind of devices and everything else (#142): a gap, a
+            // header that stays in view while its section scrolls, and a quieter surface under its rows.
+            item(key = "other-gap") { Spacer(Modifier.height(OTHER_SECTION_GAP)) }
+            stickyHeader(key = "other-header") {
+                OtherHeader(
+                    count = other.size,
+                    sort = state.preferences.sort,
+                    onClose = actions.onHideOther,
+                    onInfo = { otherInfoOpen = true },
+                )
             }
             items(other, key = { it.device.address }) { item ->
-                DeviceRow(item, actions, Modifier.animateItem(), compact = true)
+                DeviceRow(
+                    item,
+                    actions,
+                    Modifier.animateItem().background(MaterialTheme.colorScheme.surfaceContainerLow),
+                    compact = true,
+                )
             }
+            item(key = "other-close") { OtherFooter(actions.onHideOther) }
         }
     }
 }
@@ -661,23 +678,61 @@ private fun OtherInfoSheet(onDismiss: () -> Unit) {
     }
 }
 
-/** "Other devices · 23", ⓘ, and "Close" at the end, which hides the section again (#142). */
+/**
+ * "Other devices · 23" with the order they are in, ⓘ, and a "Close" button at the end, which hides
+ * the section again (#142). It carries the section's upper edge: a strong line on a quieter surface.
+ */
 @Composable
-private fun OtherHeader(count: Int, onClose: () -> Unit, onInfo: () -> Unit) {
-    Column(Modifier.fillMaxWidth()) {
-        HorizontalDivider(Modifier.padding(top = 8.dp))
+private fun OtherHeader(count: Int, sort: DeviceSort, onClose: () -> Unit, onInfo: () -> Unit) {
+    Column(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceContainer)) {
+        HorizontalDivider(thickness = 2.dp, color = MaterialTheme.colorScheme.outline)
         Row(
-            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(start = 16.dp, end = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = stringResource(R.string.nearby_other_section, count),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Column(Modifier.weight(1f, fill = false)) {
+                Text(
+                    text = stringResource(R.string.nearby_other_section, count),
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = stringResource(sort.labelRes()),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                )
+            }
             OtherInfoButton(onInfo)
             Spacer(Modifier.weight(1f))
-            TextButton(onClick = onClose) { Text(stringResource(R.string.nearby_other_close)) }
+            FilledTonalButton(
+                onClick = onClose,
+                modifier = Modifier.heightIn(min = 40.dp),
+                contentPadding = PaddingValues(start = 12.dp, end = 16.dp),
+            ) {
+                Icon(Icons.Filled.Close, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(6.dp))
+                Text(stringResource(R.string.nearby_other_close))
+            }
+        }
+    }
+}
+
+/** The section's lower edge: the same close again, so a long section need not be scrolled back up. */
+@Composable
+private fun OtherFooter(onClose: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surfaceContainerLow)
+            .padding(vertical = 8.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        FilledTonalButton(onClick = onClose, modifier = Modifier.heightIn(min = 40.dp)) {
+            Icon(Icons.Filled.Close, contentDescription = null, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(6.dp))
+            Text(stringResource(R.string.nearby_other_close_section))
         }
     }
 }
@@ -723,6 +778,7 @@ private const val PULSE_MS = 1_000
 private const val CHIP_FADE_MS = 150
 private val FILTER_BUTTON = 34.dp
 private const val REORDER_AUTO_MS = 8_000L
+private val OTHER_SECTION_GAP = 20.dp
 
 @Composable
 private fun RadioOffState(reason: ScanFailure, actions: ScanActions, modifier: Modifier = Modifier) {
