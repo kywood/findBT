@@ -4,8 +4,6 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -53,8 +51,8 @@ fun HomeScreen(onFind: (address: String) -> Unit, onOpenSettings: () -> Unit, st
                             onClick = { tab = item },
                             icon = {
                                 when (item) {
-                                    HomeTab.NEARBY -> Icon(painterResource(UiR.drawable.ic_device_beacon), null)
-                                    HomeTab.MY_DEVICES -> Icon(Icons.Filled.Star, null)
+                                    HomeTab.NEARBY -> Icon(painterResource(UiR.drawable.ic_tab_nearby), null)
+                                    HomeTab.MY_DEVICES -> Icon(painterResource(UiR.drawable.ic_tab_mine), null)
                                 }
                             },
                             label = { Text(stringResource(item.label)) },
