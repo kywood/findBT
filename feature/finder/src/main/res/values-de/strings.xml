@@ -24,6 +24,14 @@
     <string name="finder_signal_lost_body">Vor %1$d s gesehen · geh zurück, wo das Signal stärker war</string>
     <string name="finder_not_found_title">Signal nicht gefunden</string>
     <string name="finder_not_found_body">Geh näher heran oder prüfe, ob es eingeschaltet ist</string>
+    <string name="finder_bluetooth_off_title">Bluetooth ist aus</string>
+    <string name="finder_bluetooth_off_body">Schalte Bluetooth ein und versuche es erneut</string>
+    <string name="finder_location_off_title">Standort ist aus</string>
+    <string name="finder_location_off_body">In dieser Android-Version braucht die Bluetooth-Suche den eingeschalteten Standort</string>
+    <string name="finder_permission_title">Berechtigung nötig</string>
+    <string name="finder_permission_body">Erlaube \"Geräte in der Nähe\" in den Einstellungen und versuche es erneut</string>
+    <string name="finder_scan_failed_title">Suche konnte nicht starten</string>
+    <string name="finder_scan_failed_body">Warte ein paar Sekunden und versuche es erneut</string>
     <string name="finder_retry">Erneut versuchen</string>
     <string name="finder_back_to_list">Zurück zur Liste</string>
     <string name="finder_no_compass_title">Folge wärmer und kälter</string>

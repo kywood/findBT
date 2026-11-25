@@ -10,6 +10,7 @@ import com.gamenuri.btscanner24.core.ble.BleScanner
 import com.gamenuri.btscanner24.core.ble.BondedDevices
 import com.gamenuri.btscanner24.core.ble.DeviceRepository
 import com.gamenuri.btscanner24.core.ble.ScanEvent
+import com.gamenuri.btscanner24.core.ble.ScanFailure
 import com.gamenuri.btscanner24.core.ble.scanContinuously
 import com.gamenuri.btscanner24.core.data.DataDependenciesProvider
 import com.gamenuri.btscanner24.core.data.HiddenDevicesRepository
@@ -40,6 +41,7 @@ class DevicesViewModel(
 
     private val paired = MutableStateFlow<List<PairedDevice>>(emptyList())
     private val hasPermission = MutableStateFlow(bondedDevices.hasPermission())
+    private val scanFailure = MutableStateFlow<ScanFailure?>(null)
     private var scanJob: Job? = null
 
     val uiState: StateFlow<MyDevicesUiState> = combine(
@@ -47,9 +49,10 @@ class DevicesViewModel(
         repository.devices.sample(UI_REFRESH_MS),
         hiddenDevices.hidden,
         hasPermission,
-    ) { pairedList, seen, hidden, permitted ->
+        scanFailure,
+    ) { pairedList, seen, hidden, permitted, failure ->
         MyDevices.build(pairedList, seen.values, hidden, clock()) { it.distanceMeters }
-            .copy(hasPermission = permitted)
+            .copy(hasPermission = permitted, scanFailure = failure)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MyDevicesUiState())
 
     /** Called when the tab becomes visible: re-read paired devices (the user may have paired one) and scan. */
@@ -57,11 +60,18 @@ class DevicesViewModel(
         hasPermission.value = bondedDevices.hasPermission()
         paired.value = bondedDevices.list()
         if (scanJob?.isActive == true || !scanner.hasScanPermission()) return
+        scanFailure.value = null
         scanJob = viewModelScope.launch(Dispatchers.Default) {
             // Waits out Android's 5-starts-per-30-s budget shared with the Nearby tab (#62) and starts
             // again when the scan dies quietly, so a device nearby keeps its signal (#116).
             scanner.scanContinuously().collect { event ->
-                if (event is ScanEvent.Result) repository.onScanResult(event.result)
+                when (event) {
+                    is ScanEvent.Result -> {
+                        if (scanFailure.value != null) scanFailure.value = null
+                        repository.onScanResult(event.result)
+                    }
+                    is ScanEvent.Failed -> scanFailure.value = event.reason
+                }
             }
         }
     }

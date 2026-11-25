@@ -88,6 +88,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.gamenuri.btscanner24.core.ble.ScanFailure
 import com.gamenuri.btscanner24.core.ble.proximity.ProximityBand
 import com.gamenuri.btscanner24.core.ble.proximity.ProximityTrend
 import com.gamenuri.btscanner24.core.designsystem.component.WATER_RISE_MS
@@ -489,7 +490,13 @@ private fun MainActions(state: FinderUiState, actions: FinderActions, content: C
 private fun StageText(state: FinderUiState) {
     val (title, body) = when (state.stage) {
         FinderStage.WAITING -> R.string.finder_waiting_title to R.string.finder_waiting_body
-        FinderStage.NOT_FOUND -> R.string.finder_not_found_title to R.string.finder_not_found_body
+        FinderStage.NOT_FOUND -> when (state.scanFailure) {
+            null -> R.string.finder_not_found_title to R.string.finder_not_found_body
+            ScanFailure.BLUETOOTH_OFF -> R.string.finder_bluetooth_off_title to R.string.finder_bluetooth_off_body
+            ScanFailure.LOCATION_OFF -> R.string.finder_location_off_title to R.string.finder_location_off_body
+            ScanFailure.PERMISSION_MISSING -> R.string.finder_permission_title to R.string.finder_permission_body
+            else -> R.string.finder_scan_failed_title to R.string.finder_scan_failed_body
+        }
         FinderStage.SPIN -> R.string.finder_spin_title to R.string.finder_spin_body
         FinderStage.SPIN_AGAIN -> R.string.finder_spin_again_title to R.string.finder_spin_again_body
         FinderStage.WALK -> if (state.band == ProximityBand.VERY_CLOSE || state.band == ProximityBand.RIGHT_HERE) {
