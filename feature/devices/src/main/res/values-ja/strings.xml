@@ -15,4 +15,11 @@
     <string name="devices_permission_body">「付近のデバイス」を許可すると、このスマートフォンとペアリングしたデバイスが表示されます。</string>
     <string name="devices_permission_action">許可</string>
     <string name="devices_add_tracker">トラッカーを追加</string>
+    <string name="devices_section_saved">保存したデバイス</string>
+    <string name="devices_saved_count_free">%1$d · %2$d台無料</string>
+    <string name="devices_saved_hint">周りのリストまたは探す画面から保存できます</string>
+    <string name="devices_saved_mark">保存済み</string>
+    <string name="devices_saved_edit">名前・種類を変更</string>
+    <string name="devices_saved_remove">保存を解除</string>
+    <string name="devices_saved_not_seen">保存済み · まだ検出されていません</string>
 </resources>

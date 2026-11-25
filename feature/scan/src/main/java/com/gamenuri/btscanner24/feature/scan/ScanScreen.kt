@@ -95,6 +95,7 @@ import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
 import com.gamenuri.btscanner24.core.model.BleDevice
 import com.gamenuri.btscanner24.core.model.DeviceFilter
 import com.gamenuri.btscanner24.core.model.DeviceSort
+import com.gamenuri.btscanner24.core.model.SaveLimit
 import com.gamenuri.btscanner24.core.ui.DeviceCard
 import com.gamenuri.btscanner24.core.ui.R as UiR
 import com.gamenuri.btscanner24.core.ui.permission.rememberBlePermissionState
@@ -113,6 +114,10 @@ fun ScanScreen(
     onOpenSettings: () -> Unit = {},
     /** Shown once after the last row (the app puts its end-of-list ad card here, #81). */
     listFooter: (@Composable () -> Unit)? = null,
+    /** "Save to My devices" from a row's ⋮ menu (#108); null hides the menu. */
+    onSaveDevice: ((BleDevice) -> Unit)? = null,
+    /** Addresses already saved: their rows offer no save. */
+    savedAddresses: Set<String> = emptySet(),
     viewModel: ScanViewModel = viewModel(factory = ScanViewModel.Factory),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -168,6 +173,8 @@ fun ScanScreen(
             onRefreshOrder = viewModel::refreshOrder,
             onDeviceClick = onDeviceClick,
             onOpenSettings = onOpenSettings,
+            onSaveDevice = onSaveDevice,
+            savedAddresses = savedAddresses,
         ),
     )
 }
@@ -196,6 +203,9 @@ data class ScanActions(
     /** Opens find mode for the device. */
     val onDeviceClick: (BleDevice) -> Unit = {},
     val onOpenSettings: () -> Unit = {},
+    /** Saves the device to My devices (#108); null when saving is not wired (previews, demo). */
+    val onSaveDevice: ((BleDevice) -> Unit)? = null,
+    val savedAddresses: Set<String> = emptySet(),
 )
 
 /**
@@ -583,6 +593,11 @@ private fun DeviceRow(item: DeviceListItem, actions: ScanActions, modifier: Modi
         onClick = { actions.onDeviceClick(item.device) },
         modifier = modifier,
         compact = compact,
+        // Paired devices are in My devices already; unnamed ones cannot be recognised again.
+        onSave = actions.onSaveDevice
+            ?.takeIf { !item.isPaired && item.device.address !in actions.savedAddresses }
+            ?.takeIf { SaveLimit.canBeSaved(item.device) }
+            ?.let { save -> { save(item.device) } },
     )
 }
 

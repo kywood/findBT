@@ -15,4 +15,11 @@
     <string name="devices_permission_body">Permite \"Dispositivos cercanos\" para ver los dispositivos vinculados a este teléfono.</string>
     <string name="devices_permission_action">Permitir</string>
     <string name="devices_add_tracker">Añadir un rastreador</string>
+    <string name="devices_section_saved">Dispositivos guardados</string>
+    <string name="devices_saved_count_free">%1$d · %2$d gratis</string>
+    <string name="devices_saved_hint">Guarda desde la lista Cerca o la pantalla de búsqueda</string>
+    <string name="devices_saved_mark">Guardado</string>
+    <string name="devices_saved_edit">Cambiar nombre o tipo</string>
+    <string name="devices_saved_remove">Quitar de guardados</string>
+    <string name="devices_saved_not_seen">Guardado · aún no detectado</string>
 </resources>

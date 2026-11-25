@@ -66,4 +66,17 @@
     <string name="paywall_or">or</string>
     <string name="paywall_reward">Watch an ad for 24h Premium</string>
     <string name="paywall_reward_note">Watch one ad (about 30 s) to the end for 24 hours of Premium</string>
+    <string name="save_title">Save to My devices</string>
+    <string name="save_name_label">Name</string>
+    <string name="save_type_label">Type</string>
+    <string name="save_local_note">Name and type stay on this phone</string>
+    <string name="save_cancel">Cancel</string>
+    <string name="save_confirm">Save</string>
+    <string name="save_done">Saved to My devices</string>
+    <string name="save_view">View</string>
+    <string name="save_locked_title">1 saved device is free</string>
+    <string name="save_locked_body">With Premium, save as many as you like and remove ads.</string>
+    <string name="save_locked_ad_used">Already used today</string>
+    <string name="save_locked_later">Not now</string>
+    <string name="device_more_for">More for %1$s</string>
 </resources>

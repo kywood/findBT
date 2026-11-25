@@ -153,6 +153,9 @@ private fun AppNavHost(start: String, startOnMyDevices: Boolean, openPaywall: Bo
                     onFind = { address -> water.rise { navController.navigate(Routes.finder(address)) } },
                     onOpenSettings = { navController.navigate(Routes.SETTINGS) },
                     startOnMyDevices = startOnMyDevices,
+                    rewarded = ads?.let { nearoAds ->
+                        RewardedAd(rewardedReady) { activity?.let { nearoAds.showRewarded(it) { } } }
+                    },
                 )
             }
             composable(Routes.SETTINGS) {
