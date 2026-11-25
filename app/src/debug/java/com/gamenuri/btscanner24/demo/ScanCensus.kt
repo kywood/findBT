@@ -51,6 +51,23 @@ internal object ScanCensus {
         appendLine("source " + counts(devices.flatMap { sources(it) }, top = 20))
         val services = devices.flatMap { d -> d.serviceUuids16.map { "0x%04X".format(it) } }
         appendLine("service16 " + counts(services, top = 12))
+        // Apple Find My rows one by one (why are there two "trackers"?): the address tail only, how
+        // strong and how fresh, and the frame's length and status byte. Debug logcat only.
+        val now = System.currentTimeMillis()
+        devices.forEach { device ->
+            manufacturerData(device.rawBytes).filter { (company, payload) ->
+                company == 0x004C && payload.firstOrNull() == 0x12
+            }.forEach { (_, payload) ->
+                val length = payload.getOrNull(1)?.let { "0x%02X".format(it) } ?: "none"
+                val status = payload.getOrNull(2)?.let { "0x%02X".format(it) } ?: "none"
+                val age = (now - device.lastSeen) / 1000
+                val known = (now - device.firstSeen) / 1000
+                appendLine(
+                    "findMy addr=..${device.address.takeLast(5)} rssi=${device.rssi} age=${age}s known=${known}s " +
+                        "len=$length status=$status named=${device.hasName} category=${device.category.name}",
+                )
+            }
+        }
         // Per category: which advertising families make it up (to spot other people's phones etc.).
         devices.groupBy { it.category }.forEach { (category, list) ->
             appendLine("mix ${category.name} " + counts(list.flatMap { sources(it) }, top = 8))
