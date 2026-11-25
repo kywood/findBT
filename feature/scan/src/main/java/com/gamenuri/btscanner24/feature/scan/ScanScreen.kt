@@ -35,6 +35,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Badge
@@ -48,6 +49,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -162,6 +164,7 @@ fun ScanScreen(
             onSortChange = viewModel::setSort,
             onApplyFilter = viewModel::applyFilter,
             onShowOther = viewModel::showOther,
+            onHideOther = viewModel::hideOther,
             countFor = viewModel::resultCount,
             onRefreshOrder = viewModel::refreshOrder,
             onDeviceClick = onDeviceClick,
@@ -190,6 +193,8 @@ data class ScanActions(
     val onApplyFilter: (DeviceFilter) -> Unit = {},
     /** "N other devices hidden · Show" at the end of the list (#82). */
     val onShowOther: () -> Unit = {},
+    /** "Close" on the other devices' header (#142). */
+    val onHideOther: () -> Unit = {},
     /** Live result count for an edited filter. */
     val countFor: (DeviceFilter) -> Int = { 0 },
     val onRefreshOrder: () -> Unit = {},
@@ -497,6 +502,8 @@ private fun DeviceList(
     listState: LazyListState,
     modifier: Modifier = Modifier,
 ) {
+    var otherInfoOpen by rememberSaveable { mutableStateOf(false) }
+    if (otherInfoOpen) OtherInfoSheet(onDismiss = { otherInfoOpen = false })
     LazyColumn(
         modifier = modifier,
         state = listState,
@@ -553,10 +560,14 @@ private fun DeviceList(
         // Stable keys keep each row attached to its device; rows only move on a full sort.
         items(personal, key = { it.device.address }) { item -> DeviceRow(item, actions, Modifier.animateItem()) }
         if (state.hiddenOtherCount > 0) {
-            item(key = "other-hidden") { HiddenOtherRow(state.hiddenOtherCount, actions.onShowOther) }
+            item(key = "other-hidden") {
+                HiddenOtherRow(state.hiddenOtherCount, actions.onShowOther, onInfo = { otherInfoOpen = true })
+            }
         }
         if (other.isNotEmpty()) {
-            item(key = "other-header") { OtherHeader(other.size) }
+            item(key = "other-header") {
+                OtherHeader(other.size, onClose = actions.onHideOther, onInfo = { otherInfoOpen = true })
+            }
             items(other, key = { it.device.address }) { item ->
                 DeviceRow(item, actions, Modifier.animateItem(), compact = true)
             }
@@ -587,7 +598,7 @@ private fun DeviceRow(item: DeviceListItem, actions: ScanActions, modifier: Modi
 
 /** "23 other devices hidden · Show": one centred line, the whole row is the 48 dp touch target (#82). */
 @Composable
-private fun HiddenOtherRow(count: Int, onShow: () -> Unit) {
+private fun HiddenOtherRow(count: Int, onShow: () -> Unit, onInfo: () -> Unit) {
     val show = stringResource(R.string.nearby_other_show)
     Row(
         modifier = Modifier
@@ -610,19 +621,61 @@ private fun HiddenOtherRow(count: Int, onShow: () -> Unit) {
             color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.Bold,
         )
+        OtherInfoButton(onInfo)
     }
 }
 
+/** ⓘ beside "other devices": opens the short explanation of what they are (#142). */
 @Composable
-private fun OtherHeader(count: Int) {
+private fun OtherInfoButton(onClick: () -> Unit) {
+    IconButton(onClick = onClick) {
+        Icon(
+            Icons.Outlined.Info,
+            contentDescription = stringResource(R.string.nearby_other_info),
+            modifier = Modifier.size(18.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+/** What "other devices" are, why they start hidden, and what to do if one of them is yours (#142). */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun OtherInfoSheet(onDismiss: () -> Unit) {
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text(stringResource(R.string.other_info_title), style = MaterialTheme.typography.titleLarge)
+            Text(stringResource(R.string.other_info_what), style = MaterialTheme.typography.bodyMedium)
+            Text(stringResource(R.string.other_info_why), style = MaterialTheme.typography.bodyMedium)
+            Text(stringResource(R.string.other_info_mine), style = MaterialTheme.typography.bodyMedium)
+            Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.other_info_ok))
+            }
+        }
+    }
+}
+
+/** "Other devices · 23", ⓘ, and "Close" at the end, which hides the section again (#142). */
+@Composable
+private fun OtherHeader(count: Int, onClose: () -> Unit, onInfo: () -> Unit) {
     Column(Modifier.fillMaxWidth()) {
         HorizontalDivider(Modifier.padding(top = 8.dp))
-        Text(
-            text = stringResource(R.string.nearby_other_section, count),
-            modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 4.dp),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(R.string.nearby_other_section, count),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            OtherInfoButton(onInfo)
+            Spacer(Modifier.weight(1f))
+            TextButton(onClick = onClose) { Text(stringResource(R.string.nearby_other_close)) }
+        }
     }
 }
 
