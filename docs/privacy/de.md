@@ -36,8 +36,6 @@ Nichts davon wird hochgeladen. Gespeicherte und ausgeblendete Geräte, Angaben z
 | Dienst | Was er erhält | Wozu |
 |---|---|---|
 | Google AdMob | Werbe-ID, App-Set-ID, IP-Adresse (ungefährer Standort), Geräte- und App-Informationen sowie Interaktionen mit Anzeigen, einschließlich der Angabe, ob eine freiwillige Anzeige mit Prämie bis zum Ende angesehen wurde | Anzeigen (Banner, Vollbild und freiwillige Anzeigen mit Prämie) ausliefern und messen sowie Betrug verhindern |
-| Google Firebase Analytics | Zusammengefasste App-Ereignisse wie „eine Suche wurde gestartet“, „innerhalb von 1 Minute gefunden“ oder „ein Gerät wurde gespeichert“ (nur als Anzahl), dazu Gerätetyp, Betriebssystemversion, App-Version, Sprache, Land und Installations-ID | Verstehen, welche Funktionen sich bewähren, und die App verbessern |
-| Google Firebase Crashlytics | Absturzberichte: Stacktraces, Gerätemodell, Betriebssystemversion und Installations-ID | Abstürze beheben |
 | Google Play Billing | Kaufinformationen, die Google verarbeitet | Den einmaligen Premium-Kauf abwickeln |
 
 Keiner dieser Dienste erhält deine Bluetooth-Scan-Ergebnisse, deine gespeicherten Geräte, die Namen, die du ihnen gibst, aufgezeichnete Orte, Daten des Schutzmodus oder Tracker-Einträge. Anzeigenanfragen enthalten keine Informationen über die Geräte um dich herum. Es gelten die Datenschutzerklärungen der Dienste: https://policies.google.com/privacy
@@ -53,7 +51,7 @@ Keiner dieser Dienste erhält deine Bluetooth-Scan-Ergebnisse, deine gespeichert
 
 ## Werbung und deine Wahlmöglichkeiten
 
-- Im EWR, im Vereinigten Königreich und in der Schweiz bitten wir um deine Einwilligung, bevor wir personalisierte Werbung zeigen. Nutzungsstatistiken und Absturzberichte bleiben aus, solange du der Speicherung auf deinem Gerät nicht zustimmst. Du kannst deine Wahl jederzeit in den Einstellungen der App ändern (**Einstellungen › Datenschutzoptionen**).
+- Im EWR, im Vereinigten Königreich und in der Schweiz bitten wir um deine Einwilligung, bevor wir personalisierte Werbung zeigen oder für Werbung etwas auf deinem Gerät speichern. Du kannst deine Wahl jederzeit in den Einstellungen der App ändern (**Einstellungen › Datenschutzoptionen**).
 - Anzeigen mit Prämie sind freiwillig. Du entscheidest dich, eine anzusehen, und erhältst dafür 24 Stunden Premium, höchstens einmal am Tag. Vollbildanzeigen erscheinen nur, nachdem du ein Gerät gefunden hast, nie während der Suche.
 - Du kannst deine Werbe-ID zurücksetzen oder löschen oder personalisierte Werbung deaktivieren, und zwar in den Android-**Einstellungen › Google › Werbung** (die Bezeichnung variiert je nach Gerät).
 - Mit dem Kauf von Nearo Premium verschwindet die Werbung. Das gilt auch, solange ein 24-Stunden-Pass aktiv ist.
@@ -64,7 +62,7 @@ Nearo richtet sich nicht an Kinder unter 13 Jahren (oder unter dem Mindestalter 
 
 ## Speicherdauer und Löschung
 
-Wir speichern keine personenbezogenen Daten auf eigenen Servern. Auf deinem Handy werden Tracker-Einträge nach höchstens 48 Stunden gelöscht, Angaben zur letzten Erkennung werden gelöscht, sobald das Gerät nicht mehr zu deinen gehört, und alles andere bleibt, bis du es entfernst, den Speicher der App löschst oder die App deinstallierst. Analyse- und Absturzdaten bewahrt Google gemäß seinen Aufbewahrungseinstellungen auf: 14 Monate bei Analytics und 90 Tage bei Crashlytics.
+Wir speichern keine personenbezogenen Daten auf eigenen Servern. Auf deinem Handy werden Tracker-Einträge nach höchstens 48 Stunden gelöscht, Angaben zur letzten Erkennung werden gelöscht, sobald das Gerät nicht mehr zu deinen gehört, und alles andere bleibt, bis du es entfernst, den Speicher der App löschst oder die App deinstallierst. Nearo 2.0 nutzt keinen Analyse- oder Absturzbericht-Dienst.
 
 ## Sicherheit
 

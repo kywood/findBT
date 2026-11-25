@@ -36,8 +36,6 @@ Rien de ce qui précède n'est envoyé où que ce soit. Les appareils enregistr�
 | Service | Ce qu'il reçoit | Pourquoi |
 |---|---|---|
 | Google AdMob | Identifiant publicitaire, identifiant d'ensemble d'applications, adresse IP (localisation approximative), informations sur l'appareil et l'application, et interactions avec les publicités, y compris le fait qu'une publicité avec récompense facultative ait été regardée jusqu'au bout | Afficher et mesurer les publicités (bannière, plein écran et publicités avec récompense facultatives) et prévenir la fraude |
-| Google Firebase Analytics | Événements agrégés de l'application, tels que « une recherche a commencé », « trouvé en moins d'une minute » ou « un appareil a été enregistré » (un simple décompte), ainsi que le type d'appareil, la version du système, la version de l'application, la langue, le pays et l'identifiant d'installation | Comprendre quelles fonctions sont utiles et améliorer l'application |
-| Google Firebase Crashlytics | Rapports d'erreur : traces d'appels, modèle d'appareil, version du système et identifiant d'installation | Corriger les plantages |
 | Google Play Billing | Informations d'achat, traitées par Google | Traiter l'achat unique de Premium |
 
 Aucun de ces services ne reçoit vos résultats de recherche Bluetooth, vos appareils enregistrés, les noms que vous leur donnez, les lieux enregistrés, les données du mode protection ni les relevés de traceurs. Les demandes de publicité ne contiennent aucune information sur les appareils qui vous entourent. Leurs propres politiques de confidentialité s'appliquent : https://policies.google.com/privacy
@@ -53,7 +51,7 @@ Aucun de ces services ne reçoit vos résultats de recherche Bluetooth, vos appa
 
 ## Publicités et vos choix
 
-- Dans l'EEE, au Royaume-Uni et en Suisse, nous demandons votre consentement avant d'afficher des publicités personnalisées, et les statistiques d'utilisation et les rapports d'erreur restent désactivés tant que vous n'acceptez pas le stockage sur votre appareil. Vous pouvez modifier votre choix à tout moment dans les réglages de l'application (**Settings › Privacy options**).
+- Dans l'EEE, au Royaume-Uni et en Suisse, nous demandons votre consentement avant d'afficher des publicités personnalisées ou d'enregistrer quoi que ce soit sur votre appareil pour la publicité. Vous pouvez modifier votre choix à tout moment dans les réglages de l'application (**Settings › Privacy options**).
 - Les publicités avec récompense sont facultatives. Vous choisissez d'en regarder une en échange de 24 heures de Premium, une fois par jour au maximum. Les publicités en plein écran n'apparaissent qu'après avoir trouvé un appareil, jamais pendant la recherche.
 - Vous pouvez réinitialiser ou supprimer votre identifiant publicitaire, ou refuser les publicités personnalisées, dans **Paramètres › Google › Annonces** d'Android (l'intitulé varie selon l'appareil).
 - L'achat de Nearo Premium supprime les publicités. Un pass de 24 heures actif aussi.
@@ -64,7 +62,7 @@ Nearo ne s'adresse pas aux enfants de moins de 13 ans (ou de l'âge minimum dans
 
 ## Conservation et suppression des données
 
-Nous ne conservons aucune donnée personnelle sur nos propres serveurs. Sur votre téléphone, les relevés de traceurs sont supprimés au bout de 48 heures au maximum, un relevé de dernière détection est supprimé lorsque l'appareil n'est plus l'un des vôtres, et tout le reste demeure jusqu'à ce que vous le retiriez, effaciez le stockage de l'application ou la désinstalliez. Les données d'analyse et d'erreur sont conservées par Google selon ses paramètres de conservation : 14 mois pour Analytics et 90 jours pour Crashlytics.
+Nous ne conservons aucune donnée personnelle sur nos propres serveurs. Sur votre téléphone, les relevés de traceurs sont supprimés au bout de 48 heures au maximum, un relevé de dernière détection est supprimé lorsque l'appareil n'est plus l'un des vôtres, et tout le reste demeure jusqu'à ce que vous le retiriez, effaciez le stockage de l'application ou la désinstalliez. Nearo 2.0 n'utilise aucun service d'analyse ni de rapports d'erreur.
 
 ## Sécurité
 

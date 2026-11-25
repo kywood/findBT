@@ -36,8 +36,6 @@ Nada de lo anterior se sube a ningún sitio. Los dispositivos guardados y oculto
 | Servicio | Qué recibe | Para qué |
 |---|---|---|
 | Google AdMob | ID de publicidad, ID de conjunto de apps, dirección IP (ubicación aproximada), información del dispositivo y de la app, e interacciones con los anuncios, incluido si se vio hasta el final un anuncio recompensado opcional | Mostrar y medir anuncios (banner, pantalla completa y recompensados opcionales) y prevenir el fraude |
-| Google Firebase Analytics | Eventos agregados de la app, como «empezó una búsqueda», «encontrado en menos de 1 minuto» o «se guardó un dispositivo» (solo un recuento), además del tipo de dispositivo, versión del sistema, versión de la app, idioma, país e ID de instalación | Entender qué funciones sirven y mejorar la app |
-| Google Firebase Crashlytics | Informes de fallos: trazas de pila, modelo de dispositivo, versión del sistema e ID de instalación | Corregir fallos |
 | Facturación de Google Play | Información de compra, gestionada por Google | Procesar la compra única de Premium |
 
 Ninguno de estos servicios recibe los resultados del escaneo Bluetooth, tus dispositivos guardados, los nombres que les pones, los lugares registrados, los datos del modo de protección ni los registros de rastreadores. Las solicitudes de anuncios no llevan información sobre los dispositivos que te rodean. Se aplican sus propias políticas de privacidad: https://policies.google.com/privacy
@@ -53,7 +51,7 @@ Ninguno de estos servicios recibe los resultados del escaneo Bluetooth, tus disp
 
 ## Anuncios y tus opciones
 
-- En el EEE, el Reino Unido y Suiza pedimos tu consentimiento antes de mostrar anuncios personalizados, y las estadísticas de uso y los informes de fallos permanecen desactivados salvo que aceptes el almacenamiento en tu dispositivo. Puedes cambiar tu elección en cualquier momento en los ajustes de la app (**Ajustes › Opciones de privacidad**).
+- En el EEE, el Reino Unido y Suiza pedimos tu consentimiento antes de mostrar anuncios personalizados o de guardar algo en tu dispositivo para los anuncios. Puedes cambiar tu elección en cualquier momento en los ajustes de la app (**Ajustes › Opciones de privacidad**).
 - Los anuncios recompensados son opcionales. Tú eliges ver uno a cambio de 24 horas de Premium, como máximo una vez al día. Los anuncios a pantalla completa aparecen solo después de encontrar un dispositivo, nunca mientras buscas.
 - Puedes restablecer o eliminar tu ID de publicidad, o desactivar los anuncios personalizados, en **Ajustes › Google › Anuncios** de Android (el texto varía según el dispositivo).
 - Comprar Nearo Premium elimina los anuncios. También un pase de 24 horas activo.
@@ -64,7 +62,7 @@ Nearo no está dirigida a menores de 13 años (o de la edad mínima de tu país)
 
 ## Conservación y eliminación de datos
 
-No guardamos datos personales en servidores propios. En tu teléfono, los registros de rastreadores se borran tras 48 horas como máximo, un registro de última detección se borra cuando su dispositivo deja de ser tuyo y todo lo demás permanece hasta que lo quites, borres el almacenamiento de la app o la desinstales. Google conserva los datos de análisis y de fallos según sus ajustes de conservación: 14 meses para Analytics y 90 días para Crashlytics.
+No guardamos datos personales en servidores propios. En tu teléfono, los registros de rastreadores se borran tras 48 horas como máximo, un registro de última detección se borra cuando su dispositivo deja de ser tuyo y todo lo demás permanece hasta que lo quites, borres el almacenamiento de la app o la desinstales. Nearo 2.0 no usa ningún servicio de análisis ni de informes de fallos.
 
 ## Seguridad
 

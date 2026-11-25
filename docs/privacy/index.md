@@ -8,8 +8,8 @@ permalink: /privacy/
 **English** · [한국어](ko/) · [日本語](ja/) · [Español](es/) · [Português (Brasil)](pt-br/) · [Deutsch](de/) · [Français](fr/)
 
 <!-- Before publishing (#57): replace [DEVELOPER NAME], [CONTACT EMAIL] and [EFFECTIVE DATE] in every language file.
-     Keep in sync with the Play Console data safety form. If 2.0 ships without Firebase (#33), remove the
-     Firebase Analytics and Crashlytics rows and the Analytics sentences in every language file.
+     Keep in sync with the Play Console data safety form. 2.0 ships without Firebase (#33, PM decision 2026-11-26).
+     If Firebase is added later, add its rows back in every language file.
      The language files are generated from one structure: change all seven together. -->
 
 **Effective date:** [EFFECTIVE DATE]
@@ -41,8 +41,6 @@ None of the above is uploaded. Saved devices, hidden devices, last-seen records,
 | Service | What it receives | Why |
 |---|---|---|
 | Google AdMob | Advertising ID, app set ID, IP address (approximate location), device and app information, and ad interactions, including whether an optional rewarded ad was watched to the end | To show and measure ads (banner, full-screen and optional rewarded ads) and to prevent fraud |
-| Google Firebase Analytics | Aggregate app events, such as "a search started", "found within 1 minute" or "a device was saved" (a count only), plus device type, OS version, app version, language, country and installation ID | To understand which features work and improve the app |
-| Google Firebase Crashlytics | Crash reports: stack traces, device model, OS version and installation ID | To fix crashes |
 | Google Play Billing | Purchase information, handled by Google | To process the one-time premium purchase |
 
 None of these services receive your Bluetooth scan results, your saved devices, the names you give them, recorded places, protection mode data or tracker records. Ad requests carry no information about the devices around you. Their own privacy policies apply: https://policies.google.com/privacy
@@ -58,7 +56,7 @@ None of these services receive your Bluetooth scan results, your saved devices, 
 
 ## Ads and your choices
 
-- In the EEA, the UK and Switzerland, we ask for your consent before showing personalized ads, and usage analytics and crash reports stay off unless you agree to storage on your device. You can change your choice at any time in the app's settings (**Settings › Privacy options**).
+- In the EEA, the UK and Switzerland, we ask for your consent before showing personalized ads and before storing anything on your device for ads. You can change your choice at any time in the app's settings (**Settings › Privacy options**).
 - Rewarded ads are optional. You choose to watch one in exchange for 24 hours of Premium, at most once a day. Full-screen ads appear only after you finish finding a device, never while you are searching.
 - You can reset or delete your advertising ID, or opt out of personalized ads, in Android **Settings › Google › Ads** (the wording varies by device).
 - Buying Nearo Premium removes ads. So does an active 24-hour pass.
@@ -69,7 +67,7 @@ Nearo is not directed to children under 13 (or the minimum age in your country),
 
 ## Data retention and deletion
 
-We do not keep personal data on our own servers. On your phone, tracker records are deleted after at most 48 hours, a last-seen record is deleted when its device is no longer one of yours, and everything else stays until you remove it, clear the app's storage or uninstall the app. Analytics and crash data are kept by Google under its retention settings: 14 months for Analytics and 90 days for Crashlytics.
+We do not keep personal data on our own servers. On your phone, tracker records are deleted after at most 48 hours, a last-seen record is deleted when its device is no longer one of yours, and everything else stays until you remove it, clear the app's storage or uninstall the app. Nearo 2.0 does not use an analytics or crash-reporting service.
 
 ## Security
 
