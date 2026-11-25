@@ -974,6 +974,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         // Design #76, in units of the ring radius R (RING_OUTER). [ArrowMesh] is in R already; its
         // underside floats 0.22 R above the floor (centre 0.29 R), bobbing by ± 0.02 R.
         const val MESH_SCALE = RING_OUTER
+
         // About 40% of the ring's width, as drawn in v1.4 (it read as half of it on the A50, #146).
         const val FULL_BLEED_ARROW = 0.58f
         const val FULL_BLEED_ARROW_THICKNESS = 0.86f
