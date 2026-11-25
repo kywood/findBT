@@ -330,7 +330,7 @@ private fun MapRow(item: DeviceListItem, picked: Boolean, onClick: () -> Unit, o
 private fun String.shortened(): String = if (length > MAX_TAG_NAME) take(MAX_TAG_NAME - 1).trimEnd() + "…" else this
 
 /** The system's "remove animations" setting. */
-private fun Context.animationsOff(): Boolean =
+internal fun Context.animationsOff(): Boolean =
     Settings.Global.getFloat(contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
 
 private const val MAX_TAG_NAME = 18

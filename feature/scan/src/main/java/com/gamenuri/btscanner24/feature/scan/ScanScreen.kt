@@ -76,6 +76,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -96,6 +98,8 @@ import com.gamenuri.btscanner24.core.ble.BleScanner
 import com.gamenuri.btscanner24.core.ble.ScanFailure
 import com.gamenuri.btscanner24.core.designsystem.component.IllustratedMessage
 import com.gamenuri.btscanner24.core.designsystem.component.StatusBanner
+import com.gamenuri.btscanner24.core.designsystem.component.WaterMotion
+import com.gamenuri.btscanner24.core.designsystem.component.water
 import com.gamenuri.btscanner24.core.designsystem.icon.NearoIcons
 import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
 import com.gamenuri.btscanner24.core.model.BleDevice
@@ -243,6 +247,11 @@ data class ScanActions(
  * row (status, sort, filter); then the list. Filters live in a bottom sheet. With [showMap] the same
  * devices stand on the 3D map instead (#86), on the find screens' blue; whenever something needs
  * saying first (a permission, the radio off, a failed scan) the list with its banners is shown.
+ *
+ * Between the dark list and the blue map the screen changes the way every browse-to-3D change does
+ * (#172): the map rises over the list as water and drains off it again. The map page lies on top of
+ * the list page and is drawn only under the waterline; whichever page is fully covered or fully
+ * gone is not composed at all.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -268,45 +277,53 @@ fun ScanContent(
     val error = (state.status as? ScanStatus.Error)?.reason
     val mapShown = showMap && permissionBanner == null && error == null
     val find = NearoTheme.colors.findFar
-    Scaffold(
-        modifier = modifier,
-        containerColor = if (mapShown) find.background else MaterialTheme.colorScheme.background,
-        topBar = {
-            ScanTopBar(
-                title = title,
-                state = state,
-                actions = actions,
-                searchOpen = searchOpen,
-                onSearchOpenChange = { searchOpen = it },
-                showMap = showMap,
-                onBlue = mapShown,
-            )
-        },
-    ) { innerPadding ->
-        if (mapShown) {
-            DeviceMap(state, actions, Modifier.fillMaxSize().padding(innerPadding), followPose)
-        } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-            ) {
-                ControlRow(state, actions, onSortNow, onOpenFilters = { filtersOpen = true })
-
-                // Nothing to show and the radio (or Location on Android 11) is off: a full empty state (#30).
-                val radioOff = error == ScanFailure.BLUETOOTH_OFF || error == ScanFailure.LOCATION_OFF
-                if (error != null && radioOff && state.items.isEmpty()) {
-                    RadioOffState(error, actions, Modifier.fillMaxWidth().weight(1f))
-                } else {
-                    DeviceList(
-                        state = state,
-                        permissionBanner = permissionBanner,
-                        error = error,
-                        actions = actions,
-                        listState = listState,
-                        modifier = Modifier.fillMaxWidth().weight(1f),
-                    )
-                }
+    val context = LocalContext.current
+    val mapWater = remember { WaterMotion(full = mapShown) }
+    LaunchedEffect(mapShown) {
+        val reduceMotion = context.animationsOff()
+        when {
+            mapShown && !mapWater.isFull -> mapWater.rise(kickAt = VIEW_SWITCH_X, reduceMotion = reduceMotion)
+            !mapShown && !mapWater.isEmpty -> mapWater.drain(reduceMotion = reduceMotion)
+        }
+    }
+    val topBar: @Composable (onBlue: Boolean) -> Unit = { onBlue ->
+        ScanTopBar(
+            title = title,
+            state = state,
+            actions = actions,
+            searchOpen = searchOpen,
+            onSearchOpenChange = { searchOpen = it },
+            showMap = showMap,
+            onBlue = onBlue,
+        )
+    }
+    Box(modifier) {
+        // Under the map until the water has covered it, and again from the moment it starts to drain.
+        if (!mapWater.isFull) {
+            Scaffold(
+                containerColor = MaterialTheme.colorScheme.background,
+                topBar = { topBar(false) },
+            ) { innerPadding ->
+                ListPage(
+                    state = state,
+                    permissionBanner = permissionBanner,
+                    error = error,
+                    actions = actions,
+                    listState = listState,
+                    onSortNow = onSortNow,
+                    onOpenFilters = { filtersOpen = true },
+                    modifier = Modifier.fillMaxSize().padding(innerPadding),
+                )
+            }
+        }
+        if (mapShown || !mapWater.isEmpty) {
+            // The blue itself is the cover: the 3D scene needs a few frames before it has anything to show.
+            Scaffold(
+                modifier = Modifier.water(mapWater, cover = SolidColor(find.background)),
+                containerColor = find.background,
+                topBar = { topBar(true) },
+            ) { innerPadding ->
+                DeviceMap(state, actions, Modifier.fillMaxSize().padding(innerPadding), followPose)
             }
         }
     }
@@ -322,6 +339,41 @@ fun ScanContent(
             },
             onClose = { filtersOpen = false },
         )
+    }
+}
+
+/** Where the list/map switch sits across the top bar, 0..1: the water is nudged from under the tap. */
+private const val VIEW_SWITCH_X = 0.8f
+
+/** The Nearby tab as a list: the control row, then the devices or what is in the way of seeing them. */
+@Composable
+private fun ListPage(
+    state: ScanUiState,
+    permissionBanner: PermissionBanner?,
+    error: ScanFailure?,
+    actions: ScanActions,
+    listState: LazyListState,
+    onSortNow: () -> Unit,
+    onOpenFilters: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier) {
+        ControlRow(state, actions, onSortNow, onOpenFilters = onOpenFilters)
+
+        // Nothing to show and the radio (or Location on Android 11) is off: a full empty state (#30).
+        val radioOff = error == ScanFailure.BLUETOOTH_OFF || error == ScanFailure.LOCATION_OFF
+        if (error != null && radioOff && state.items.isEmpty()) {
+            RadioOffState(error, actions, Modifier.fillMaxWidth().weight(1f))
+        } else {
+            DeviceList(
+                state = state,
+                permissionBanner = permissionBanner,
+                error = error,
+                actions = actions,
+                listState = listState,
+                modifier = Modifier.fillMaxWidth().weight(1f),
+            )
+        }
     }
 }
 
