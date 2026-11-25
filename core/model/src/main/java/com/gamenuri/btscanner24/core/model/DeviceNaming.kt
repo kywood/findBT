@@ -8,7 +8,16 @@ sealed interface DeviceLabel {
     data class Named(val text: String, val source: NameSource, override val suffix: String) : DeviceLabel
 
     /** No usable name: shown as "Samsung Earbuds · 3F2A", never as "Unknown". */
-    data class Generic(val maker: String?, val category: DeviceCategory, override val suffix: String) : DeviceLabel
+    data class Generic(
+        val maker: String?,
+        val category: DeviceCategory,
+        override val suffix: String,
+        /**
+         * An unnamed Apple "Find My" signal (#144). AirTags send it, and so do iPhones, AirPods and
+         * Macs, so it is named for what it is instead of being called a tracker.
+         */
+        val appleFindMy: Boolean = false,
+    ) : DeviceLabel
 }
 
 /** Where a name came from, best first. */
@@ -35,8 +44,12 @@ object DeviceNaming {
                 return DeviceLabel.Named(clean, source, suffix)
             }
         }
-        return DeviceLabel.Generic(device.manufacturer, device.category, suffix)
+        // The only way an unnamed Apple device is taken for a tracker is its Find My frame.
+        val appleFindMy = device.companyId == APPLE_COMPANY_ID && device.category == DeviceCategory.TRACKER
+        return DeviceLabel.Generic(device.manufacturer, device.category, suffix, appleFindMy)
     }
+
+    private const val APPLE_COMPANY_ID = 0x004C
 
     /** "AA:BB:CC:DD:3F:2A" -> "3F2A". */
     fun addressSuffix(address: String): String = address.filter { it.isLetterOrDigit() }.takeLast(4).uppercase()
