@@ -992,6 +992,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         val STEP_RADII = floatArrayOf(RING_OUTER, MID_RING, FAR_RING)
         val STEP_FILL_ALPHAS = floatArrayOf(0.13f, 0.05f, 0.03f)
         const val STEP_SECTOR_ALPHA = 0.09f
+
         // Rims, in R like the meshes: 0.04 wide and 0.05 high, white like the arrow.
         const val RIM_WIDTH = 0.04f
         const val RIM_HEIGHT = 0.05f
@@ -1030,6 +1031,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         const val STAND_RING_HEIGHT = 0.012f
         const val STAND_SHADOW_SPREAD = 0.85f
         const val SHADOW_LIFT = 0.004f
+
         // Leaving on "Found it": up 0.4, about half a turn, gone in the first fifth of the medal's rise.
         const val MODEL_EXIT_SHARE = 0.2f
         const val MODEL_EXIT_RISE = 0.4f
