@@ -26,7 +26,8 @@ import kotlin.math.sqrt
  * (v2.1). OpenGL ES 2.0 only, like the find scene, and nothing but flat or vertex colours.
  *
  * The scene is heading-relative: −Z is where the phone points, +X its right, +Y up; the camera
- * always looks from +Z and the devices turn round the middle as the phone turns. All easing happens
+ * always looks from +Z. Devices with a measured direction turn round the middle as the phone turns;
+ * all others keep their place on screen, as their place on the ring says nothing about a direction. All easing happens
  * here on the GL thread, so the UI thread only sets targets in [MapSceneState].
  */
 internal class MapRenderer(private val state: MapSceneState) : GlScene {
@@ -265,7 +266,7 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
         Matrix.multiplyMM(viewProjection, 0, projection, 0, view, 0)
     }
 
-    /** How far the devices are turned round the middle: with the phone, or not at all when the view stands still. */
+    /** How far measured devices are turned round the middle: with the phone, or not at all in a still view. */
     private fun worldTurn(): Float = if (state.hasPose && !state.reduceMotion) heading else 0f
 
     /** The three slabs and their rims, tinted from the screen's blue: lighter towards the middle. */
@@ -386,7 +387,7 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
         val turn = worldTurn()
         for (pin in pins) {
             val spot = spots[pin.key] ?: continue
-            val (x, z) = floorDirection(spot.angle - turn)
+            val (x, z) = floorDirection(spot.angle - if (pin.measured) turn else 0f)
             val floor = MapFloor.height(spot.radius) + SHADOW_LIFT
             val px = x * spot.radius + SHADOW_ASIDE
             val pz = z * spot.radius + SHADOW_TOWARDS
@@ -481,7 +482,9 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
     }
 
     private fun drawPin(pin: MapPin, spot: Spot, turn: Float, index: Int) {
-        val degrees = spot.angle - turn
+        // Only a measured direction is fixed in the room; a tidy place on the ring stays where it is on
+        // screen, so no device has to be looked for in a direction nobody knows (#86).
+        val degrees = spot.angle - if (pin.measured) turn else 0f
         val (dx, dz) = floorDirection(degrees)
         val x = dx * spot.radius
         val z = dz * spot.radius
