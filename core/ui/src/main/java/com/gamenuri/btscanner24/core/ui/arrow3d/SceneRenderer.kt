@@ -626,6 +626,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         const val TARGET_HALO = 0.21f * RING_OUTER
         const val TARGET_HALO_INNER = 0.18f / 0.21f
         const val TARGET_HALO_ALPHA = 0.6f
+        const val HERE_EPSILON = 0.01f
 
         // "Found it" (same design): a white medal of radius 0.6 and thickness 0.13 with rounded
         // edges rises to 0.75 in 0.8 s, turning a little more than once and growing from 0.4; on
