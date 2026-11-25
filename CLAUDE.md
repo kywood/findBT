@@ -16,7 +16,7 @@ Android app "Nearo: Bluetooth Finder" (package `com.gamenuri.btscanner24`), rene
 - Never change `applicationId`; bump `versionCode` for every release; never commit signing keys or `google-services.json`.
 
 ## Modules
-`:app` → `:feature:scan`, `:feature:finder`, `:feature:devices`, `:feature:onboarding` → `:core:ui`, `:core:ble`, `:core:data`, `:core:sensors` → `:core:designsystem`, `:core:model`
+`:app` → `:feature:scan`, `:feature:finder`, `:feature:devices`, `:feature:onboarding`, `:feature:protection`, `:feature:settings` → `:core:ui`, `:core:ble`, `:core:data`, `:core:sensors` → `:core:designsystem`, `:core:model`
 
 ## Build
 - `./gradlew spotlessCheck assembleDebug testDebugUnitTest` before every PR (`spotlessApply` auto-fixes formatting)

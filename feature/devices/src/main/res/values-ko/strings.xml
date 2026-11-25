@@ -40,4 +40,13 @@
     <string name="last_seen_turn_on">위치 기록 켜기</string>
     <string name="last_seen_find">찾기 시작</string>
     <string name="last_seen_no_map_app">지도 앱을 찾지 못했어요</string>
+    <!-- Protection mode and left-behind alerts (#163) -->
+    <string name="devices_protection_menu">보호 모드</string>
+    <string name="devices_protection_off_title">보호 모드 꺼짐</string>
+    <string name="devices_protection_off_body">두고 가면 알림이 멈춰 있어요</string>
+    <string name="devices_protection_turn_on">켜기</string>
+    <string name="devices_left_behind_title">%1$s · 두고 온 것 같아요</string>
+    <string name="devices_left_behind_body">마지막 감지 %1$s</string>
+    <string name="devices_left_behind_view">마지막 위치 보기</string>
+    <string name="devices_left_behind_mute">1시간 동안 알리지 않기</string>
 </resources>

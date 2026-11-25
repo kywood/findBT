@@ -20,6 +20,7 @@ import com.gamenuri.btscanner24.core.data.HiddenDevicesRepository
 import com.gamenuri.btscanner24.core.data.LastSeenRecorder
 import com.gamenuri.btscanner24.core.data.LastSeenRepository
 import com.gamenuri.btscanner24.core.data.ListPreferencesRepository
+import com.gamenuri.btscanner24.core.data.ProtectionRepository
 import com.gamenuri.btscanner24.core.data.SavedDevicesRepository
 import com.gamenuri.btscanner24.core.model.LastSeen
 import com.gamenuri.btscanner24.core.sensors.PhoneLocation
@@ -55,7 +56,10 @@ class BtScannerApp :
             bondedDevices = BondedDevices(this),
             connectedDevices = ConnectedDevices(this),
             mediaFindTone = if (BuildConfig.EARBUD_TONE) MediaFindTone(this) else null,
-        ).also { ScanCensus.start(it.repository) }
+        ).also {
+            ScanCensus.start(it.repository)
+            startLastSeenRecorder(it)
+        }
     }
 
     override fun onCreate() {
@@ -80,25 +84,29 @@ class BtScannerApp :
     override val lastSeen: LastSeenRepository
         get() = if (demo != null) demoLastSeen else userLastSeen
 
+    override val protection: ProtectionRepository by lazy { ProtectionRepository(this) }
+
     private var lastSeenRecorder: Job? = null
 
     /**
-     * Starts writing down where the user's own devices were last heard (#162). Called once the
-     * launch is known not to be a demo; it only listens to scans the screens run, so it does nothing
-     * while the app is in the background.
+     * Starts writing down where the user's own devices were last heard (#162), with the real Bluetooth
+     * objects, so never in a demo launch. That is when a screen first needs them, or when Android
+     * brings the protection service back without a screen (#163). It only listens to scans that run
+     * anyway: the screens' own, and the protection service's while the user has that on.
      */
-    internal fun startLastSeenRecorder() {
-        if (lastSeenRecorder != null || demo != null) return
+    private fun startLastSeenRecorder(ble: BleDependencies) {
+        if (lastSeenRecorder != null) return
         val location = PhoneLocation(this)
-        val bonded = bleDependencies.bondedDevices
+        val bonded = ble.bondedDevices
+        val store = userLastSeen
         val recorder = LastSeenRecorder(
-            seen = bleDependencies.repository.devices.map { it.values },
+            seen = ble.repository.devices.map { it.values },
             paired = { if (bonded.isReadable) bonded.list() else null },
-            saved = savedDevices.saved,
-            store = lastSeen,
+            saved = userSavedDevices.saved,
+            store = store,
             // Only once the user turned place recording on (#178), and never closer than about 100 m.
             locate = {
-                val fix = if (lastSeen.recordsPlace.first()) location.current() else null
+                val fix = if (store.recordsPlace.first()) location.current() else null
                 fix?.let { LastSeen.Place.coarse(it.latitude, it.longitude, it.accuracyMeters) }
             },
         )

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Protection mode and left-behind alerts (#163) -->
+    <string name="protection_title">Protection mode</string>
+    <string name="protection_back">Back</string>
+    <string name="protection_intro_headline">Watches for devices you leave behind</string>
+    <string name="protection_point_alert">Tells you when you move away from a saved device</string>
+    <string name="protection_point_notification">A notification stays visible while it is on</string>
+    <string name="protection_point_battery">Battery use may go up slightly</string>
+    <string name="protection_point_privacy">Device details and places stay on this phone</string>
+    <string name="protection_turn_on">Turn on protection mode</string>
+    <string name="protection_not_now">Not now</string>
+    <string name="protection_permissions_needed">Allow the permissions so protection mode can alert you</string>
+    <string name="protection_section_left_behind">Left-behind alerts</string>
+    <string name="protection_no_devices">Save a device on the Nearby tab or pair one with this phone and it shows up here</string>
+    <string name="protection_footer">Battery use may go up slightly. Device details and places stay on this phone.</string>
+    <string name="protection_channel_status">Protection mode status</string>
+    <string name="protection_channel_alerts">Left-behind alerts</string>
+    <string name="protection_status_title">Protection mode is on</string>
+    <string name="protection_status_none">No devices picked to watch yet</string>
+    <string name="protection_status_bluetooth_off">Bluetooth is off, so devices cannot be watched</string>
+    <string name="protection_status_location_off">Location is off, so devices cannot be watched</string>
+    <string name="protection_status_cannot_scan">Scanning could not start, so devices cannot be watched</string>
+    <string name="protection_turn_off">Turn off</string>
+    <string name="protection_alert_title">You may have left %1$s behind</string>
+    <string name="protection_alert_text">Last detected at %1$s. Check where it was last seen.</string>
+    <string name="protection_alert_view">View last seen</string>
+    <string name="protection_mute_hour">Mute for 1 hour</string>
+    <string name="protection_mute_today">Mute for today</string>
+    <string name="protection_off_title">Protection mode is off</string>
+    <string name="protection_off_restart">It stopped when your phone restarted. Tap to turn it back on.</string>
+    <string name="protection_off_stopped">Android stopped it. Tap to turn it back on.</string>
+    <string name="protection_turn_on_short">Turn on</string>
+    <plurals name="protection_status_watching">
+        <item quantity="one">Watching %d device</item>
+        <item quantity="other">Watching %d devices</item>
+    </plurals>
+</resources>

@@ -40,4 +40,13 @@
     <string name="last_seen_turn_on">Ortsaufzeichnung einschalten</string>
     <string name="last_seen_find">Suche starten</string>
     <string name="last_seen_no_map_app">Keine Karten-App gefunden</string>
+    <!-- Protection mode and left-behind alerts (#163) -->
+    <string name="devices_protection_menu">Schutzmodus</string>
+    <string name="devices_protection_off_title">Schutzmodus ist aus</string>
+    <string name="devices_protection_off_body">Hinweise bei zurückgelassenen Geräten sind pausiert</string>
+    <string name="devices_protection_turn_on">Einschalten</string>
+    <string name="devices_left_behind_title">%1$s · Vielleicht zurückgelassen</string>
+    <string name="devices_left_behind_body">Zuletzt erkannt: %1$s</string>
+    <string name="devices_left_behind_view">Letzten Ort ansehen</string>
+    <string name="devices_left_behind_mute">1 Stunde stumm</string>
 </resources>

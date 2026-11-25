@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Protection mode and left-behind alerts (#163) -->
+    <string name="protection_title">Schutzmodus</string>
+    <string name="protection_back">Zurück</string>
+    <string name="protection_intro_headline">Achtet auf Geräte, die du zurücklässt</string>
+    <string name="protection_point_alert">Sagt dir Bescheid, wenn du dich von einem gespeicherten Gerät entfernst</string>
+    <string name="protection_point_notification">Solange er an ist, bleibt eine Benachrichtigung sichtbar</string>
+    <string name="protection_point_battery">Der Akkuverbrauch kann leicht steigen</string>
+    <string name="protection_point_privacy">Gerätedaten und Orte bleiben auf diesem Handy</string>
+    <string name="protection_turn_on">Schutzmodus einschalten</string>
+    <string name="protection_not_now">Nicht jetzt</string>
+    <string name="protection_permissions_needed">Erlaube die Berechtigungen, damit der Schutzmodus dich benachrichtigen kann</string>
+    <string name="protection_section_left_behind">Hinweise bei zurückgelassenen Geräten</string>
+    <string name="protection_no_devices">Speichere ein Gerät im Tab „In der Nähe“ oder kopple es mit dem Handy, dann erscheint es hier</string>
+    <string name="protection_footer">Der Akkuverbrauch kann leicht steigen. Gerätedaten und Orte bleiben auf diesem Handy.</string>
+    <string name="protection_channel_status">Status des Schutzmodus</string>
+    <string name="protection_channel_alerts">Hinweise bei zurückgelassenen Geräten</string>
+    <string name="protection_status_title">Schutzmodus ist an</string>
+    <string name="protection_status_none">Du hast noch keine Geräte ausgewählt</string>
+    <string name="protection_status_bluetooth_off">Bluetooth ist aus, Geräte können nicht beobachtet werden</string>
+    <string name="protection_status_location_off">Der Standort ist aus, Geräte können nicht beobachtet werden</string>
+    <string name="protection_status_cannot_scan">Die Suche konnte nicht starten, Geräte können nicht beobachtet werden</string>
+    <string name="protection_turn_off">Ausschalten</string>
+    <string name="protection_alert_title">Du hast %1$s vielleicht zurückgelassen</string>
+    <string name="protection_alert_text">Zuletzt erkannt um %1$s. Sieh nach, wo es zuletzt gesehen wurde.</string>
+    <string name="protection_alert_view">Letzten Ort ansehen</string>
+    <string name="protection_mute_hour">1 Stunde stumm</string>
+    <string name="protection_mute_today">Heute stumm</string>
+    <string name="protection_off_title">Schutzmodus ist aus</string>
+    <string name="protection_off_restart">Er wurde beim Neustart des Handys beendet. Tippe, um ihn wieder einzuschalten.</string>
+    <string name="protection_off_stopped">Android hat ihn beendet. Tippe, um ihn wieder einzuschalten.</string>
+    <string name="protection_turn_on_short">Einschalten</string>
+    <plurals name="protection_status_watching">
+        <item quantity="one">%d Gerät wird beobachtet</item>
+        <item quantity="other">%d Geräte werden beobachtet</item>
+    </plurals>
+</resources>

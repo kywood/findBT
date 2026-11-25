@@ -40,4 +40,13 @@
     <string name="last_seen_turn_on">Turn on place recording</string>
     <string name="last_seen_find">Start finding</string>
     <string name="last_seen_no_map_app">No maps app found</string>
+    <!-- Protection mode and left-behind alerts (#163) -->
+    <string name="devices_protection_menu">Protection mode</string>
+    <string name="devices_protection_off_title">Protection mode is off</string>
+    <string name="devices_protection_off_body">Left-behind alerts are paused</string>
+    <string name="devices_protection_turn_on">Turn on</string>
+    <string name="devices_left_behind_title">%1$s · May be left behind</string>
+    <string name="devices_left_behind_body">Last detected %1$s</string>
+    <string name="devices_left_behind_view">View last seen</string>
+    <string name="devices_left_behind_mute">Mute for 1 hour</string>
 </resources>

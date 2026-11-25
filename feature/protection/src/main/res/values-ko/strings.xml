@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Protection mode and left-behind alerts (#163) -->
+    <string name="protection_title">보호 모드</string>
+    <string name="protection_back">뒤로</string>
+    <string name="protection_intro_headline">두고 온 기기를 지켜봐요</string>
+    <string name="protection_point_alert">저장한 기기와 멀어지면 알려 드려요</string>
+    <string name="protection_point_notification">켜져 있는 동안 알림이 계속 표시돼요</string>
+    <string name="protection_point_battery">배터리 사용이 조금 늘 수 있어요</string>
+    <string name="protection_point_privacy">기기 정보와 위치는 이 폰에만 저장돼요</string>
+    <string name="protection_turn_on">보호 모드 켜기</string>
+    <string name="protection_not_now">나중에</string>
+    <string name="protection_permissions_needed">권한을 허용해야 보호 모드가 알려 드릴 수 있어요</string>
+    <string name="protection_section_left_behind">두고 가면 알림</string>
+    <string name="protection_no_devices">주변 탭에서 기기를 저장하거나 폰에 페어링하면 여기에 나타나요</string>
+    <string name="protection_footer">배터리 사용이 조금 늘 수 있어요. 기기 정보와 위치는 이 폰에만 저장돼요.</string>
+    <string name="protection_channel_status">보호 모드 상태</string>
+    <string name="protection_channel_alerts">두고 가면 알림</string>
+    <string name="protection_status_title">보호 모드 켜짐</string>
+    <string name="protection_status_none">지켜볼 기기를 아직 고르지 않았어요</string>
+    <string name="protection_status_bluetooth_off">블루투스가 꺼져 있어 기기를 지켜볼 수 없어요</string>
+    <string name="protection_status_location_off">위치가 꺼져 있어 기기를 지켜볼 수 없어요</string>
+    <string name="protection_status_cannot_scan">스캔을 시작하지 못해 기기를 지켜볼 수 없어요</string>
+    <string name="protection_turn_off">끄기</string>
+    <string name="protection_alert_title">%1$s, 두고 온 것 같아요</string>
+    <string name="protection_alert_text">%1$s에 마지막으로 감지했어요. 마지막 위치를 확인해 보세요.</string>
+    <string name="protection_alert_view">마지막 위치 보기</string>
+    <string name="protection_mute_hour">1시간 동안 알리지 않기</string>
+    <string name="protection_mute_today">오늘은 알리지 않기</string>
+    <string name="protection_off_title">보호 모드가 꺼져 있어요</string>
+    <string name="protection_off_restart">폰을 다시 시작해서 꺼졌어요. 다시 켜려면 탭하세요.</string>
+    <string name="protection_off_stopped">Android가 보호 모드를 멈췄어요. 다시 켜려면 탭하세요.</string>
+    <string name="protection_turn_on_short">켜기</string>
+    <plurals name="protection_status_watching">
+        <item quantity="other">기기 %d개를 지켜보는 중</item>
+    </plurals>
+</resources>

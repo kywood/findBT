@@ -5,6 +5,7 @@ import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.ScanCallback
+import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
 import android.content.Context
@@ -17,6 +18,9 @@ import androidx.core.location.LocationManagerCompat
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+
+/** One device a filtered scan listens for: by its address, by the name it advertises, or both. */
+data class WatchTarget(val address: String?, val name: String?)
 
 /**
  * Wraps the platform BLE scanner as a cold [Flow]. Collecting starts a scan,
@@ -67,8 +71,27 @@ open class BleScanner(context: Context) {
         }
     }
 
+    open fun scan(): Flow<ScanEvent> = results(filters = null, mode = ScanSettings.SCAN_MODE_LOW_LATENCY)
+
+    /**
+     * A low-power scan that only reports [targets] (#163). Unlike [scan] it keeps delivering with the
+     * screen off, which Android allows for filtered scans only. No targets, no scan: the flow just
+     * stays open.
+     */
+    open fun watch(targets: Collection<WatchTarget>): Flow<ScanEvent> {
+        val filters = targets.flatMap { target ->
+            listOfNotNull(
+                target.address?.takeIf(BluetoothAdapter::checkBluetoothAddress)
+                    ?.let { ScanFilter.Builder().setDeviceAddress(it).build() },
+                target.name?.takeIf { it.isNotBlank() }?.let { ScanFilter.Builder().setDeviceName(it).build() },
+            )
+        }
+        if (filters.isEmpty()) return callbackFlow { awaitClose { } }
+        return results(filters, ScanSettings.SCAN_MODE_LOW_POWER)
+    }
+
     @SuppressLint("MissingPermission") // checked by hasScanPermission()
-    open fun scan(): Flow<ScanEvent> = callbackFlow {
+    private fun results(filters: List<ScanFilter>?, mode: Int): Flow<ScanEvent> = callbackFlow {
         val failure = when {
             !isSupported -> ScanFailure.NOT_SUPPORTED
             !hasScanPermission() -> ScanFailure.PERMISSION_MISSING
@@ -104,12 +127,12 @@ open class BleScanner(context: Context) {
         }
 
         val settings = ScanSettings.Builder()
-            .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+            .setScanMode(mode)
             .build()
 
         try {
             synchronized(recentStarts) { recentStarts.addLast(SystemClock.elapsedRealtime()) }
-            scanner.startScan(null, settings, callback)
+            scanner.startScan(filters, settings, callback)
         } catch (e: SecurityException) {
             trySend(ScanEvent.Failed(ScanFailure.PERMISSION_MISSING))
             close()

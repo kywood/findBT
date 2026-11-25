@@ -40,4 +40,13 @@
     <string name="last_seen_turn_on">場所の記録をオンにする</string>
     <string name="last_seen_find">探し始める</string>
     <string name="last_seen_no_map_app">マップアプリが見つかりません</string>
+    <!-- Protection mode and left-behind alerts (#163) -->
+    <string name="devices_protection_menu">保護モード</string>
+    <string name="devices_protection_off_title">保護モードはオフです</string>
+    <string name="devices_protection_off_body">置き忘れアラートは停止中です</string>
+    <string name="devices_protection_turn_on">オンにする</string>
+    <string name="devices_left_behind_title">%1$s · 置き忘れたかもしれません</string>
+    <string name="devices_left_behind_body">最後の検出 %1$s</string>
+    <string name="devices_left_behind_view">最後の場所を見る</string>
+    <string name="devices_left_behind_mute">1時間通知しない</string>
 </resources>

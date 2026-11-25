@@ -51,6 +51,10 @@ fun HomeScreen(
     myDevicesRequests: Int = 0,
     /** The rewarded ad for the locked save sheet (#108); null without ads. */
     rewarded: RewardedAd? = null,
+    /** Protection mode (#163): its screen, and the last-seen card a left-behind notification asks for. */
+    onOpenProtection: () -> Unit = {},
+    lastSeenRequest: String? = null,
+    onLastSeenRequestHandled: () -> Unit = {},
 ) {
     var tab by rememberSaveable { mutableStateOf(if (startOnMyDevices) HomeTab.MY_DEVICES else HomeTab.NEARBY) }
     var handledRequests by rememberSaveable { mutableIntStateOf(myDevicesRequests) }
@@ -138,6 +142,9 @@ fun HomeScreen(
                         saved.firstOrNull { it.address == item.paired.address }?.let { saveTarget = SaveTarget.of(it) }
                     },
                     freeSaveLimit = SaveLimit.FREE_DEVICES.takeUnless { premium.isPremium },
+                    onOpenProtection = onOpenProtection,
+                    lastSeenRequest = lastSeenRequest,
+                    onLastSeenRequestHandled = onLastSeenRequestHandled,
                 )
         }
     }

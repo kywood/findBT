@@ -16,6 +16,7 @@ import com.gamenuri.btscanner24.core.ble.CompanyDirectory
 import com.gamenuri.btscanner24.core.ble.ConnectedDevices
 import com.gamenuri.btscanner24.core.ble.DeviceRepository
 import com.gamenuri.btscanner24.core.ble.ScanEvent
+import com.gamenuri.btscanner24.core.ble.WatchTarget
 import com.gamenuri.btscanner24.core.model.DeviceCategory
 import com.gamenuri.btscanner24.core.model.PairedDevice
 import com.gamenuri.btscanner24.core.ui.save.SaveDeviceSheet
@@ -124,6 +125,8 @@ private class DemoScanner(context: Context) : BleScanner(context) {
     override fun startCooldownMillis(now: Long): Long = 0
 
     override fun scan(): Flow<ScanEvent> = flow { awaitCancellation() }
+
+    override fun watch(targets: Collection<WatchTarget>): Flow<ScanEvent> = flow { awaitCancellation() }
 }
 
 private class DemoPremiumStore(isPremium: Boolean) : PremiumStore {

@@ -85,4 +85,5 @@ interface DataDependenciesProvider {
     val hiddenDevices: HiddenDevicesRepository
     val savedDevices: SavedDevicesRepository
     val lastSeen: LastSeenRepository
+    val protection: ProtectionRepository
 }

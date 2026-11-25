@@ -105,6 +105,7 @@ dependencies {
     implementation(projects.feature.devices)
     implementation(projects.feature.finder)
     implementation(projects.feature.onboarding)
+    implementation(projects.feature.protection)
     implementation(projects.feature.scan)
     implementation(projects.feature.settings)
 

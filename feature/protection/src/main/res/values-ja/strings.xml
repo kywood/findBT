@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Protection mode and left-behind alerts (#163) -->
+    <string name="protection_title">保護モード</string>
+    <string name="protection_back">戻る</string>
+    <string name="protection_intro_headline">置き忘れたデバイスを見守ります</string>
+    <string name="protection_point_alert">保存したデバイスから離れるとお知らせします</string>
+    <string name="protection_point_notification">オンの間は通知が表示されたままになります</string>
+    <string name="protection_point_battery">バッテリー消費が少し増えることがあります</string>
+    <string name="protection_point_privacy">デバイス情報と場所はこのスマートフォンにのみ保存されます</string>
+    <string name="protection_turn_on">保護モードをオンにする</string>
+    <string name="protection_not_now">今はしない</string>
+    <string name="protection_permissions_needed">権限を許可すると、保護モードからお知らせできます</string>
+    <string name="protection_section_left_behind">置き忘れアラート</string>
+    <string name="protection_no_devices">「周り」タブでデバイスを保存するか、スマートフォンとペアリングするとここに表示されます</string>
+    <string name="protection_footer">バッテリー消費が少し増えることがあります。デバイス情報と場所はこのスマートフォンにのみ保存されます。</string>
+    <string name="protection_channel_status">保護モードの状態</string>
+    <string name="protection_channel_alerts">置き忘れアラート</string>
+    <string name="protection_status_title">保護モードはオンです</string>
+    <string name="protection_status_none">見守るデバイスがまだ選ばれていません</string>
+    <string name="protection_status_bluetooth_off">Bluetoothがオフのため、デバイスを見守れません</string>
+    <string name="protection_status_location_off">位置情報がオフのため、デバイスを見守れません</string>
+    <string name="protection_status_cannot_scan">スキャンを開始できないため、デバイスを見守れません</string>
+    <string name="protection_turn_off">オフにする</string>
+    <string name="protection_alert_title">%1$sを置き忘れたかもしれません</string>
+    <string name="protection_alert_text">最後に検出したのは%1$sです。最後に検出した場所を確認してください。</string>
+    <string name="protection_alert_view">最後の場所を見る</string>
+    <string name="protection_mute_hour">1時間通知しない</string>
+    <string name="protection_mute_today">今日は通知しない</string>
+    <string name="protection_off_title">保護モードはオフです</string>
+    <string name="protection_off_restart">スマートフォンが再起動したため停止しました。タップするとオンに戻せます。</string>
+    <string name="protection_off_stopped">Androidが保護モードを停止しました。タップするとオンに戻せます。</string>
+    <string name="protection_turn_on_short">オンにする</string>
+    <plurals name="protection_status_watching">
+        <item quantity="other">%d台のデバイスを見守り中</item>
+    </plurals>
+</resources>

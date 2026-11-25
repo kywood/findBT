@@ -2,6 +2,7 @@ package com.gamenuri.btscanner24
 
 import android.content.Context
 import android.content.ContextWrapper
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.content.res.Resources
@@ -24,6 +25,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -54,6 +56,8 @@ import com.gamenuri.btscanner24.feature.onboarding.OnboardingActions
 import com.gamenuri.btscanner24.feature.onboarding.OnboardingContent
 import com.gamenuri.btscanner24.feature.onboarding.OnboardingPage
 import com.gamenuri.btscanner24.feature.onboarding.OnboardingScreen
+import com.gamenuri.btscanner24.feature.protection.Protection
+import com.gamenuri.btscanner24.feature.protection.ProtectionScreen
 import com.gamenuri.btscanner24.feature.scan.LocalNearbyMap
 import com.gamenuri.btscanner24.feature.scan.NearbyMapOptions
 import com.gamenuri.btscanner24.feature.settings.AppInfo
@@ -64,7 +68,20 @@ import com.gamenuri.btscanner24.feature.settings.SettingsScreen
 import java.util.Locale
 import kotlinx.coroutines.flow.MutableStateFlow
 
+/** What a tapped protection notification asks the app to show (#163). */
+private data class ProtectionRequest(val open: String, val address: String?)
+
 class MainActivity : ComponentActivity() {
+    private val protectionRequest = MutableStateFlow<ProtectionRequest?>(null)
+
+    private fun readProtectionRequest(intent: Intent?) {
+        if (intent == null) return
+        val open = intent.getStringExtra(Protection.EXTRA_OPEN) ?: return
+        protectionRequest.value = ProtectionRequest(open, intent.getStringExtra(Protection.EXTRA_ADDRESS))
+        // Read once: turning the phone must not open it again.
+        intent.removeExtra(Protection.EXTRA_OPEN)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
@@ -73,7 +90,12 @@ class MainActivity : ComponentActivity() {
         val demo = DemoMode.request(intent)
         val app = application as BtScannerApp
         if (demo != null) app.demo = demo
-        app.startLastSeenRecorder()
+        if (demo == null) {
+            // Protection the user left on, whose service Android stopped, runs again from here (#163).
+            Protection.resumeIfOn(this)
+            readProtectionRequest(intent)
+            addOnNewIntentListener { readProtectionRequest(it) }
+        }
         val showOnboarding = demo == null && needsOnboarding(app)
         setContent {
             // Locale outside the theme, so locale-dependent typography (#75) follows demo languages too.
@@ -107,6 +129,7 @@ class MainActivity : ComponentActivity() {
                                 openPaywall = demo?.openPaywall == true,
                                 onOnboardingDone = app.appState::setOnboardingDone,
                                 onDistanceUnit = app.appState::setDistanceUnit,
+                                protectionRequest = protectionRequest,
                             )
                         }
                     }
@@ -145,6 +168,7 @@ private fun AppNavHost(
     openPaywall: Boolean,
     onOnboardingDone: () -> Unit,
     onDistanceUnit: (DistanceUnit) -> Unit,
+    protectionRequest: MutableStateFlow<ProtectionRequest?>,
 ) {
     val navController = rememberNavController()
     // Where the last touch came down, 0..1 across the screen: the find screen's water starts there (#107).
@@ -159,6 +183,22 @@ private fun AppNavHost(
     val findEntry = rememberFindEntryWater()
     // "View" on the find screen's saved bar goes back to Home on the My devices tab (#152).
     var myDevicesRequests by remember { mutableIntStateOf(0) }
+    // A tapped protection notification (#163): the last-seen card on My devices, or the protection screen.
+    val asked by protectionRequest.collectAsStateWithLifecycle()
+    var lastSeenRequest by remember { mutableStateOf<String?>(null) }
+    var turnOnProtection by remember { mutableStateOf(false) }
+    LaunchedEffect(asked) {
+        val request = asked ?: return@LaunchedEffect
+        protectionRequest.value = null
+        if (request.open == Protection.OPEN_LAST_SEEN) {
+            lastSeenRequest = request.address
+            myDevicesRequests++
+            navController.popBackStack(Routes.HOME, inclusive = false)
+        } else {
+            turnOnProtection = request.open == Protection.OPEN_TURN_ON
+            navController.navigate(Routes.PROTECTION) { launchSingleTop = true }
+        }
+    }
     val activity = LocalActivity.current
     val ads = remember(activity) { activity?.let { NearoAds.from(it) } }
     val rewardedReady by (ads?.rewardedReady ?: NoRewardedAd).collectAsStateWithLifecycle()
@@ -187,6 +227,12 @@ private fun AppNavHost(
                         navController.navigate(Routes.finder(address)) { launchSingleTop = true }
                     },
                     onOpenSettings = { navController.navigate(Routes.SETTINGS) },
+                    onOpenProtection = {
+                        turnOnProtection = false
+                        navController.navigate(Routes.PROTECTION) { launchSingleTop = true }
+                    },
+                    lastSeenRequest = lastSeenRequest,
+                    onLastSeenRequestHandled = { lastSeenRequest = null },
                     startOnMyDevices = startOnMyDevices,
                     myDevicesRequests = myDevicesRequests,
                     rewarded = ads?.let { nearoAds ->
@@ -212,6 +258,9 @@ private fun AppNavHost(
                         }
                     },
                 )
+            }
+            composable(Routes.PROTECTION) {
+                ProtectionScreen(onBack = { navController.popBackStack() }, turnOnNow = turnOnProtection)
             }
             composable(Routes.LICENSES) {
                 LicensesScreen(librariesRes = R.raw.aboutlibraries, onBack = { navController.popBackStack() })
@@ -308,6 +357,7 @@ private object Routes {
     const val HOME = "home"
     const val SETTINGS = "settings"
     const val LICENSES = "licenses"
+    const val PROTECTION = "protection"
     const val ADDRESS_ARG = "address"
     const val FINDER = "finder/{$ADDRESS_ARG}"
 

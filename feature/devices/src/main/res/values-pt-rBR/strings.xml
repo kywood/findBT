@@ -40,4 +40,13 @@
     <string name="last_seen_turn_on">Ativar o registro do lugar</string>
     <string name="last_seen_find">Começar a procurar</string>
     <string name="last_seen_no_map_app">Nenhum app de mapas encontrado</string>
+    <!-- Protection mode and left-behind alerts (#163) -->
+    <string name="devices_protection_menu">Modo de proteção</string>
+    <string name="devices_protection_off_title">O modo de proteção está desativado</string>
+    <string name="devices_protection_off_body">Os alertas de esquecimento estão pausados</string>
+    <string name="devices_protection_turn_on">Ativar</string>
+    <string name="devices_left_behind_title">%1$s · Pode ter ficado para trás</string>
+    <string name="devices_left_behind_body">Última detecção: %1$s</string>
+    <string name="devices_left_behind_view">Ver último lugar</string>
+    <string name="devices_left_behind_mute">Silenciar por 1 hora</string>
 </resources>

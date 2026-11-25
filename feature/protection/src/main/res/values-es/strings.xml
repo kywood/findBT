@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Protection mode and left-behind alerts (#163) -->
+    <string name="protection_title">Modo de protección</string>
+    <string name="protection_back">Atrás</string>
+    <string name="protection_intro_headline">Vigila los dispositivos que dejas atrás</string>
+    <string name="protection_point_alert">Te avisa cuando te alejas de un dispositivo guardado</string>
+    <string name="protection_point_notification">Una notificación permanece visible mientras está activado</string>
+    <string name="protection_point_battery">El uso de batería puede aumentar un poco</string>
+    <string name="protection_point_privacy">Los datos de los dispositivos y los lugares se quedan en este teléfono</string>
+    <string name="protection_turn_on">Activar el modo de protección</string>
+    <string name="protection_not_now">Ahora no</string>
+    <string name="protection_permissions_needed">Concede los permisos para que el modo de protección pueda avisarte</string>
+    <string name="protection_section_left_behind">Avisos de olvido</string>
+    <string name="protection_no_devices">Guarda un dispositivo en la pestaña Cerca o vincúlalo con el teléfono y aparecerá aquí</string>
+    <string name="protection_footer">El uso de batería puede aumentar un poco. Los datos de los dispositivos y los lugares se quedan en este teléfono.</string>
+    <string name="protection_channel_status">Estado del modo de protección</string>
+    <string name="protection_channel_alerts">Avisos de olvido</string>
+    <string name="protection_status_title">El modo de protección está activado</string>
+    <string name="protection_status_none">Aún no has elegido dispositivos para vigilar</string>
+    <string name="protection_status_bluetooth_off">El Bluetooth está desactivado y no se pueden vigilar los dispositivos</string>
+    <string name="protection_status_location_off">La ubicación está desactivada y no se pueden vigilar los dispositivos</string>
+    <string name="protection_status_cannot_scan">No se pudo iniciar la búsqueda y no se pueden vigilar los dispositivos</string>
+    <string name="protection_turn_off">Desactivar</string>
+    <string name="protection_alert_title">Puede que hayas olvidado %1$s</string>
+    <string name="protection_alert_text">Detectado por última vez a las %1$s. Mira dónde se vio por última vez.</string>
+    <string name="protection_alert_view">Ver último lugar</string>
+    <string name="protection_mute_hour">Silenciar 1 hora</string>
+    <string name="protection_mute_today">Silenciar por hoy</string>
+    <string name="protection_off_title">El modo de protección está desactivado</string>
+    <string name="protection_off_restart">Se detuvo al reiniciar el teléfono. Toca para volver a activarlo.</string>
+    <string name="protection_off_stopped">Android lo detuvo. Toca para volver a activarlo.</string>
+    <string name="protection_turn_on_short">Activar</string>
+    <plurals name="protection_status_watching">
+        <item quantity="one">Vigilando %d dispositivo</item>
+        <item quantity="other">Vigilando %d dispositivos</item>
+    </plurals>
+</resources>
