@@ -80,6 +80,10 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
         var tagHeight = 0f
         var tagMiddle = 0f
         var tagZ = 0f
+
+        // Where it is drawn this frame: [angle] and [radius], moved to stay below the chips (#193).
+        var drawAngle = 0f
+        var drawRadius = 0f
     }
 
     private val models = HashMap<DeviceModel, Model>()
@@ -100,6 +104,9 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
     private val mvp = FloatArray(16)
     private val probe = FloatArray(4)
     private val projected = FloatArray(4)
+
+    /** [fitInView]'s answer: degrees, radius. */
+    private val fitted = FloatArray(2)
 
     /** The "me" marker on screen (left, bottom, right, top in pixels from the lower edge): no tag lies on it. */
     private val meRect = FloatArray(RECT_FLOATS)
@@ -199,6 +206,7 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
             ((bottom - top) * viewportHeight).toInt(),
         )
 
+        fitPins(pins)
         drawFloor()
         drawFloorMarks(pins.isEmpty())
         drawStepLabels()
@@ -388,13 +396,12 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
         GLES20.glEnableVertexAttribArray(position)
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, discBuffer)
         GLES20.glVertexAttribPointer(position, 3, GLES20.GL_FLOAT, false, 0, 0)
-        val turn = worldTurn()
         for (pin in pins) {
             val spot = spots[pin.key] ?: continue
-            val (x, z) = floorDirection(spot.angle - if (pin.measured) turn else 0f)
-            val floor = MapFloor.height(spot.radius) + SHADOW_LIFT
-            val px = x * spot.radius + SHADOW_ASIDE
-            val pz = z * spot.radius + SHADOW_TOWARDS
+            val (x, z) = floorDirection(spot.drawAngle)
+            val floor = MapFloor.height(spot.drawRadius) + SHADOW_LIFT
+            val px = x * spot.drawRadius + SHADOW_ASIDE
+            val pz = z * spot.drawRadius + SHADOW_TOWARDS
             for (index in SHADOW_SCALES.indices) {
                 flatAt(px, floor, pz, SHADOW_RADIUS * SHADOW_SCALES[index] * pinSize(spot), SHADOW_COLOR, SHADOW_ALPHA)
                 GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, RING_VERTICES)
@@ -441,6 +448,67 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
     }
 
     /** A device's size: the design's 78 %, a little smaller on the floor beyond the steps, growing in when new. */
+    /** Works out where every device is drawn this frame; see [fitInView]. */
+    private fun fitPins(pins: List<MapPin>) {
+        val turn = worldTurn()
+        for (pin in pins) {
+            val spot = spots[pin.key] ?: continue
+            fitInView(spot.angle - if (pin.measured) turn else 0f, spot.radius, pinSize(spot), pin.measured)
+            spot.drawAngle = fitted[0]
+            spot.drawRadius = fitted[1]
+        }
+    }
+
+    /**
+     * Keeps a whole device below the chips (#193): a model cut in half at the chip line reads as a
+     * glitch. A device without a measured direction has no real place on its ring, so it is first
+     * pulled in across its band and, if even the band's inner edge is too high, moved round the ring
+     * towards the side until it fits. A measured device keeps its direction and is only pulled in.
+     * The result, degrees and radius, is left in [fitted].
+     */
+    private fun fitInView(degrees: Float, radius: Float, size: Float, measured: Boolean) {
+        fitted[0] = degrees
+        fitted[1] = radius
+        val limit = (1f - state.clipTop.coerceIn(0f, 1f)) * viewportHeight - PIN_EDGE_MARGIN
+        if (pinTop(degrees, radius, size) <= limit) return
+        val band = MapFloor.band(radius)
+        val inner = minOf(radius, if (band == 0) 0f else MapFloor.STEP_RADII[band - 1] + PIN_BAND_INSET)
+        if (pinTop(degrees, inner, size) <= limit) {
+            var low = inner
+            var high = radius
+            repeat(FIT_STEPS) {
+                val mid = (low + high) / 2f
+                if (pinTop(degrees, mid, size) <= limit) low = mid else high = mid
+            }
+            fitted[1] = low
+            return
+        }
+        fitted[1] = inner
+        if (measured) return
+        // Straight ahead is the top of the screen; turning towards the nearer side brings it down.
+        val side = if (wrap(degrees) >= 0f) 1f else -1f
+        var low = 0f
+        var high = MAX_FIT_TURN
+        if (pinTop(degrees + side * high, inner, size) > limit) {
+            fitted[0] = degrees + side * high
+            return
+        }
+        repeat(FIT_STEPS) {
+            val mid = (low + high) / 2f
+            if (pinTop(degrees + side * mid, inner, size) <= limit) high = mid else low = mid
+        }
+        fitted[0] = degrees + side * high
+    }
+
+    /** The top of a device standing at [degrees], [radius] on screen, pixels from the lower edge. */
+    private fun pinTop(degrees: Float, radius: Float, size: Float): Float {
+        val (dx, dz) = floorDirection(degrees)
+        project(dx * radius, MapFloor.height(radius) + PIN_TOP * size, dz * radius)
+        val w = projected[3]
+        if (w <= 0f) return Float.MAX_VALUE
+        return (projected[1] / w + 1f) / 2f * viewportHeight
+    }
+
     private fun pinSize(spot: Spot): Float {
         val far = if (MapFloor.band(spot.radius) >= MapFloor.STEPS) FAR_PIN_SHARE else 1f
         return PIN_SIZE * far * spot.shown
@@ -449,14 +517,13 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
     /** Every device: its stand, the ring on it (mint when picked) and its model. */
     private fun drawPins(pins: List<MapPin>) {
         if (hitSpots.size != pins.size * MapHits.FLOATS) hitSpots = FloatArray(pins.size * MapHits.FLOATS)
-        val turn = worldTurn()
         for ((index, pin) in pins.withIndex()) {
             val spot = spots[pin.key]
             if (spot == null) {
                 hitSpots[index * MapHits.FLOATS + 2] = 0f
                 continue
             }
-            drawPin(pin, spot, turn, index)
+            drawPin(pin, spot, index)
         }
         state.hits = MapHits(pins.map { it.key }, hitSpots.copyOf())
     }
@@ -470,7 +537,7 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
         Matrix.translateM(model, 0, x, floor, z)
         Matrix.scaleM(model, 0, size, size, size)
         drawLit(measuredRingBuffer, measuredRing.size / ObjMesh.FLOATS_PER_VERTEX, false, WHITE)
-        val end = spot.radius - BEAM_STAND_GAP * size - BEAM_HEAD_ROOM
+        val end = spot.drawRadius - BEAM_STAND_GAP * size - BEAM_HEAD_ROOM
         val length = end - BEAM_FROM
         if (length < BEAM_MIN_LENGTH) return
         Matrix.setIdentityM(model, 0)
@@ -485,15 +552,16 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
         drawLit(arrowheadBuffer, arrowhead.size / ObjMesh.FLOATS_PER_VERTEX, false, WHITE)
     }
 
-    private fun drawPin(pin: MapPin, spot: Spot, turn: Float, index: Int) {
+    private fun drawPin(pin: MapPin, spot: Spot, index: Int) {
         // Only a measured direction is fixed in the room; a tidy place on the ring stays where it is on
         // screen, so no device has to be looked for in a direction nobody knows (#86).
-        val degrees = spot.angle - if (pin.measured) turn else 0f
-        val (dx, dz) = floorDirection(degrees)
-        val x = dx * spot.radius
-        val z = dz * spot.radius
-        val floor = MapFloor.height(spot.radius)
         val size = pinSize(spot)
+        val degrees = spot.drawAngle
+        val radius = spot.drawRadius
+        val (dx, dz) = floorDirection(degrees)
+        val x = dx * radius
+        val z = dz * radius
+        val floor = MapFloor.height(radius)
         if (pin.measured) drawMeasured(spot, degrees, x, z, floor, size)
 
         Matrix.setIdentityM(model, 0)
@@ -1023,6 +1091,14 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
 
         /** From a device's middle to the near edge of a tag set beside it, in scene units (#194). */
         const val TAG_SIDE_GAP = 0.75f
+
+        // Keeping whole devices below the chips (#193).
+        /** A device's height over its floor, stand and model, as a share of its size. */
+        const val PIN_TOP = 1.4f
+        const val PIN_EDGE_MARGIN = 6f
+        const val PIN_BAND_INSET = 0.5f
+        const val FIT_STEPS = 8
+        const val MAX_FIT_TURN = 90f
         const val HIT_RADIUS = 0.7f
         const val MIN_HIT_SHARE = 0.06f
 
