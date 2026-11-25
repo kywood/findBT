@@ -32,7 +32,7 @@ android {
         // AdMob (#31). Google's public test IDs unless local.properties has the real ones (release, #35).
         manifestPlaceholders["admobAppId"] =
             localProperties.getProperty("nearo.admob.appId", "ca-app-pub-3940256099942544~3347511713")
-        for (unit in listOf("banner", "native", "interstitial", "rewarded")) {
+        for (unit in listOf("banner", "interstitial", "rewarded")) {
             val value = localProperties.getProperty("nearo.admob.$unit", "")
             buildConfigField("String", "ADMOB_${unit.uppercase()}", "\"$value\"")
         }

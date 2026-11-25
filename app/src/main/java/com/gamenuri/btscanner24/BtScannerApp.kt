@@ -83,7 +83,6 @@ class BtScannerApp :
         val test = AdUnits.TEST
         return AdUnits(
             banner = BuildConfig.ADMOB_BANNER.ifBlank { test.banner },
-            native = BuildConfig.ADMOB_NATIVE.ifBlank { test.native },
             interstitial = BuildConfig.ADMOB_INTERSTITIAL.ifBlank { test.interstitial },
             rewarded = BuildConfig.ADMOB_REWARDED.ifBlank { test.rewarded },
         )
