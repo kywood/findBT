@@ -394,10 +394,10 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
         pinRect(angle, radius, probeRect)
         return placed.none { other ->
             val box = other.goalRect
-            probeRect[RECT_LEFT] < box[RECT_RIGHT] - CLEAR_OVERLAP &&
-                box[RECT_LEFT] < probeRect[RECT_RIGHT] - CLEAR_OVERLAP &&
-                probeRect[RECT_TOP] < box[RECT_BOTTOM] - CLEAR_OVERLAP &&
-                box[RECT_TOP] < probeRect[RECT_BOTTOM] - CLEAR_OVERLAP
+            probeRect[RECT_LEFT] < box[RECT_RIGHT] + CLEAR_GAP &&
+                box[RECT_LEFT] < probeRect[RECT_RIGHT] + CLEAR_GAP &&
+                probeRect[RECT_TOP] < box[RECT_BOTTOM] + CLEAR_GAP &&
+                box[RECT_TOP] < probeRect[RECT_BOTTOM] + CLEAR_GAP
         }
     }
 
@@ -486,27 +486,28 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
         return need(room, spot.angle, spot.radius) <= limit
     }
 
-    /** The smallest slide along the ring, either way, that fits within [MAX_ZOOM] and keeps clear of [placed]. */
-    private fun tuckTarget(room: FitRoom, spot: Spot, placed: List<Spot>): Float {
+    /** Where [spot] slides along its ring: the nearest place that fits and is clear, else the nearest that fits. */
+    private fun tuckTarget(room: FitRoom, spot: Spot, placed: List<Spot>): Float =
+        slideTo(room, spot, placed, keepClear = true)
+            // No clear place: its own place if that fits, else touching another device rather than cut off.
+            ?: (if (need(room, spot.angle, spot.radius) <= MAX_ZOOM) 0f else null)
+            ?: slideTo(room, spot, placed, keepClear = false)
+            ?: spot.tuckGoal
+
+    /** The nearest slide, either way, that fits within [MAX_ZOOM] (and keeps clear); null when none does. */
+    private fun slideTo(room: FitRoom, spot: Spot, placed: List<Spot>, keepClear: Boolean): Float? {
         val limit = MAX_ZOOM * TUCK_FIT_SHARE
-        var best = spot.tuckGoal
-        var bestNeed = Float.MAX_VALUE
         var step = TUCK_STEP_DEGREES
         while (step <= MAX_TUCK_DEGREES) {
             for (side in SIDES) {
                 val slide = side * step
                 val angle = spot.angle + slide
-                if (!clearOf(placed, angle, spot.radius)) continue
-                val needed = need(room, angle, spot.radius)
-                if (needed <= limit) return slide
-                if (needed < bestNeed) {
-                    bestNeed = needed
-                    best = slide
-                }
+                if (keepClear && !clearOf(placed, angle, spot.radius)) continue
+                if (need(room, angle, spot.radius) <= limit) return slide
             }
             step += TUCK_STEP_DEGREES
         }
-        return best
+        return null
     }
 
     /** How far measured devices are turned round the middle: with the phone, or not at all in a still view. */
@@ -892,9 +893,10 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
         val middle = (projected[1] / middleW + 1f) / 2f * viewportHeight
         val beside = TAG_SIDE_GAP * viewportWidth / (2f * HALF_WIDTH_PER_DISTANCE * zoom * middleW)
         val sideBottom = middle - tag.height / 2f
+        // Over the device it hangs above its own model; beside it, it keeps clear of that too.
         return tryTag(tag, self, kept, anchor - tag.width / 2f, aboveBottom) ||
-            tryTag(tag, self, kept, anchor + beside, sideBottom) ||
-            tryTag(tag, self, kept, anchor - beside - tag.width, sideBottom)
+            tryTag(tag, NO_PIN, kept, anchor + beside, sideBottom) ||
+            tryTag(tag, NO_PIN, kept, anchor - beside - tag.width, sideBottom)
     }
 
     /** Writes rectangle number [kept] at [left], [bottom] if it fits the visible band and lies on nothing. */
@@ -1339,10 +1341,13 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
         const val TUCK_SETTLED_DEGREES = 0.2f
 
         /** Half a stand's width with the picked ring round it, as a share of its size. */
-        const val PIN_HALF_WIDTH = 0.6f
+        const val PIN_HALF_WIDTH = 0.75f
 
-        /** How much two devices' boxes may touch (share of the view) and still count as clear. */
-        const val CLEAR_OVERLAP = 0.004f
+        /** No device's model is left out of a tag's check. */
+        const val NO_PIN = -1
+
+        /** The gap two devices' boxes keep between them, as a share of the view. */
+        const val CLEAR_GAP = 0.008f
         const val RECT_LEFT = 0
         const val RECT_RIGHT = 1
         const val RECT_TOP = 2
