@@ -63,4 +63,8 @@
     <string name="finder_sound_retry">もう一度試す</string>
     <string name="finder_sound_failed">音を鳴らせませんでした。もう少し近づいてもう一度お試しください。</string>
     <string name="finder_sound_not_supported">このデバイスは音を鳴らせません。</string>
+    <string name="finder_sound_ear_title">今、耳に着けていますか?</string>
+    <string name="finder_sound_ear_body">このデバイスから大きな音が鳴り、だんだん大きくなります。着けている場合は先に外してください。</string>
+    <string name="finder_sound_ear_confirm">音を鳴らす</string>
+    <string name="finder_sound_ear_cancel">キャンセル</string>
 </resources>

@@ -64,4 +64,8 @@
     <string name="finder_sound_retry">Erneut versuchen</string>
     <string name="finder_sound_failed">Ton konnte nicht abgespielt werden. Geh näher heran und versuch es erneut.</string>
     <string name="finder_sound_not_supported">Dieses Gerät kann keinen Ton abspielen.</string>
+    <string name="finder_sound_ear_title">Trägst du sie gerade?</string>
+    <string name="finder_sound_ear_body">Auf diesem Gerät wird ein lauter Ton abgespielt, der lauter wird. Wenn du es trägst, nimm es zuerst ab.</string>
+    <string name="finder_sound_ear_confirm">Ton abspielen</string>
+    <string name="finder_sound_ear_cancel">Abbrechen</string>
 </resources>

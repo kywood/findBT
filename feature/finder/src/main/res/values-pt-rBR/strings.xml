@@ -64,4 +64,8 @@
     <string name="finder_sound_retry">Tentar de novo</string>
     <string name="finder_sound_failed">Não foi possível tocar o som. Chegue mais perto e tente de novo.</string>
     <string name="finder_sound_not_supported">Este dispositivo não pode tocar som.</string>
+    <string name="finder_sound_ear_title">Você está usando agora?</string>
+    <string name="finder_sound_ear_body">Um som alto vai tocar neste dispositivo e aumentar aos poucos. Se estiver usando, tire primeiro.</string>
+    <string name="finder_sound_ear_confirm">Tocar som</string>
+    <string name="finder_sound_ear_cancel">Cancelar</string>
 </resources>

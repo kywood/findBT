@@ -35,6 +35,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -483,13 +484,41 @@ private fun ActionRow(state: FinderUiState, actions: FinderActions, content: Col
         } else {
             null
         }
+        // A loud tone in someone's ears hurts: ask before it starts; stopping never asks (#153).
+        var earCheckOpen by rememberSaveable { mutableStateOf(false) }
+        val starting = state.sound != SoundState.PLAYING && state.sound != SoundState.CONNECTING
+        val onSound = if (state.soundViaPhone && starting) ({ earCheckOpen = true }) else actions.onToggleSound
+        if (earCheckOpen) {
+            EarCheckDialog(
+                onConfirm = {
+                    earCheckOpen = false
+                    actions.onToggleSound()
+                },
+                onDismiss = { earCheckOpen = false },
+            )
+        }
         if (state.showSoundButton) {
-            SoundButton(state.sound, actions.onToggleSound, content, respin)
+            SoundButton(state.sound, onSound, content, respin)
         } else {
             respin?.invoke(Modifier.fillMaxWidth())
         }
         MainActions(state, actions, content, background)
     }
+}
+
+@Composable
+private fun EarCheckDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.finder_sound_ear_title)) },
+        text = { Text(stringResource(R.string.finder_sound_ear_body)) },
+        confirmButton = {
+            TextButton(onClick = onConfirm) { Text(stringResource(R.string.finder_sound_ear_confirm)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.finder_sound_ear_cancel)) }
+        },
+    )
 }
 
 @Composable
@@ -512,7 +541,9 @@ private val FinderUiState.showSoundButton: Boolean
         SoundState.UNAVAILABLE -> false
         SoundState.CONNECTING, SoundState.PLAYING, SoundState.NOT_SUPPORTED -> true
         SoundState.READY, SoundState.FAILED ->
-            stage != FinderStage.WAITING && stage != FinderStage.NOT_FOUND && stage != FinderStage.SIGNAL_LOST
+            // Connected earbuds can sound without a signal to measure (#153).
+            soundViaPhone ||
+                (stage != FinderStage.WAITING && stage != FinderStage.NOT_FOUND && stage != FinderStage.SIGNAL_LOST)
     }
 
 @Composable

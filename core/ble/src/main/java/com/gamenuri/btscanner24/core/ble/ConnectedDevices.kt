@@ -72,6 +72,17 @@ open class ConnectedDevices(context: Context) {
         return found
     }
 
+    /** Addresses connected for media audio (A2DP): where a find tone can be played (#153). */
+    @SuppressLint("MissingPermission") // checked by hasPermission()
+    open fun mediaAddresses(): Set<String> {
+        if (!hasPermission()) return emptySet()
+        return try {
+            proxies[BluetoothProfile.A2DP]?.connectedDevices.orEmpty().mapTo(HashSet()) { it.address }
+        } catch (_: SecurityException) {
+            emptySet()
+        }
+    }
+
     /**
      * Signal strength of the link to a connected device, about once a second. Opens a GATT client
      * on the link and reads its RSSI; ends when that cannot be done (many earbuds only connect over
