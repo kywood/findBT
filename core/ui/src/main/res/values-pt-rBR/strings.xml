@@ -62,4 +62,17 @@
     <string name="paywall_or">ou</string>
     <string name="paywall_reward">Ver um anúncio para 24 h de Premium</string>
     <string name="paywall_reward_note">Assista a um anúncio (cerca de 30 s) até o fim para ter Premium por 24 horas</string>
+    <string name="save_title">Salvar em Meus dispositivos</string>
+    <string name="save_name_label">Nome</string>
+    <string name="save_type_label">Tipo</string>
+    <string name="save_local_note">O nome e o tipo ficam só neste telefone</string>
+    <string name="save_cancel">Cancelar</string>
+    <string name="save_confirm">Salvar</string>
+    <string name="save_done">Salvo em Meus dispositivos</string>
+    <string name="save_view">Ver</string>
+    <string name="save_locked_title">1 dispositivo salvo é grátis</string>
+    <string name="save_locked_body">Com o Premium, salve quantos quiser e remova os anúncios.</string>
+    <string name="save_locked_ad_used">Já usado hoje</string>
+    <string name="save_locked_later">Agora não</string>
+    <string name="device_more_for">Mais opções para %1$s</string>
 </resources>

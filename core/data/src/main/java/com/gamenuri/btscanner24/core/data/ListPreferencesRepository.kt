@@ -80,4 +80,5 @@ class ListPreferencesRepository(private val store: DataStore<Preferences>) {
 interface DataDependenciesProvider {
     val listPreferences: ListPreferencesRepository
     val hiddenDevices: HiddenDevicesRepository
+    val savedDevices: SavedDevicesRepository
 }
