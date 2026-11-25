@@ -20,6 +20,7 @@ import com.gamenuri.btscanner24.core.ble.watch
 import com.gamenuri.btscanner24.core.model.BleDevice
 import com.gamenuri.btscanner24.core.model.PairedDevice
 import com.gamenuri.btscanner24.core.sensors.MotionSensor
+import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -98,6 +99,9 @@ class FinderViewModel(
     private var lastProbeMs = 0L
     private var soundJob: Job? = null
     private var offeredViaPhone = false
+
+    /** "Louder" taps during the tone; back to none for every new tone (#153). */
+    private val louderSteps = AtomicInteger(0)
     private val sound = MutableStateFlow(SoundState.UNAVAILABLE)
 
     fun start() {
@@ -203,11 +207,12 @@ class FinderViewModel(
     /** The find tone as media audio through the connected target; the screen asked about ears first (#153). */
     private fun playTone(tone: MediaFindTone) {
         probeJob?.cancel()
+        louderSteps.set(0)
         sound.value = SoundState.PLAYING
         publish()
         soundJob = viewModelScope.launch {
             try {
-                tone.play(SOUND_DURATION_MS)
+                tone.play(TONE_DURATION_MS) { louderSteps.get() }
             } finally {
                 sound.value = SoundState.READY
                 publish()
@@ -265,6 +270,11 @@ class FinderViewModel(
         if (result == AlertSupport.SUPPORTED && sound.value == SoundState.UNAVAILABLE) sound.value = SoundState.READY
     }
 
+    /** One step louder than the tone gets by itself; only the user's own tap does this (#153). */
+    fun louder() {
+        if (soundJob?.isActive == true) louderSteps.incrementAndGet()
+    }
+
     fun toggleVibration() {
         vibrationOn.value = !vibrationOn.value
         publish()
@@ -309,6 +319,7 @@ class FinderViewModel(
     companion object {
         private const val UI_REFRESH_MS = 200L
         private const val SOUND_DURATION_MS = 20_000L
+        private const val TONE_DURATION_MS = 30_000L
         private const val MAX_PROBES = 3
         private const val PROBE_RETRY_MS = 10_000L
         private const val NOTE_VISIBLE_MS = 5_000L

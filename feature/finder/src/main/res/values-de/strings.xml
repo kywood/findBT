@@ -65,9 +65,10 @@
     <string name="finder_sound_failed">Ton konnte nicht abgespielt werden. Geh näher heran und versuch es erneut.</string>
     <string name="finder_sound_not_supported">Dieses Gerät kann keinen Ton abspielen.</string>
     <string name="finder_sound_ear_title">Trägst du sie gerade?</string>
-    <string name="finder_sound_ear_body">Auf diesem Gerät wird ein lauter Ton abgespielt, der lauter wird. Wenn du es trägst, nimm es zuerst ab.</string>
+    <string name="finder_sound_ear_body">Auf diesem Gerät wird ein Ton abgespielt, erst leise, dann lauter. Wenn du oder jemand anderes es trägt, nimm es vorher ab.</string>
     <string name="finder_sound_ear_confirm">Ton abspielen</string>
     <string name="finder_sound_ear_cancel">Abbrechen</string>
+    <string name="finder_sound_louder">Lauter</string>
     <string name="finder_sound_output_note">Es ist verbunden, aber der Ton läuft über eine andere Ausgabe. Wechsle die Ausgabe auf dieses Gerät, um dort einen Ton abzuspielen.</string>
     <string name="finder_sound_output_button">Tonausgabe wechseln</string>
 </resources>

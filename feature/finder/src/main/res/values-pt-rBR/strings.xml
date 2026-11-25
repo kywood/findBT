@@ -65,9 +65,10 @@
     <string name="finder_sound_failed">Não foi possível tocar o som. Chegue mais perto e tente de novo.</string>
     <string name="finder_sound_not_supported">Este dispositivo não pode tocar som.</string>
     <string name="finder_sound_ear_title">Você está usando agora?</string>
-    <string name="finder_sound_ear_body">Um som alto vai tocar neste dispositivo e aumentar aos poucos. Se estiver usando, tire primeiro.</string>
+    <string name="finder_sound_ear_body">Um som vai tocar neste dispositivo, baixo no início e depois mais alto. Se você ou outra pessoa estiver usando, tire antes de começar.</string>
     <string name="finder_sound_ear_confirm">Tocar som</string>
     <string name="finder_sound_ear_cancel">Cancelar</string>
+    <string name="finder_sound_louder">Mais alto</string>
     <string name="finder_sound_output_note">Está conectado, mas o som está saindo por outra saída. Mude a saída para este dispositivo para tocar um som nele.</string>
     <string name="finder_sound_output_button">Mudar saída de som</string>
 </resources>

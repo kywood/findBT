@@ -45,15 +45,16 @@ open class MediaFindTone(context: Context) {
     }
 
     /**
-     * Plays the tone for [durationMs] or until the caller is cancelled. The media volume starts low
-     * and climbs to [TOP_VOLUME] of the maximum over [RAMP_MS]; the user's own volume is put back after.
+     * Plays the tone for [durationMs] or until the caller is cancelled. Someone may be wearing the
+     * earbuds, so the media volume stays at [START_VOLUME] for [QUIET_MS], then climbs slowly to
+     * [TOP_VOLUME] of the maximum. [louderSteps] is how often the user asked for more; each step adds
+     * [STEP_VOLUME]. The user's own volume is put back after.
      */
-    open suspend fun play(durationMs: Long) = withContext(Dispatchers.Default) {
+    open suspend fun play(durationMs: Long, louderSteps: () -> Int = { 0 }) = withContext(Dispatchers.Default) {
         val audio = audio ?: return@withContext
         val before = audio.getStreamVolume(AudioManager.STREAM_MUSIC)
         val max = audio.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
-        val top = (max * TOP_VOLUME).roundToInt().coerceAtLeast(1)
-        val low = (max * START_VOLUME).roundToInt().coerceIn(1, top)
+        val low = (max * START_VOLUME).roundToInt().coerceAtLeast(1)
         val attributes = AudioAttributes.Builder()
             .setUsage(AudioAttributes.USAGE_MEDIA)
             .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
@@ -72,7 +73,7 @@ open class MediaFindTone(context: Context) {
             while (isActive) {
                 val elapsed = SystemClock.elapsedRealtime() - startedAt
                 if (elapsed >= durationMs) break
-                val next = low + ((top - low) * min(1f, elapsed / RAMP_MS.toFloat())).roundToInt()
+                val next = volumeIndex(max, elapsed, louderSteps()).coerceAtLeast(low)
                 if (next != level) {
                     level = next
                     audio.setMediaVolume(level)
@@ -89,6 +90,13 @@ open class MediaFindTone(context: Context) {
             audio.setMediaVolume(before)
             audio.abandonAudioFocusRequest(focus)
         }
+    }
+
+    /** Quiet first, then a slow climb to the cap; only the user's "louder" taps go beyond it. */
+    private fun volumeIndex(max: Int, elapsedMs: Long, louderSteps: Int): Int {
+        val climb = ((elapsedMs - QUIET_MS) / RAMP_MS.toFloat()).coerceIn(0f, 1f)
+        val fraction = START_VOLUME + (TOP_VOLUME - START_VOLUME) * climb + STEP_VOLUME * louderSteps
+        return (max * min(1f, fraction)).roundToInt()
     }
 
     private fun AudioManager.setMediaVolume(index: Int) {
@@ -137,11 +145,13 @@ open class MediaFindTone(context: Context) {
         const val SAMPLE_RATE = 44_100
         const val BEEP_MS = 180
         const val FADE_MS = 5
-        const val START_VOLUME = 0.2f
+        const val START_VOLUME = 0.1f
 
-        /** Loud enough to hear from a couch cushion, short of the very top (#153). */
-        const val TOP_VOLUME = 0.85f
-        const val RAMP_MS = 6_000L
+        /** Where the tone stops climbing by itself; louder only when the user asks (#153). */
+        const val TOP_VOLUME = 0.6f
+        const val STEP_VOLUME = 0.1f
+        const val QUIET_MS = 3_000L
+        const val RAMP_MS = 10_000L
         const val STEP_MS = 250L
     }
 }
