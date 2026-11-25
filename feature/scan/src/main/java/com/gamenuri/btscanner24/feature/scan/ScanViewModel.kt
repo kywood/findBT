@@ -17,6 +17,7 @@ import com.gamenuri.btscanner24.core.model.DeviceFilter
 import com.gamenuri.btscanner24.core.model.DeviceNaming
 import com.gamenuri.btscanner24.core.model.DeviceSort
 import com.gamenuri.btscanner24.core.model.ListPreferences
+import com.gamenuri.btscanner24.core.model.MapBandHold
 import com.gamenuri.btscanner24.core.model.MapLayout
 import com.gamenuri.btscanner24.core.model.MapSpot
 import com.gamenuri.btscanner24.core.model.MeasuredBearing
@@ -42,6 +43,7 @@ class ScanViewModel(
     private val clock: () -> Long = System::currentTimeMillis,
 ) : ViewModel() {
 
+    private val mapBands = MapBandHold()
     private val query = MutableStateFlow("")
     private val reorderRequests = MutableStateFlow(0)
 
@@ -130,7 +132,8 @@ class ScanViewModel(
         now: Long,
     ): Map<String, MapSpot> {
         val distances = items.filter { !it.isGone }.map { it.device.address to it.distanceMeters }
-        return MapLayout.arrange(MeasuredBearing.entries(distances, measured, now))
+        // A distance wobbling across a band's edge keeps the device on its ring (#193).
+        return MapLayout.arrange(mapBands.hold(MeasuredBearing.entries(distances, measured, now), now))
     }
 
     fun startScan() {
