@@ -22,8 +22,9 @@ data class MapPin(
     val key: String,
     val model: DeviceModel,
     /**
-     * Where round the middle it stands, degrees clockwise. In the same frame as the pose heading, so
-     * it stays put in the room while the phone turns.
+     * Where round the middle it stands, degrees clockwise from the top of the screen. When [measured]
+     * it is in the frame of the pose heading instead, and the device stays put in the room while the
+     * phone turns.
      */
     val angleDegrees: Float,
     /**

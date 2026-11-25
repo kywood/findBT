@@ -1,8 +1,5 @@
 package com.gamenuri.btscanner24.core.model
 
-import kotlin.math.abs
-import kotlin.math.roundToInt
-
 /** A device to put on the map (#86): what the scan knows about where it is. */
 data class MapEntry(
     /** Stable for the device; its place round the middle is made from it. */
@@ -18,7 +15,10 @@ data class MapEntry(
 
 /** Where a device stands on the map. */
 data class MapSpot(
-    /** Degrees clockwise round the middle. */
+    /**
+     * Degrees clockwise round the middle: from the top of the screen for a tidy place, in the heading's
+     * frame when [measured].
+     */
     val angleDegrees: Float,
     /**
      * The whole part is the distance band (0 = within 1 m, 1 = up to 5 m, 2 = up to 10 m, 3 = further)
@@ -31,18 +31,27 @@ data class MapSpot(
 
 /**
  * Arranges devices round "me" by distance (PM decision on #86): the map never pretends to know a
- * direction. The distance picks the ring; the place on the ring is made from the device's key, so it
- * is the same in every frame and every run, and devices that would stand on top of each other move
- * to the next free place. Only a measured direction is used as it is.
+ * direction. The distance picks the ring; the place on the ring is one of a few fixed places that can
+ * all be seen at once, chosen from the device's key, so it is the same in every frame and every run
+ * and nobody has to turn the phone to "find" a device whose direction is not known. Devices that
+ * would stand on top of each other move to the next free place. Only a measured direction is used as
+ * it is, and only such a device is fixed in the room.
  */
 object MapLayout {
     const val BANDS = 4
 
-    /** Places round each band, wide enough apart for two stands side by side. */
-    private val SLOTS = intArrayOf(6, 12, 20, 28)
-
-    /** Each band's places are turned by this share of a place, so devices do not line up in spokes. */
-    private val TWIST = floatArrayOf(0.5f, 0.2f, 0.7f, 0.4f)
+    /**
+     * The places of each band, degrees clockwise from straight ahead (away from the viewer), wide
+     * enough apart for two stands side by side. The nearest ring is seen all round. Further out only
+     * the far side is in view (the list sheet covers the near side), and the further the ring, the
+     * narrower the part of it that fits the screen's width.
+     */
+    private val PLACES = arrayOf(
+        floatArrayOf(30f, 90f, 150f, 210f, 270f, 330f),
+        floatArrayOf(300f, 324f, 348f, 12f, 36f, 60f, 144f, 180f, 216f),
+        floatArrayOf(328f, 341f, 354f, 6f, 19f, 32f),
+        floatArrayOf(333f, 342f, 351f, 0f, 9f, 18f, 27f),
+    )
     private const val FULL_TURN = 360f
     private const val FAR_ACROSS = 0.5f
     private const val MAX_ACROSS = 0.999f
@@ -54,31 +63,29 @@ object MapLayout {
 
     private const val HASH_MIX = -0x61c88647 // 0x9E3779B9, the golden-ratio hash multiplier.
     private const val HASH_SHIFT = 8
-    private const val ANGLE_STEPS = 3600
 
     fun arrange(entries: List<MapEntry>): Map<String, MapSpot> {
         val spots = HashMap<String, MapSpot>(entries.size)
-        val taken = Array(BANDS) { BooleanArray(SLOTS[it]) }
-        // Measured directions first: they stand where they really are and keep that place free of others.
-        for (entry in entries) {
-            val degrees = entry.measuredDegrees ?: continue
-            val ring = ring(entry.distanceMeters)
-            val angle = normalize(degrees)
-            taken[ring.toInt()][slot(angle, ring.toInt())] = true
-            spots[entry.key] = MapSpot(angle, ring, measured = true)
-        }
-        // The rest in the order of their keys, so who gives way never depends on the order of the scan.
-        for (entry in entries.filter { it.measuredDegrees == null }.sortedBy { it.key }) {
+        val taken = Array(BANDS) { BooleanArray(PLACES[it].size) }
+        // The order of the keys, so who gives way never depends on the order of the scan.
+        for (entry in entries.sortedBy { it.key }) {
             if (entry.key in spots) continue
             val ring = ring(entry.distanceMeters)
+            val measured = entry.measuredDegrees
+            if (measured != null) {
+                spots[entry.key] = MapSpot(normalize(measured), ring, measured = true)
+                continue
+            }
             val band = ring.toInt()
-            val slots = SLOTS[band]
-            val free = freeSlot(taken[band], slot(homeDegrees(entry.key), band))
+            val free = freePlace(taken[band], homePlace(entry.key, band))
             taken[band][free] = true
-            spots[entry.key] = MapSpot((free + TWIST[band]) * FULL_TURN / slots, ring, measured = false)
+            spots[entry.key] = MapSpot(PLACES[band][free], ring, measured = false)
         }
         return spots
     }
+
+    /** How many devices a band holds before two have to share a place. */
+    fun places(band: Int): Int = PLACES[band].size
 
     /** The band and the place across it for a distance; no distance yet counts as far. */
     fun ring(distanceMeters: Double?): Float {
@@ -93,34 +100,23 @@ object MapLayout {
         return band + (across - band).toFloat().coerceIn(0f, MAX_ACROSS)
     }
 
-    /** The place round the middle a key asks for: spread evenly, the same in every run. */
-    fun homeDegrees(key: String): Float {
+    /** The place in [band] a key asks for: spread evenly over the places, the same in every run. */
+    fun homePlace(key: String, band: Int): Int {
         val mixed = (key.hashCode() * HASH_MIX) ushr HASH_SHIFT
-        return (mixed % ANGLE_STEPS) * FULL_TURN / ANGLE_STEPS
-    }
-
-    private fun slot(degrees: Float, band: Int): Int {
-        val slots = SLOTS[band]
-        return (((degrees / (FULL_TURN / slots) - TWIST[band]).roundToInt() % slots) + slots) % slots
+        return mixed % PLACES[band].size
     }
 
     /** [wanted] if it is free, else the nearest free one, looking right then left; [wanted] when all are taken. */
-    private fun freeSlot(taken: BooleanArray, wanted: Int): Int {
-        val slots = taken.size
-        for (step in 0..slots / 2) {
-            val right = (wanted + step) % slots
+    private fun freePlace(taken: BooleanArray, wanted: Int): Int {
+        val places = taken.size
+        for (step in 0..places / 2) {
+            val right = (wanted + step) % places
             if (!taken[right]) return right
-            val left = (wanted - step + slots) % slots
+            val left = (wanted - step + places) % places
             if (!taken[left]) return left
         }
         return wanted
     }
 
     private fun normalize(degrees: Float): Float = ((degrees % FULL_TURN) + FULL_TURN) % FULL_TURN
-
-    /** The smallest turn between two directions, 0..180. */
-    fun apart(a: Float, b: Float): Float {
-        val turn = abs(normalize(a) - normalize(b))
-        return if (turn > FULL_TURN / 2) FULL_TURN - turn else turn
-    }
 }

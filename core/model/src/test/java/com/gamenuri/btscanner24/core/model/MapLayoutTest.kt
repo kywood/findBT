@@ -34,28 +34,33 @@ class MapLayoutTest {
     }
 
     @Test
-    fun `devices in one band never share a place`() {
-        val entries = (1..12).map { MapEntry("AA:BB:CC:00:00:%02d".format(it), 3.0) }
-        val spots = MapLayout.arrange(entries).values.toList()
-        assertEquals(12, spots.size)
-        for (i in spots.indices) {
-            for (j in i + 1 until spots.size) {
-                val apart = MapLayout.apart(spots[i].angleDegrees, spots[j].angleDegrees)
-                assertTrue("only $apart° apart", apart >= 29f)
-            }
+    fun `devices in one band never share a place while there is room`() {
+        for (band in 0 until MapLayout.BANDS) {
+            val meters = listOf(0.5, 3.0, 7.0, 20.0)[band]
+            val entries = (1..MapLayout.places(band)).map { MapEntry("AA:BB:CC:00:00:%02d".format(it), meters) }
+            val angles = MapLayout.arrange(entries).values.map { it.angleDegrees }
+            assertEquals(entries.size, angles.toSet().size)
         }
     }
 
     @Test
-    fun `a measured direction is used as it is and the others keep clear of it`() {
-        val home = MapLayout.homeDegrees("plain")
-        val spots = MapLayout.arrange(listOf(MapEntry("plain", 3.0), MapEntry("measured", 3.5, home)))
+    fun `beyond the first ring every place is on the far side or straight below, never off to the side`() {
+        val entries = (1..40).map { MapEntry("device-$it", 1.0 + it * 0.5) }
+        for (spot in MapLayout.arrange(entries).values) {
+            val angle = spot.angleDegrees
+            val far = angle <= 60f || angle >= 300f
+            val near = angle in 144f..216f
+            assertTrue("a place at $angle°", far || (near && spot.ring.toInt() == 1))
+        }
+    }
+
+    @Test
+    fun `a measured direction is used as it is`() {
+        val spots = MapLayout.arrange(listOf(MapEntry("plain", 3.0), MapEntry("measured", 3.5, -90f)))
         val measured = spots.getValue("measured")
         assertTrue(measured.measured)
-        assertEquals(home, measured.angleDegrees, 0.001f)
-        val plain = spots.getValue("plain")
-        assertTrue(!plain.measured)
-        assertTrue(MapLayout.apart(plain.angleDegrees, measured.angleDegrees) >= 14f)
+        assertEquals(270f, measured.angleDegrees, 0.001f)
+        assertEquals(MapLayout.arrange(listOf(MapEntry("plain", 3.0))).getValue("plain"), spots.getValue("plain"))
     }
 
     @Test
@@ -65,9 +70,8 @@ class MapLayoutTest {
     }
 
     @Test
-    fun `similar keys are spread round the middle`() {
-        val angles = (0..7).map { MapLayout.homeDegrees("AA:BB:CC:DD:EE:0$it") }
-        assertTrue(angles.max() - angles.min() > 90f)
-        assertTrue(angles.all { it in 0f..360f })
+    fun `similar keys ask for different places`() {
+        val places = (0..7).map { MapLayout.homePlace("AA:BB:CC:DD:EE:0$it", 1) }
+        assertTrue(places.toSet().size >= 4)
     }
 }
