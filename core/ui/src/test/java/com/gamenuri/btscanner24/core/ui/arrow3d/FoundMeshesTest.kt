@@ -56,4 +56,17 @@ class FoundMeshesTest {
             assertTrue(mesh[o + 1] <= base + CheckMesh.HEIGHT + 0.0001f)
         }
     }
+
+    @Test
+    fun `ball is round and its faces point outwards`() {
+        val mesh = BallMesh.build(radius = 0.12f)
+        assertUnitNormals(mesh)
+        for (vertex in 0 until mesh.size / stride) {
+            val o = vertex * stride
+            val distance = sqrt(mesh[o] * mesh[o] + mesh[o + 1] * mesh[o + 1] + mesh[o + 2] * mesh[o + 2])
+            assertEquals(0.12f, distance, 0.0001f)
+            val outwards = mesh[o] * mesh[o + 3] + mesh[o + 1] * mesh[o + 4] + mesh[o + 2] * mesh[o + 5]
+            assertEquals(0.12f, outwards, 0.0001f)
+        }
+    }
 }
