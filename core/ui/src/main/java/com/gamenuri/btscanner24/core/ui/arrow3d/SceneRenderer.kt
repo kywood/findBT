@@ -311,14 +311,15 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
     }
 
     /**
-     * How far out the device marker sits: on the far ring, or closer in when the far ring is hidden
-     * under the fade at the top, so the marker stays in sight instead of vanishing there (#121).
+     * How far out the device marker sits: on the far ring, or closer in when that would put it on
+     * the state text. It comes in only as far as it must, so it stays ahead of the arrow's tip, and
+     * it is drawn whole there instead of fading with the far floor (#121).
      */
     private fun targetRadius(x: Float, z: Float): Float {
         val top = state.topFade
         if (top < 0f) return FAR_RING
-        // Normalised height (−1 bottom, +1 top) of the line below which the far floor is whole.
-        val limit = 1f - 2f * (top + FADE_BAND)
+        // Normalised height (−1 bottom, +1 top) of the highest place for the marker's middle.
+        val limit = 1f - 2f * (top + TARGET_CLEARANCE)
         var radius = FAR_RING
         while (radius > TARGET_MIN_RADIUS) {
             probe[0] = x * radius
@@ -382,12 +383,12 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         Matrix.scaleM(mvp, 0, shadowModel, 0, TARGET_DOT, 1f, TARGET_DOT)
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, discBuffer)
         GLES20.glVertexAttribPointer(position, 3, GLES20.GL_FLOAT, false, 0, 0)
-        flat(mvp, color, alpha, soft = true)
+        flat(mvp, color, alpha, soft = true, fadeTop = false)
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, ringVertices)
         Matrix.scaleM(mvp, 0, shadowModel, 0, TARGET_HALO, 1f, TARGET_HALO)
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, haloBuffer)
         GLES20.glVertexAttribPointer(position, 3, GLES20.GL_FLOAT, false, 0, 0)
-        flat(mvp, color, alpha * TARGET_HALO_ALPHA, soft = true)
+        flat(mvp, color, alpha * TARGET_HALO_ALPHA, soft = true, fadeTop = false)
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, ringVertices)
     }
 
@@ -534,7 +535,14 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
     }
 
     /** [soft]: fades towards the edges of the view and below the middle of the screen (the pulses). */
-    private fun flat(matrix: FloatArray, color: Int, alpha: Float, radial: Boolean = false, soft: Boolean = false) {
+    private fun flat(
+        matrix: FloatArray,
+        color: Int,
+        alpha: Float,
+        radial: Boolean = false,
+        soft: Boolean = false,
+        fadeTop: Boolean = true,
+    ) {
         GLES20.glUniformMatrix4fv(GLES20.glGetUniformLocation(flatProgram, "uMvp"), 1, false, matrix, 0)
         // Across the whole screen the floor runs on to the edges; in a box it softens towards them.
         val edge = if (state.fullBleed) NO_EDGE_FADE else EDGE_FADE
@@ -557,7 +565,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
             }
             GLES20.glUniform2f(GLES20.glGetUniformLocation(flatProgram, "uFade"), goneY, wholeY)
             // From the top: gone above the state text's lower edge, whole a little below it.
-            val top = state.topFade
+            val top = if (fadeTop) state.topFade else -1f
             val clearY = if (top >= 0f) (1f - top) * viewportHeight else NO_TOP_FADE
             GLES20.glUniform2f(
                 GLES20.glGetUniformLocation(flatProgram, "uTop"),
@@ -699,7 +707,8 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         const val TARGET_HALO_INNER = 0.18f / 0.21f
         const val TARGET_HALO_ALPHA = 0.6f
         const val TARGET_MIN_RADIUS = 1.25f * RING_OUTER
-        const val TARGET_STEP = 0.1f * RING_OUTER
+        const val TARGET_STEP = 0.05f * RING_OUTER
+        const val TARGET_CLEARANCE = 0.04f
         const val HERE_EPSILON = 0.01f
 
         // "Found it" (same design): a white medal of radius 0.6 and thickness 0.13 with rounded
