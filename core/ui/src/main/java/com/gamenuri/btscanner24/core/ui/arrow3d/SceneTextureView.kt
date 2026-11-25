@@ -9,6 +9,7 @@ import android.opengl.EGLDisplay
 import android.opengl.EGLSurface
 import android.view.TextureView
 import android.view.View
+import android.view.ViewTreeObserver
 
 /**
  * A see-through [TextureView] with its own OpenGL ES thread for the 3D find scene (#76). A
@@ -26,12 +27,37 @@ internal class SceneTextureView(context: Context) :
     var onUnavailable: (() -> Unit)? = null
 
     private val mesh: FloatArray by lazy { ArrowMesh.build() }
-    private val marker: FloatArray by lazy { MarkerMesh.build() }
     private var thread: RenderThread? = null
 
     init {
         isOpaque = false
         surfaceTextureListener = this
+    }
+
+    private val location = IntArray(2)
+    private val fadeUpdater = ViewTreeObserver.OnPreDrawListener {
+        updateFade()
+        true
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        viewTreeObserver.addOnPreDrawListener(fadeUpdater)
+    }
+
+    override fun onDetachedFromWindow() {
+        viewTreeObserver.removeOnPreDrawListener(fadeUpdater)
+        super.onDetachedFromWindow()
+    }
+
+    /** Design find-flow-3d v1.1: the rings are whole down to half the screen and gone from 60 %. */
+    private fun updateFade() {
+        val screen = rootView.height
+        if (screen <= 0 || height <= 0) return
+        getLocationInWindow(location)
+        val bottom = location[1] + height
+        state.fadeFullY = bottom - screen * FADE_FULL_AT
+        state.fadeClearY = bottom - screen * FADE_CLEAR_AT
     }
 
     fun setPose(headingDegrees: Float, elevationDegrees: Float, rollDegrees: Float) {
@@ -123,7 +149,7 @@ internal class SceneTextureView(context: Context) :
                 check(eglSurface != EGL14.EGL_NO_SURFACE) { "EGL surface" }
                 check(EGL14.eglMakeCurrent(display, eglSurface, eglSurface, context)) { "EGL current" }
 
-                val renderer = SceneRenderer(mesh, marker, this@SceneTextureView.state)
+                val renderer = SceneRenderer(mesh, this@SceneTextureView.state)
                 renderer.onSurfaceCreated()
                 var last = System.nanoTime()
                 while (running) {
@@ -181,6 +207,8 @@ internal class SceneTextureView(context: Context) :
 
     private companion object {
         const val FRAME_MS = 16L
+        const val FADE_FULL_AT = 0.5f
+        const val FADE_CLEAR_AT = 0.6f
         const val PAUSED_POLL_MS = 100L
         const val JOIN_TIMEOUT_MS = 500L
         const val NANOS_PER_SECOND = 1_000_000_000f

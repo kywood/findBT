@@ -29,8 +29,12 @@ data class FindSceneSpec(
     /** Low confidence: wider arrow and sector. */
     val wide: Boolean = false,
     val locked: Boolean = false,
-    /** Within reach: a marker with rings pulsing over the floor instead of the arrow. */
+    /** Within reach: a mint puck with rings pulsing over the floor instead of the arrow. */
     val rightHere: Boolean = false,
+    /** "Found it": only the check medal, rising from the floor ring. */
+    val found: Boolean = false,
+    /** Mint: the puck, its rings, the check and the found ring. */
+    val accentColor: Color = Color(0xFF2EE6A0),
     val arrowColor: Color = Color.White,
     val floorColor: Color = Color.White,
     /** Animations are off in the system settings: no bobbing. */
@@ -76,6 +80,8 @@ fun FindScene3d(
                 wide = spec.wide
                 locked = spec.locked
                 rightHere = spec.rightHere
+                found = spec.found
+                accentColor = spec.accentColor.toArgb()
                 arrowColor = spec.arrowColor.toArgb()
                 floorColor = spec.floorColor.toArgb()
                 reduceMotion = spec.reduceMotion

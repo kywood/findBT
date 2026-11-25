@@ -1,5 +1,6 @@
 package com.gamenuri.btscanner24.feature.finder
 
+import android.provider.Settings
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -16,6 +18,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -29,14 +32,20 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -47,12 +56,15 @@ import com.gamenuri.btscanner24.core.designsystem.theme.FoundColors
 import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
 import com.gamenuri.btscanner24.core.model.DeviceLabel
 import com.gamenuri.btscanner24.core.model.NameSource
+import com.gamenuri.btscanner24.core.ui.arrow3d.FindScene3d
+import com.gamenuri.btscanner24.core.ui.arrow3d.FindSceneSpec
 import com.gamenuri.btscanner24.core.ui.text
 import kotlinx.coroutines.delay
 
 /**
- * "Found it!" (design screens-rest-v3 §1, #70): full-screen mint, a white check inside the same rings
- * as "Right here", the device and how long it took; Done stays at the bottom.
+ * "Found it!" (design find-flow-3d v1.1, #76): the white check medal rises from a mint floor ring in
+ * the same 3D scene as the find screen, then the device and how long it took; Done stays at the
+ * bottom. The drawn check (#70) is only shown where the 3D scene cannot run.
  * Saving to My devices and the in-app review prompt come with #32/#9 storage and the Play libraries.
  */
 @Composable
@@ -89,13 +101,34 @@ fun FoundContent(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {
-                CheckHero(
-                    colors,
-                    Modifier.graphicsLayer {
-                        scaleX = checkScale.value
-                        scaleY = checkScale.value
-                    },
-                )
+                val pop = Modifier.graphicsLayer {
+                    scaleX = checkScale.value
+                    scaleY = checkScale.value
+                }
+                var sceneFailed by remember { mutableStateOf(false) }
+                val context = LocalContext.current
+                val reduceMotion = remember(context) {
+                    val scale = Settings.Global.ANIMATOR_DURATION_SCALE
+                    Settings.Global.getFloat(context.contentResolver, scale, 1f) == 0f
+                }
+                if (LocalArFindScene.current && !sceneFailed && !LocalInspectionMode.current) {
+                    FindScene3d(
+                        spec = FindSceneSpec(
+                            found = true,
+                            arrowColor = Color.White,
+                            floorColor = colors.content,
+                            accentColor = colors.rings,
+                            reduceMotion = reduceMotion,
+                        ),
+                        modifier = pop
+                            .weight(1f, fill = false)
+                            .sizeIn(maxWidth = 280.dp, maxHeight = 280.dp)
+                            .aspectRatio(1f),
+                        onUnavailable = { sceneFailed = true },
+                    )
+                } else {
+                    CheckHero(colors, pop)
+                }
                 Spacer(Modifier.height(28.dp))
                 Text(
                     text = stringResource(R.string.found_title),

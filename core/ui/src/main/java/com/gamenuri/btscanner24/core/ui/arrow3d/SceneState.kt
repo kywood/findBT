@@ -24,8 +24,23 @@ internal class SceneState {
     /** Direction locked: the arrow settles with a small overshoot. */
     @Volatile var locked: Boolean = false
 
-    /** Within reach: the arrow gives way to a marker with rings pulsing out over the floor. */
+    /** Within reach: the arrow gives way to a puck with rings pulsing out over the floor. */
     @Volatile var rightHere: Boolean = false
+
+    /** "Found it": the check medal rises from the floor; nothing else is shown. */
+    @Volatile var found: Boolean = false
+
+    /** Mint: the puck, its rings, the check and the found ring. */
+    @Volatile var accentColor: Int = 0xFF2EE6A0.toInt()
+
+    /**
+     * The pulsing rings fade out between these two heights (pixels from the bottom of the view):
+     * fully visible at [fadeFullY] and above, gone at [fadeClearY] and below, so that no ring
+     * crosses the distance number or the buttons. Equal values: no fade.
+     */
+    @Volatile var fadeFullY: Float = 0f
+
+    @Volatile var fadeClearY: Float = 0f
 
     @Volatile var arrowColor: Int = 0xFFFFFFFF.toInt()
 

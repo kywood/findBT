@@ -15,27 +15,33 @@ import kotlin.math.sqrt
  * Draws the find arrow as a real 3D object on a floor (#76): the mesh with a matte two-tone light
  * and a faint blue rim, a planar shadow, a floor ring and the confidence sector, seen through a
  * perspective camera that follows how the phone is held. Within reach ("right here") the arrow
- * shrinks away, a ball takes its place and rings pulse out over the same floor. OpenGL ES 2.0 only, so every test phone
+ * shrinks away, a mint puck takes its place and rings pulse out over the same floor; "Found it"
+ * is a check medal rising from that floor (design find-flow-3d v1.1). OpenGL ES 2.0 only, so every test phone
  * (the Android 11 A50 too) runs the same shaders.
  *
  * The scene is heading-relative: −Z is where the phone points, +X its right, +Y up. All easing
  * happens here on the GL thread, so the UI thread only sets targets in [SceneState].
  */
-internal class SceneRenderer(
-    private val mesh: FloatArray,
-    private val marker: FloatArray,
-    private val state: SceneState,
-) {
+internal class SceneRenderer(private val mesh: FloatArray, private val state: SceneState) {
+    private val puck = DiscMesh.build(PUCK_RADIUS, PUCK_THICKNESS, PUCK_BEVEL)
+    private val medal = DiscMesh.build(MEDAL_RADIUS, MEDAL_THICKNESS, MEDAL_BEVEL)
+    private val check = CheckMesh.build(base = MEDAL_THICKNESS / 2)
+
 
     private var arrowProgram = 0
     private var flatProgram = 0
     private var meshBuffer = 0
     private var ringBuffer = 0
     private var sectorBuffer = 0
-    private var markerBuffer = 0
+    private var puckBuffer = 0
+    private var medalBuffer = 0
+    private var checkBuffer = 0
     private var pulseBuffer = 0
+    private var discBuffer = 0
     private val meshVertices = mesh.size / ObjMesh.FLOATS_PER_VERTEX
-    private val markerVertices = marker.size / ObjMesh.FLOATS_PER_VERTEX
+    private val puckVertices = puck.size / ObjMesh.FLOATS_PER_VERTEX
+    private val medalVertices = medal.size / ObjMesh.FLOATS_PER_VERTEX
+    private val checkVertices = check.size / ObjMesh.FLOATS_PER_VERTEX
 
     private val projection = FloatArray(16)
     private val lookAt = FloatArray(16)
@@ -48,6 +54,8 @@ internal class SceneRenderer(
     private val mvp = FloatArray(16)
     private val shadow = FloatArray(16)
     private var aspect = 1f
+    private var viewportWidth = 1f
+    private var viewportHeight = 1f
 
     // Eased values.
     private var initialized = false
@@ -62,23 +70,32 @@ internal class SceneRenderer(
     private var width = 1f
     private var sectorHalf = SECTOR_NARROW
 
-    /** 0 = the arrow, 1 = the "right here" marker. */
+    /** 0 = the arrow, 1 = the "right here" puck. */
     private var here = 0f
+
+    /** Seconds since the medal started to rise. */
+    private var foundTime = 0f
 
     fun onSurfaceCreated() {
         arrowProgram = program(ARROW_VERTEX, ARROW_FRAGMENT)
         flatProgram = program(FLAT_VERTEX, FLAT_FRAGMENT)
-        val buffers = IntArray(5)
-        GLES20.glGenBuffers(5, buffers, 0)
+        val buffers = IntArray(BUFFERS)
+        GLES20.glGenBuffers(BUFFERS, buffers, 0)
         meshBuffer = buffers[0]
         ringBuffer = buffers[1]
         sectorBuffer = buffers[2]
-        markerBuffer = buffers[3]
-        pulseBuffer = buffers[4]
+        puckBuffer = buffers[3]
+        medalBuffer = buffers[4]
+        checkBuffer = buffers[5]
+        pulseBuffer = buffers[6]
+        discBuffer = buffers[7]
         upload(meshBuffer, mesh)
-        upload(markerBuffer, marker)
+        upload(puckBuffer, puck)
+        upload(medalBuffer, medal)
+        upload(checkBuffer, check)
         upload(ringBuffer, ringStrip(RING_INNER, RING_OUTER))
-        upload(pulseBuffer, ringStrip(1f - PULSE_WIDTH, 1f))
+        upload(pulseBuffer, ringStrip(1f - ACCENT_RING_WIDTH, 1f))
+        upload(discBuffer, ringStrip(0f, 1f))
         upload(sectorBuffer, sectorTriangles())
         GLES20.glClearColor(0f, 0f, 0f, 0f)
         // Premultiplied alpha: the layer under this view (the find screen's blue) shows through.
@@ -88,6 +105,8 @@ internal class SceneRenderer(
     fun onSurfaceChanged(width: Int, height: Int) {
         GLES20.glViewport(0, 0, width, height)
         aspect = if (height > 0) width.toFloat() / height else 1f
+        viewportWidth = width.coerceAtLeast(1).toFloat()
+        viewportHeight = height.coerceAtLeast(1).toFloat()
     }
 
     fun draw(deltaSeconds: Float) {
@@ -95,6 +114,10 @@ internal class SceneRenderer(
         camera()
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT or GLES20.GL_DEPTH_BUFFER_BIT or GLES20.GL_STENCIL_BUFFER_BIT)
 
+        if (state.found) {
+            drawFound()
+            return
+        }
         val bob = if (state.reduceMotion) 0f else HOVER_BOB * sin(time * TAU / HOVER_PERIOD_SECONDS)
         val hover = HOVER_HEIGHT + bob
         Matrix.setIdentityM(model, 0)
@@ -103,22 +126,68 @@ internal class SceneRenderer(
         val arrowScale = (1f - here) * MESH_SCALE
         Matrix.scaleM(model, 0, width * arrowScale, arrowScale, arrowScale)
         Matrix.setIdentityM(markerModel, 0)
-        Matrix.translateM(markerModel, 0, 0f, hover, 0f)
+        Matrix.translateM(markerModel, 0, 0f, PUCK_HEIGHT + bob, 0f)
         Matrix.scaleM(markerModel, 0, here * MESH_SCALE, here * MESH_SCALE, here * MESH_SCALE)
         val showArrow = here < 1f - HERE_EPSILON
-        val showMarker = here > HERE_EPSILON
+        val showPuck = here > HERE_EPSILON
 
         drawFloor(yaw)
         // Both shadows first (blended onto the floor), then the solids.
         if (showArrow) drawShadow(meshBuffer, meshVertices, model)
-        if (showMarker) drawShadow(markerBuffer, markerVertices, markerModel)
-        if (showArrow) drawSolid(meshBuffer, meshVertices, model, stretch = width)
-        if (showMarker) drawSolid(markerBuffer, markerVertices, markerModel, stretch = 1f)
+        if (showPuck) drawShadow(puckBuffer, puckVertices, markerModel)
+        if (showArrow) drawSolid(meshBuffer, meshVertices, model, state.arrowColor, stretch = width)
+        if (showPuck) drawSolid(puckBuffer, puckVertices, markerModel, state.accentColor)
+    }
+
+    /**
+     * "Found it": the medal rises from the floor ring to its place while it turns a little more
+     * than once and grows, then hovers. With animations off it is simply there.
+     */
+    private fun drawFound() {
+        val rise = if (state.reduceMotion) 1f else (foundTime / MEDAL_RISE_SECONDS).coerceIn(0f, 1f)
+        val left = 1f - rise
+        val eased = 1f - left * left * left
+        val bob = if (state.reduceMotion || rise < 1f) {
+            0f
+        } else {
+            HOVER_BOB * sin((foundTime - MEDAL_RISE_SECONDS) * TAU / HOVER_PERIOD_SECONDS)
+        }
+        val scale = (MEDAL_START_SCALE + (1f - MEDAL_START_SCALE) * eased) * MESH_SCALE
+        Matrix.setIdentityM(markerModel, 0)
+        Matrix.translateM(markerModel, 0, 0f, MEDAL_HEIGHT * eased + bob, 0f)
+        Matrix.rotateM(markerModel, 0, (1f - eased) * MEDAL_SPIN_DEGREES, 0f, 1f, 0f)
+        // Stood up to face the viewer, leaning back a little.
+        Matrix.rotateM(markerModel, 0, MEDAL_TILT_DEGREES, 1f, 0f, 0f)
+        Matrix.scaleM(markerModel, 0, scale, scale, scale)
+
+        GLES20.glDisable(GLES20.GL_DEPTH_TEST)
+        GLES20.glEnable(GLES20.GL_BLEND)
+        GLES20.glUseProgram(flatProgram)
+        val position = GLES20.glGetAttribLocation(flatProgram, "aPos")
+        GLES20.glEnableVertexAttribArray(position)
+        val ringVertices = (RING_SEGMENTS + 1) * 2
+        drawBaseRings(position, ringVertices)
+        val accent = state.accentColor
+        Matrix.scaleM(mvp, 0, viewProjection, 0, FOUND_RING, 1f, FOUND_RING)
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, discBuffer)
+        GLES20.glVertexAttribPointer(position, 3, GLES20.GL_FLOAT, false, 0, 0)
+        flat(mvp, accent, FOUND_DISC_ALPHA)
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, ringVertices)
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, pulseBuffer)
+        GLES20.glVertexAttribPointer(position, 3, GLES20.GL_FLOAT, false, 0, 0)
+        flat(mvp, accent, 1f)
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, ringVertices)
+        GLES20.glDisableVertexAttribArray(position)
+
+        drawShadow(medalBuffer, medalVertices, markerModel)
+        drawSolid(medalBuffer, medalVertices, markerModel, state.arrowColor)
+        drawSolid(checkBuffer, checkVertices, markerModel, accent)
     }
 
     /** Moves every eased value one step and returns the arrow's yaw (clockwise from "ahead"). */
     private fun advance(dt: Float): Float {
         time += dt
+        foundTime = if (state.found) foundTime + dt else 0f
         val world = state.worldBearingDegrees
         val anchored = !world.isNaN() && state.hasPose
         val target = if (anchored) world else state.relativeDegrees
@@ -198,16 +267,9 @@ internal class SceneRenderer(
         val position = GLES20.glGetAttribLocation(flatProgram, "aPos")
         val color = state.floorColor
 
-        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, ringBuffer)
         GLES20.glEnableVertexAttribArray(position)
-        GLES20.glVertexAttribPointer(position, 3, GLES20.GL_FLOAT, false, 0, 0)
         val ringVertices = (RING_SEGMENTS + 1) * 2
-        flat(viewProjection, color, RING_ALPHA)
-        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, ringVertices)
-        // A second, fainter ring closer in gives the floor some depth.
-        Matrix.scaleM(mvp, 0, viewProjection, 0, INNER_RING, 1f, INNER_RING)
-        flat(mvp, color, INNER_RING_ALPHA)
-        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, ringVertices)
+        drawBaseRings(position, ringVertices)
         if (state.spinning) {
             // Sweep progress, clockwise from straight ahead.
             val segments = (state.progress.coerceIn(0f, 1f) * RING_SEGMENTS).roundToInt()
@@ -224,24 +286,45 @@ internal class SceneRenderer(
             val half = sectorHalf.roundToInt().coerceIn(1, SECTOR_MAX_HALF)
             GLES20.glDrawArrays(GLES20.GL_TRIANGLES, (SECTOR_MAX_HALF - half) * 3, half * 2 * 3)
         }
-        if (here > HERE_EPSILON) drawPulses(position, color, ringVertices)
+        if (here > HERE_EPSILON) drawPulses(position, ringVertices)
         GLES20.glDisableVertexAttribArray(position)
     }
 
-    /** "Right here": rings spread from the marker over the floor and fade towards the rim. */
-    private fun drawPulses(position: Int, color: Int, ringVertices: Int) {
+    /** The floor ring and a second, fainter ring closer in that gives the floor some depth. */
+    private fun drawBaseRings(position: Int, ringVertices: Int) {
+        val color = state.floorColor
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, ringBuffer)
+        GLES20.glVertexAttribPointer(position, 3, GLES20.GL_FLOAT, false, 0, 0)
+        flat(viewProjection, color, RING_ALPHA)
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, ringVertices)
+        Matrix.scaleM(mvp, 0, viewProjection, 0, INNER_RING, 1f, INNER_RING)
+        flat(mvp, color, INNER_RING_ALPHA)
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, ringVertices)
+    }
+
+    /**
+     * "Right here": mint rings spread from the puck far out over the floor, fading as they go. They
+     * also fade towards the edges of the view and below the middle of the screen, so they never
+     * cross the distance number or the buttons.
+     */
+    private fun drawPulses(position: Int, ringVertices: Int) {
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, pulseBuffer)
         GLES20.glVertexAttribPointer(position, 3, GLES20.GL_FLOAT, false, 0, 0)
-        for (ring in 1..PULSE_RINGS) {
-            // With animations off the rings stand still, evenly spaced out to the rim.
-            val spread = if (state.reduceMotion) {
-                ring.toFloat() / PULSE_RINGS
-            } else {
-                (time / PULSE_PERIOD_SECONDS + ring.toFloat() / PULSE_RINGS) % 1f
+        val color = state.accentColor
+        if (state.reduceMotion) {
+            // Animations off: two rings that stand still.
+            for (ring in STILL_RINGS.indices) {
+                Matrix.scaleM(mvp, 0, viewProjection, 0, STILL_RINGS[ring], 1f, STILL_RINGS[ring])
+                flat(mvp, color, STILL_ALPHAS[ring] * here, soft = true)
+                GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, ringVertices)
             }
-            val radius = spread * RING_OUTER
+            return
+        }
+        for (ring in 0 until PULSE_RINGS) {
+            val spread = (time / PULSE_PERIOD_SECONDS + ring.toFloat() / PULSE_RINGS) % 1f
+            val radius = PULSE_FROM + (PULSE_TO - PULSE_FROM) * spread
             Matrix.scaleM(mvp, 0, viewProjection, 0, radius, 1f, radius)
-            flat(mvp, color, PULSE_ALPHA * (1f - spread * PULSE_FADE) * here)
+            flat(mvp, color, PULSE_ALPHA * (1f - spread) * here, soft = true)
             GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, ringVertices)
         }
     }
@@ -259,6 +342,7 @@ internal class SceneRenderer(
         GLES20.glEnable(GLES20.GL_STENCIL_TEST)
         GLES20.glStencilOp(GLES20.GL_KEEP, GLES20.GL_KEEP, GLES20.GL_INCR)
         GLES20.glUniform1f(GLES20.glGetUniformLocation(flatProgram, "uRadial"), 0f)
+        GLES20.glUniform1f(GLES20.glGetUniformLocation(flatProgram, "uEdge"), 0f)
         GLES20.glUniform4f(
             GLES20.glGetUniformLocation(flatProgram, "uColor"),
             SHADOW_RED * SHADOW_LAYER_ALPHA,
@@ -284,7 +368,7 @@ internal class SceneRenderer(
     }
 
     /** A lit mesh; [stretch] is how much wider than its model it is drawn (the low-confidence arrow). */
-    private fun drawSolid(buffer: Int, vertices: Int, model: FloatArray, stretch: Float) {
+    private fun drawSolid(buffer: Int, vertices: Int, model: FloatArray, color: Int, stretch: Float = 1f) {
         GLES20.glEnable(GLES20.GL_DEPTH_TEST)
         GLES20.glDisable(GLES20.GL_BLEND)
         GLES20.glUseProgram(arrowProgram)
@@ -301,7 +385,6 @@ internal class SceneRenderer(
         GLES20.glUniformMatrix4fv(GLES20.glGetUniformLocation(arrowProgram, "uModel"), 1, false, model, 0)
         // Normals of a mesh stretched sideways: divide by the stretch twice (inverse transpose).
         GLES20.glUniform3f(GLES20.glGetUniformLocation(arrowProgram, "uInvScale"), 1f / (stretch * stretch), 1f, 1f)
-        val color = state.arrowColor
         GLES20.glUniform3f(
             GLES20.glGetUniformLocation(arrowProgram, "uBase"),
             red(color) * BASE_BRIGHTNESS,
@@ -323,8 +406,26 @@ internal class SceneRenderer(
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0)
     }
 
-    private fun flat(matrix: FloatArray, color: Int, alpha: Float, radial: Boolean = false) {
+    /** [soft]: fades towards the edges of the view and below the middle of the screen (the pulses). */
+    private fun flat(
+        matrix: FloatArray,
+        color: Int,
+        alpha: Float,
+        radial: Boolean = false,
+        soft: Boolean = false,
+    ) {
         GLES20.glUniformMatrix4fv(GLES20.glGetUniformLocation(flatProgram, "uMvp"), 1, false, matrix, 0)
+        GLES20.glUniform1f(GLES20.glGetUniformLocation(flatProgram, "uEdge"), if (soft) EDGE_FADE else 0f)
+        if (soft) {
+            GLES20.glUniform2f(GLES20.glGetUniformLocation(flatProgram, "uViewport"), viewportWidth, viewportHeight)
+            // Without a real range (not laid out yet) the fade is switched off.
+            val fades = state.fadeFullY > state.fadeClearY
+            GLES20.glUniform2f(
+                GLES20.glGetUniformLocation(flatProgram, "uFade"),
+                if (fades) state.fadeClearY else -2f,
+                if (fades) state.fadeFullY else -1f,
+            )
+        }
         // Radial: clear at the centre, full colour at the rim (the direction sector).
         GLES20.glUniform1f(GLES20.glGetUniformLocation(flatProgram, "uRadial"), if (radial) 1f / SECTOR_RADIUS else 0f)
         GLES20.glUniform4f(
@@ -410,13 +511,37 @@ internal class SceneRenderer(
         const val SECTOR_WIDE = 35f
         const val SECTOR_ALPHA = 0.22f
 
-        // "Right here": three rings spread from the marker to the floor ring, each taking 1.6 s.
+        // "Right here" (design find-flow-3d v1.1, in R): a mint puck of radius 0.34 and thickness
+        // 0.11 floating at 0.24; three mint rings spread from 0.55 to 3.1 in 1.8 s, 85 % → 0.
+        const val PUCK_RADIUS = 0.34f
+        const val PUCK_THICKNESS = 0.11f
+        const val PUCK_BEVEL = 0.02f
+        const val PUCK_HEIGHT = 0.24f * RING_OUTER
         const val PULSE_RINGS = 3
-        const val PULSE_PERIOD_SECONDS = 1.6f
-        const val PULSE_WIDTH = 0.045f
-        const val PULSE_ALPHA = 0.6f
-        const val PULSE_FADE = 0.85f
+        const val PULSE_PERIOD_SECONDS = 1.8f
+        const val PULSE_FROM = 0.55f * RING_OUTER
+        const val PULSE_TO = 3.1f * RING_OUTER
+        const val PULSE_ALPHA = 0.85f
+        val STILL_RINGS = floatArrayOf(0.8f * RING_OUTER, 1.2f * RING_OUTER)
+        val STILL_ALPHAS = floatArrayOf(0.85f, 0.45f)
+        const val EDGE_FADE = 0.12f
         const val HERE_EPSILON = 0.01f
+
+        // "Found it" (same design): a white medal of radius 0.6 and thickness 0.13 with rounded
+        // edges rises to 0.75 in 0.8 s, turning a little more than once and growing from 0.4; on
+        // the floor a mint ring at 1.25 (0.07 thick) around a 16 % mint disc.
+        const val MEDAL_RADIUS = 0.6f
+        const val MEDAL_THICKNESS = 0.13f
+        const val MEDAL_BEVEL = 0.045f
+        const val MEDAL_HEIGHT = 0.75f * RING_OUTER
+        const val MEDAL_RISE_SECONDS = 0.8f
+        const val MEDAL_SPIN_DEGREES = 400f
+        const val MEDAL_TILT_DEGREES = 72f
+        const val MEDAL_START_SCALE = 0.4f
+        const val FOUND_RING = 1.25f * RING_OUTER
+        const val FOUND_DISC_ALPHA = 0.16f
+        const val ACCENT_RING_WIDTH = 0.07f / 1.25f
+        const val BUFFERS = 8
 
         // Shadow: #0B2A8A, never black, about 28 % where all three copies overlap.
         const val SHADOW_RED = 0.043f
@@ -497,9 +622,18 @@ internal class SceneRenderer(
         const val FLAT_FRAGMENT = """
             precision mediump float;
             uniform vec4 uColor;
+            uniform vec2 uViewport;
+            uniform vec2 uFade;
+            uniform float uEdge;
             varying float vFade;
             void main() {
-                gl_FragColor = uColor * vFade;
+                float fade = vFade;
+                if (uEdge > 0.0) {
+                    vec2 p = gl_FragCoord.xy / uViewport;
+                    float edge = min(min(p.x, 1.0 - p.x), min(p.y, 1.0 - p.y));
+                    fade *= smoothstep(0.0, uEdge, edge) * smoothstep(uFade.x, uFade.y, gl_FragCoord.y);
+                }
+                gl_FragColor = uColor * fade;
             }
         """
 

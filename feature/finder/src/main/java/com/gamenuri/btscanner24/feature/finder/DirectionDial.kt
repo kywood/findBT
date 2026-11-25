@@ -38,6 +38,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.gamenuri.btscanner24.core.designsystem.component.FLOOR_TILT_DEGREES
 import com.gamenuri.btscanner24.core.designsystem.component.drawFloorArrow
+import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
 import com.gamenuri.btscanner24.core.designsystem.component.drawRoundedArrow
 import com.gamenuri.btscanner24.core.designsystem.component.nearoArrowPath
 import com.gamenuri.btscanner24.core.sensors.PoseSensor
@@ -114,6 +115,7 @@ private fun ArrowScene(state: FinderUiState, spinning: Boolean, onUnavailable: (
             worldBearingDegrees = state.bearingDegrees,
             spinning = spinning && state.arrowDegrees == null,
             rightHere = state.stage == FinderStage.RIGHT_HERE,
+            accentColor = NearoTheme.colors.found.rings,
             progress = state.sweepProgress,
             wide = state.confidence != ArrowConfidence.HIGH,
             locked = state.stage == FinderStage.LOCKED,
