@@ -358,7 +358,7 @@ fun FinderContent(
                     }
                 }
             }
-            FinderScaffold(state, actions, content, accent, background, scene3d, dialSlot)
+            FinderScaffold(state, actions, content, accent, background, scene3d, dialSlot, save)
         }
     }
 }
@@ -406,6 +406,7 @@ private fun FinderScaffold(
     background: Color,
     sceneBehind: Boolean,
     dialSlot: SceneSlot,
+    save: FinderSave?,
 ) {
     Scaffold(
         containerColor = Color.Transparent,
