@@ -15,6 +15,10 @@
     <string name="settings_restore_ok">プレミアムを復元しました</string>
     <string name="settings_restore_none">復元できる購入はありません</string>
     <string name="settings_restore_failed">Google Play に接続できませんでした。しばらくしてからもう一度お試しください。</string>
+    <string name="settings_section_display">表示</string>
+    <string name="settings_distance_unit">距離の単位</string>
+    <string name="settings_distance_unit_meters">メートル</string>
+    <string name="settings_distance_unit_feet">フィート</string>
     <string name="settings_section_privacy">プライバシー</string>
     <string name="settings_privacy_options">プライバシー設定</string>
     <string name="settings_privacy_options_body">広告の同意</string>

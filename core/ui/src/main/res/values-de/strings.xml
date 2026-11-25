@@ -45,6 +45,10 @@
     <string name="device_distance_within_1">unter 1 m</string>
     <string name="device_distance_5_to_10">~5–10 m</string>
     <string name="device_distance_over_10">über 10 m</string>
+    <string name="device_distance_ft">~%1$s ft</string>
+    <string name="device_distance_within_3_ft">unter 3 ft</string>
+    <string name="device_distance_15_to_30_ft">~15–30 ft</string>
+    <string name="device_distance_over_30_ft">über 30 ft</string>
     <string name="paywall_restore">Wiederherstellen</string>
     <string name="paywall_close">Schließen</string>
     <string name="paywall_title">Nearo Premium</string>

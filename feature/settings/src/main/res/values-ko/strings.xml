@@ -15,6 +15,10 @@
     <string name="settings_restore_ok">프리미엄이 복원됐어요</string>
     <string name="settings_restore_none">복원할 구매가 없어요</string>
     <string name="settings_restore_failed">Google Play에 연결하지 못했어요. 잠시 후 다시 시도해 주세요.</string>
+    <string name="settings_section_display">표시</string>
+    <string name="settings_distance_unit">거리 단위</string>
+    <string name="settings_distance_unit_meters">미터</string>
+    <string name="settings_distance_unit_feet">피트</string>
     <string name="settings_section_privacy">개인정보</string>
     <string name="settings_privacy_options">개인정보 옵션</string>
     <string name="settings_privacy_options_body">광고 동의</string>

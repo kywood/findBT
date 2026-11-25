@@ -30,6 +30,9 @@
     <string name="filter_distance_within_5">Within 5 m</string>
     <string name="filter_distance_5_10">5–10 m</string>
     <string name="filter_distance_over_10">10 m+</string>
+    <string name="filter_distance_within_15_ft">Within 15 ft</string>
+    <string name="filter_distance_15_30_ft">15–30 ft</string>
+    <string name="filter_distance_over_30_ft">30 ft+</string>
     <string name="filter_signal">Signal</string>
     <string name="filter_maker">Maker</string>
     <string name="filter_maker_count">%1$s %2$d</string>

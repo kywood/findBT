@@ -15,6 +15,10 @@
     <string name="settings_restore_ok">Premium wiederhergestellt</string>
     <string name="settings_restore_none">Kein Kauf zum Wiederherstellen</string>
     <string name="settings_restore_failed">Google Play nicht erreichbar. Versuch es später erneut.</string>
+    <string name="settings_section_display">Anzeige</string>
+    <string name="settings_distance_unit">Entfernungseinheit</string>
+    <string name="settings_distance_unit_meters">Meter</string>
+    <string name="settings_distance_unit_feet">Fuß</string>
     <string name="settings_section_privacy">Datenschutz</string>
     <string name="settings_privacy_options">Datenschutzoptionen</string>
     <string name="settings_privacy_options_body">Werbe-Einwilligung</string>

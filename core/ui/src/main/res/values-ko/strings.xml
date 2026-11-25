@@ -46,6 +46,10 @@
     <string name="device_distance_within_1">1m 이내</string>
     <string name="device_distance_5_to_10">약 5~10m</string>
     <string name="device_distance_over_10">10m 이상</string>
+    <string name="device_distance_ft">약 %1$sft</string>
+    <string name="device_distance_within_3_ft">3ft 이내</string>
+    <string name="device_distance_15_to_30_ft">약 15~30ft</string>
+    <string name="device_distance_over_30_ft">30ft 이상</string>
     <!-- Paywall (#32, design screens-rest-v3 §3) -->
     <string name="paywall_restore">복원</string>
     <string name="paywall_close">닫기</string>

@@ -15,6 +15,10 @@
     <string name="settings_restore_ok">Premium restored</string>
     <string name="settings_restore_none">No purchase to restore</string>
     <string name="settings_restore_failed">Couldn\'t reach Google Play. Try again later.</string>
+    <string name="settings_section_display">Display</string>
+    <string name="settings_distance_unit">Distance unit</string>
+    <string name="settings_distance_unit_meters">Meters</string>
+    <string name="settings_distance_unit_feet">Feet</string>
     <string name="settings_section_privacy">Privacy</string>
     <string name="settings_privacy_options">Privacy options</string>
     <string name="settings_privacy_options_body">Ad consent</string>

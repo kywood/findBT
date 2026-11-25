@@ -39,6 +39,8 @@ import androidx.navigation.compose.rememberNavController
 import com.gamenuri.btscanner24.core.ads.NearoAds
 import com.gamenuri.btscanner24.core.ble.BleScanner
 import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
+import com.gamenuri.btscanner24.core.model.DistanceUnit
+import com.gamenuri.btscanner24.core.ui.LocalDistanceUnit
 import com.gamenuri.btscanner24.demo.DemoMode
 import com.gamenuri.btscanner24.feature.finder.FINDER_EXIT_HOLD_MS
 import com.gamenuri.btscanner24.feature.finder.FindEntryCover
@@ -74,7 +76,11 @@ class MainActivity : ComponentActivity() {
                 NearoTheme {
                     val findState = demo?.findState
                     val onboardingPage = demo?.onboardingPage
+                    // Feet in the US, UK, Liberia and Myanmar until the user picks a unit in Settings (#83).
+                    val pickedUnit by app.appState.distanceUnit.collectAsStateWithLifecycle()
+                    val region = LocalConfiguration.current.locales[0].country
                     CompositionLocalProvider(
+                        LocalDistanceUnit provides (pickedUnit ?: DistanceUnit.forRegion(region)),
                         LocalArFindScene provides (demo?.arScene != false),
                         LocalFindScenePose provides (demo?.findState == null || demo.followPose),
                     ) {
@@ -90,6 +96,7 @@ class MainActivity : ComponentActivity() {
                                 startOnMyDevices = demo?.startOnMyDevices == true,
                                 openPaywall = demo?.openPaywall == true,
                                 onOnboardingDone = app.appState::setOnboardingDone,
+                                onDistanceUnit = app.appState::setDistanceUnit,
                             )
                         }
                     }
@@ -122,7 +129,13 @@ private fun DemoOnboarding(name: String) {
 }
 
 @Composable
-private fun AppNavHost(start: String, startOnMyDevices: Boolean, openPaywall: Boolean, onOnboardingDone: () -> Unit) {
+private fun AppNavHost(
+    start: String,
+    startOnMyDevices: Boolean,
+    openPaywall: Boolean,
+    onOnboardingDone: () -> Unit,
+    onDistanceUnit: (DistanceUnit) -> Unit,
+) {
     val navController = rememberNavController()
     // Where the last touch came down, 0..1 across the screen: the find screen's water starts there (#107).
     val tapX = remember { FloatArray(1) { 0.5f } }
@@ -173,6 +186,7 @@ private fun AppNavHost(start: String, startOnMyDevices: Boolean, openPaywall: Bo
                     appInfo = buildAppInfo,
                     onBack = { if (!navController.popBackStack()) navController.navigate(Routes.HOME) },
                     onLicenses = { navController.navigate(Routes.LICENSES) },
+                    onDistanceUnit = onDistanceUnit,
                     openPaywall = openPaywall,
                     privacyOptions = ads?.let { nearoAds ->
                         PrivacyOptions(nearoAds.isPrivacyOptionsRequired) {

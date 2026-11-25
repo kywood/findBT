@@ -33,6 +33,7 @@ import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Mail
 import androidx.compose.material.icons.outlined.PrivacyTip
 import androidx.compose.material.icons.outlined.Restore
+import androidx.compose.material.icons.outlined.Straighten
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -40,6 +41,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -67,6 +71,8 @@ import com.gamenuri.btscanner24.core.billing.RestoreResult
 import com.gamenuri.btscanner24.core.designsystem.theme.BrandIconGradientBottom
 import com.gamenuri.btscanner24.core.designsystem.theme.BrandIconGradientTop
 import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
+import com.gamenuri.btscanner24.core.model.DistanceUnit
+import com.gamenuri.btscanner24.core.ui.LocalDistanceUnit
 import com.gamenuri.btscanner24.core.ui.premium.PaywallActions
 import com.gamenuri.btscanner24.core.ui.premium.PaywallSheet
 import kotlinx.coroutines.launch
@@ -100,6 +106,7 @@ data class SettingsActions(
     val onPrivacyPolicy: () -> Unit = {},
     val onContact: () -> Unit = {},
     val onLicenses: () -> Unit = {},
+    val onDistanceUnit: (DistanceUnit) -> Unit = {},
 )
 
 /** ⋮ → Settings (#56, design settings-v3). No ads on this screen. */
@@ -109,6 +116,7 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onLicenses: () -> Unit,
     modifier: Modifier = Modifier,
+    onDistanceUnit: (DistanceUnit) -> Unit = {},
     privacyOptions: PrivacyOptions? = null,
     rewarded: RewardedOffer? = null,
     /** Opens the paywall sheet right away (debug demo shots, later "Go Premium" links). */
@@ -165,6 +173,7 @@ fun SettingsScreen(
                 context.openUri(mail)
             },
             onLicenses = onLicenses,
+            onDistanceUnit = onDistanceUnit,
         ),
     )
 
@@ -242,6 +251,8 @@ fun SettingsContent(
             if (!premium.isPurchased) {
                 SettingsRow(Icons.Outlined.Restore, R.string.settings_restore, onClick = actions.onRestore)
             }
+            SectionHeader(R.string.settings_section_display)
+            DistanceUnitRow(LocalDistanceUnit.current, actions.onDistanceUnit)
             SectionHeader(R.string.settings_section_privacy)
             if (showPrivacyOptions) {
                 SettingsRow(
@@ -401,6 +412,48 @@ private fun SettingsRow(
                 tint = variant,
                 modifier = Modifier.size(20.dp),
             )
+        }
+    }
+}
+
+/** Metres or feet (#83). Shows the unit in use, which is the region's until one is picked here. */
+@Composable
+private fun DistanceUnitRow(selected: DistanceUnit, onSelect: (DistanceUnit) -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 52.dp)
+            .padding(horizontal = 20.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        val variant = MaterialTheme.colorScheme.onSurfaceVariant
+        Icon(Icons.Outlined.Straighten, null, tint = variant, modifier = Modifier.size(24.dp))
+        Spacer(Modifier.width(16.dp))
+        Text(
+            stringResource(R.string.settings_distance_unit),
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.weight(1f),
+        )
+        Spacer(Modifier.width(12.dp))
+        SingleChoiceSegmentedButtonRow {
+            DistanceUnit.entries.forEachIndexed { index, unit ->
+                SegmentedButton(
+                    selected = unit == selected,
+                    onClick = { onSelect(unit) },
+                    shape = SegmentedButtonDefaults.itemShape(index, DistanceUnit.entries.size),
+                    icon = {},
+                ) {
+                    Text(
+                        stringResource(
+                            when (unit) {
+                                DistanceUnit.METERS -> R.string.settings_distance_unit_meters
+                                DistanceUnit.FEET -> R.string.settings_distance_unit_feet
+                            },
+                        ),
+                        maxLines = 1,
+                    )
+                }
+            }
         }
     }
 }

@@ -45,6 +45,10 @@
     <string name="device_distance_within_1">1m以内</string>
     <string name="device_distance_5_to_10">約5〜10m</string>
     <string name="device_distance_over_10">10m以上</string>
+    <string name="device_distance_ft">約%1$s ft</string>
+    <string name="device_distance_within_3_ft">3ft以内</string>
+    <string name="device_distance_15_to_30_ft">約15〜30ft</string>
+    <string name="device_distance_over_30_ft">30ft以上</string>
     <string name="paywall_restore">復元</string>
     <string name="paywall_close">閉じる</string>
     <string name="paywall_title">Nearo プレミアム</string>

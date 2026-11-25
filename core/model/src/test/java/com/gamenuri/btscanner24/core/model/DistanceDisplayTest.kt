@@ -24,4 +24,18 @@ class DistanceDisplayTest {
         assertEquals(DistanceDisplay.FiveToTen, DistanceDisplay.of(9.9))
         assertEquals(DistanceDisplay.OverTen, DistanceDisplay.of(13.0))
     }
+
+    @Test
+    fun `feet show whole feet between 3 and 15 ft`() {
+        assertEquals(DistanceDisplay.WithinOne, DistanceDisplay.of(0.83, DistanceUnit.FEET))
+        assertEquals(DistanceDisplay.About(3, DistanceUnit.FEET), DistanceDisplay.of(1.0, DistanceUnit.FEET))
+        assertEquals(DistanceDisplay.About(8, DistanceUnit.FEET), DistanceDisplay.of(2.4, DistanceUnit.FEET))
+        assertEquals(DistanceDisplay.About(15, DistanceUnit.FEET), DistanceDisplay.of(4.9, DistanceUnit.FEET))
+    }
+
+    @Test
+    fun `feet keep the same ranges as metres`() {
+        assertEquals(DistanceDisplay.FiveToTen, DistanceDisplay.of(7.0, DistanceUnit.FEET))
+        assertEquals(DistanceDisplay.OverTen, DistanceDisplay.of(13.0, DistanceUnit.FEET))
+    }
 }

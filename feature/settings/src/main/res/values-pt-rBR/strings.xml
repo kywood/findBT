@@ -15,6 +15,10 @@
     <string name="settings_restore_ok">Premium restaurado</string>
     <string name="settings_restore_none">Nenhuma compra para restaurar</string>
     <string name="settings_restore_failed">Não foi possível conectar ao Google Play. Tente mais tarde.</string>
+    <string name="settings_section_display">Exibição</string>
+    <string name="settings_distance_unit">Unidade de distância</string>
+    <string name="settings_distance_unit_meters">Metros</string>
+    <string name="settings_distance_unit_feet">Pés</string>
     <string name="settings_section_privacy">Privacidade</string>
     <string name="settings_privacy_options">Opções de privacidade</string>
     <string name="settings_privacy_options_body">Consentimento de anúncios</string>
