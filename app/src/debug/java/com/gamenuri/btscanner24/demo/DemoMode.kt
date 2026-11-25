@@ -42,6 +42,7 @@ internal object DemoMode {
             locale = intent.getStringExtra(EXTRA_LOCALE),
             onboardingPage = intent.getStringExtra(EXTRA_ONBOARDING),
             arScene = intent.getBooleanExtra(EXTRA_AR, true),
+            showAds = intent.getBooleanExtra(EXTRA_ADS, false),
         )
     }
 
@@ -77,6 +78,7 @@ internal object DemoMode {
     private const val EXTRA_LOCALE = "demo_locale"
     private const val EXTRA_ONBOARDING = "demo_onboarding"
     private const val EXTRA_AR = "demo_ar"
+    private const val EXTRA_ADS = "demo_ads"
 }
 
 /** Looks like a running scan but never reports a real device. */

@@ -15,6 +15,8 @@ internal data class DemoRequest(
     val onboardingPage: String? = null,
     /** The 3D, AR-style find arrow (#76); `--ez demo_ar false` shows the Canvas fallback instead. */
     val arScene: Boolean = true,
+    /** Keeps (test) ads on in a demo launch, for ad placement shots (`--ez demo_ads true`). Off otherwise. */
+    val showAds: Boolean = false,
 ) {
     val startOnMyDevices: Boolean get() = screen == "devices"
 

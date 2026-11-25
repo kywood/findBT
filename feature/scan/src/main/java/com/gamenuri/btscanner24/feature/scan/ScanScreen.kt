@@ -32,14 +32,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Badge
@@ -71,6 +66,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -111,6 +107,8 @@ fun ScanScreen(
     onDeviceClick: (BleDevice) -> Unit = {},
     modifier: Modifier = Modifier,
     onOpenSettings: () -> Unit = {},
+    /** Shown once after the last row (the app puts its end-of-list ad card here, #81). */
+    listFooter: (@Composable () -> Unit)? = null,
     viewModel: ScanViewModel = viewModel(factory = ScanViewModel.Factory),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -137,6 +135,7 @@ fun ScanScreen(
         modifier = modifier,
         title = title,
         state = state,
+        listFooter = listFooter,
         permissionBanner = when {
             permission.isGranted -> null
             permission.isPermanentlyDenied -> PermissionBanner.OPEN_SETTINGS
@@ -207,6 +206,7 @@ fun ScanContent(
     permissionBanner: PermissionBanner?,
     actions: ScanActions,
     modifier: Modifier = Modifier,
+    listFooter: (@Composable () -> Unit)? = null,
 ) {
     var searchOpen by rememberSaveable { mutableStateOf(false) }
     var filtersOpen by rememberSaveable { mutableStateOf(false) }
@@ -235,7 +235,15 @@ fun ScanContent(
             if (error != null && radioOff && state.items.isEmpty()) {
                 RadioOffState(error, actions, Modifier.fillMaxWidth().weight(1f))
             } else {
-                DeviceList(state, permissionBanner, error, actions, listState, Modifier.fillMaxWidth().weight(1f))
+                DeviceList(
+                    state = state,
+                    permissionBanner = permissionBanner,
+                    error = error,
+                    actions = actions,
+                    listState = listState,
+                    modifier = Modifier.fillMaxWidth().weight(1f),
+                    footer = listFooter,
+                )
             }
         }
     }
@@ -284,18 +292,19 @@ private fun ScanTopBar(
                     onSearchOpenChange(!searchOpen)
                 },
             ) {
-                Icon(
-                    imageVector = if (searchOpen) Icons.Default.Close else Icons.Default.Search,
-                    contentDescription = stringResource(
-                        if (searchOpen) R.string.action_close_search else R.string.action_search,
-                    ),
-                )
+                val searchLabel =
+                    stringResource(if (searchOpen) R.string.action_close_search else R.string.action_search)
+                if (searchOpen) {
+                    Icon(Icons.Default.Close, contentDescription = searchLabel)
+                } else {
+                    Icon(painterResource(UiR.drawable.ic_search), contentDescription = searchLabel)
+                }
             }
             if (!searchOpen) {
                 val scanning = state.isScanning
                 IconButton(onClick = if (scanning) actions.onPause else actions.onResume) {
                     Icon(
-                        imageVector = if (scanning) Icons.Default.Pause else Icons.Default.PlayArrow,
+                        painter = painterResource(if (scanning) UiR.drawable.ic_pause else UiR.drawable.ic_play),
                         contentDescription = stringResource(
                             if (scanning) R.string.action_pause_scan else R.string.action_resume_scan,
                         ),
@@ -457,7 +466,7 @@ private fun FilterButton(count: Int, onClick: () -> Unit) {
         // The count sits inside the button in primary colours; red would read as an error (#89).
         Box(Modifier.size(FILTER_BUTTON)) {
             FilledTonalIconButton(onClick = onClick, modifier = Modifier.fillMaxSize()) {
-                Icon(Icons.Default.Tune, contentDescription = description)
+                Icon(painterResource(UiR.drawable.ic_filter), contentDescription = description)
             }
             Badge(
                 modifier = Modifier.align(Alignment.TopEnd).padding(top = 2.dp, end = 2.dp).size(15.dp),
@@ -469,7 +478,7 @@ private fun FilterButton(count: Int, onClick: () -> Unit) {
         }
     } else {
         IconButton(onClick = onClick, modifier = Modifier.size(40.dp)) {
-            Icon(Icons.Default.Tune, contentDescription = description)
+            Icon(painterResource(UiR.drawable.ic_filter), contentDescription = description)
         }
     }
 }
@@ -482,6 +491,7 @@ private fun DeviceList(
     actions: ScanActions,
     listState: LazyListState,
     modifier: Modifier = Modifier,
+    footer: (@Composable () -> Unit)? = null,
 ) {
     LazyColumn(
         modifier = modifier,
@@ -547,8 +557,15 @@ private fun DeviceList(
                 DeviceRow(item, actions, Modifier.animateItem(), compact = true)
             }
         }
+        // After everything else, never between rows. A short search or filter result stays clean (#81).
+        val narrowed = state.activeFilterCount > 0 || state.query.isNotBlank()
+        if (footer != null && state.items.isNotEmpty() && !(narrowed && state.items.size <= FOOTER_MIN_RESULTS)) {
+            item(key = "footer") { footer() }
+        }
     }
 }
+
+private const val FOOTER_MIN_RESULTS = 3
 
 @Composable
 private fun DeviceRow(item: DeviceListItem, actions: ScanActions, modifier: Modifier, compact: Boolean = false) {
@@ -616,7 +633,7 @@ private fun SortMenu(selected: DeviceSort, onSelect: (DeviceSort) -> Unit) {
             colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurface),
         ) {
             Icon(
-                Icons.AutoMirrored.Filled.Sort,
+                painterResource(UiR.drawable.ic_sort),
                 contentDescription = stringResource(R.string.sort_menu),
                 modifier = Modifier.size(18.dp),
             )

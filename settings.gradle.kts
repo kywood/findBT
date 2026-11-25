@@ -27,6 +27,7 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 include(":app")
 include(":core:model")
+include(":core:ads")
 include(":core:ble")
 include(":core:billing")
 include(":core:data")
