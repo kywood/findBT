@@ -13,7 +13,7 @@ sealed interface DeviceLabel {
         val category: DeviceCategory,
         override val suffix: String,
         /**
-         * An unnamed Apple "Find My" signal (#144). AirTags send it, and so do iPhones, AirPods and
+         * An unnamed Apple "Find My" signal (#144), shown as "Apple device". AirTags send it, and so do iPhones, AirPods and
          * Macs, so it is named for what it is instead of being called a tracker.
          */
         val appleFindMy: Boolean = false,

@@ -37,7 +37,7 @@
     <string name="device_distance">約%1$s m</string>
     <string name="device_name_with_suffix">%1$s · %2$s</string>
     <string name="device_generic_maker_type">%1$s %2$s</string>
-    <string name="device_generic_apple_find_my">Apple「探す」対応機器</string>
+    <string name="device_generic_apple_find_my">Apple製デバイス</string>
     <string name="device_generic_maker">%1$s のデバイス</string>
     <string name="device_generic">Bluetoothデバイス</string>
     <string name="badge_paired">マイ</string>
