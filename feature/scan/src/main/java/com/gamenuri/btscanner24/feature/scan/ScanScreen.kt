@@ -162,6 +162,7 @@ fun ScanScreen(
             onHideOther = viewModel::hideOther,
             countFor = viewModel::resultCount,
             onRefreshOrder = viewModel::refreshOrder,
+            onAutoRefreshOrder = viewModel::autoRefreshOrder,
             onDeviceClick = onDeviceClick,
             onOpenSettings = onOpenSettings,
         ),
@@ -191,6 +192,8 @@ data class ScanActions(
     /** Live result count for an edited filter. */
     val countFor: (DeviceFilter) -> Int = { 0 },
     val onRefreshOrder: () -> Unit = {},
+    /** The untapped re-sort (timer, back at the top): personal rows only (#143). */
+    val onAutoRefreshOrder: () -> Unit = {},
     /** Opens find mode for the device. */
     val onDeviceClick: (BleDevice) -> Unit = {},
     val onOpenSettings: () -> Unit = {},
@@ -217,7 +220,7 @@ fun ScanContent(
         actions.onRefreshOrder()
         scope.launch { listState.animateScrollToItem(0) }
     }
-    ReorderAutoSort(state.reorderAvailable, listState, actions.onRefreshOrder)
+    ReorderAutoSort(state.reorderAvailable, listState, actions.onAutoRefreshOrder)
 
     Scaffold(
         modifier = modifier,
