@@ -78,8 +78,7 @@ private fun FinderUiState.isSpinning(): Boolean =
     stage == FinderStage.SPIN || stage == FinderStage.SPIN_AGAIN || stage == FinderStage.WAITING
 
 /** No signal to point at: the 3D floor stays, without an arrow. */
-private fun FinderUiState.hasNoSignal(): Boolean =
-    stage == FinderStage.NOT_FOUND || stage == FinderStage.SIGNAL_LOST
+private fun FinderUiState.hasNoSignal(): Boolean = stage == FinderStage.NOT_FOUND || stage == FinderStage.SIGNAL_LOST
 
 /**
  * Stages the 3D scene draws: looking for a direction, pointing, "right here", and no signal (the
