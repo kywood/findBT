@@ -52,7 +52,12 @@ class BtScannerApp :
     override val listPreferences: ListPreferencesRepository by lazy { ListPreferencesRepository(this) }
 
     override val hiddenDevices: HiddenDevicesRepository by lazy { HiddenDevicesRepository(this) }
-    override val savedDevices: SavedDevicesRepository by lazy { SavedDevicesRepository(this) }
+    private val userSavedDevices by lazy { SavedDevicesRepository(this) }
+    private val demoSavedDevices by lazy { SavedDevicesRepository(this, demo = true) }
+
+    // A demo launch (debug screenshots) keeps its saves apart from the user's own list.
+    override val savedDevices: SavedDevicesRepository
+        get() = if (demo != null) demoSavedDevices else userSavedDevices
 
     val appState: AppStateRepository by lazy { AppStateRepository(this) }
 

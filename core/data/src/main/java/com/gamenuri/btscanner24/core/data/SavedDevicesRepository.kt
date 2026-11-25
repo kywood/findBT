@@ -13,13 +13,18 @@ import kotlinx.coroutines.flow.map
 
 private val Context.savedDevicesStore: DataStore<Preferences> by preferencesDataStore(name = "saved_devices")
 
+/** Demo launches (debug screenshots) save here, so nothing made up lands in the user's own list. */
+private val Context.demoSavedDevicesStore: DataStore<Preferences> by preferencesDataStore(name = "saved_devices_demo")
+
 /**
  * Devices the user saved to My devices by hand (#108), oldest first. Stored on the phone only.
  * The free limit is the caller's business (SaveLimit); nothing saved is ever dropped here.
  */
 class SavedDevicesRepository(private val store: DataStore<Preferences>) {
 
-    constructor(context: Context) : this(context.applicationContext.savedDevicesStore)
+    constructor(context: Context, demo: Boolean = false) : this(
+        context.applicationContext.let { if (demo) it.demoSavedDevicesStore else it.savedDevicesStore },
+    )
 
     val saved: Flow<List<SavedDevice>> = store.data.map { SavedDeviceCodec.decode(it[DEVICES].orEmpty()) }
 
