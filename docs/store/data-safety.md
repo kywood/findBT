@@ -6,8 +6,7 @@ so everything Nearo keeps on the phone (scan results, saved devices, last seen p
 is **not** declared as collected.
 
 SDKs in the 2.0 build: Google Mobile Ads (AdMob) with the UMP consent form, Google Play Billing.
-Firebase Analytics and Crashlytics are **not** in the build unless #33 lands; their rows are marked
-"only with #33" and must be left out otherwise.
+No Firebase in 2.0 (PM decision 2026-11-26): no analytics and no crash-reporting service.
 
 > Before submitting: re-check Google's current Data safety disclosure page for the AdMob SDK version we
 > ship and update the table if Google's list changed.
@@ -28,9 +27,8 @@ Firebase Analytics and Crashlytics are **not** in the build unless #33 lands; th
 | Category › Type | Collected | Shared | Required / optional | Purposes | Source |
 |---|---|---|---|---|---|
 | Location › Approximate location | Yes | Yes | Required | Advertising, fraud prevention | AdMob (derived from the IP address) |
-| App activity › App interactions | Yes | Yes | Required | Advertising (analytics only with #33) | AdMob (Firebase Analytics only with #33) |
+| App activity › App interactions | Yes | Yes | Required | Advertising | AdMob |
 | App info and performance › Diagnostics | Yes | Yes | Required | Advertising, fraud prevention | AdMob |
-| App info and performance › Crash logs | only with #33 | No | Required | App functionality | Crashlytics |
 | Device or other IDs | Yes | Yes | Required | Advertising, fraud prevention | Advertising ID, app set ID |
 
 "Shared" is Yes for AdMob data because ads are served by Google and its partners. This is the
