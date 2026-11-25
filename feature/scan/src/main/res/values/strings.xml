@@ -39,6 +39,7 @@
     <string name="nearby_other_section">Other devices · %1$d</string>
     <!-- Other devices: close and explanation (#142) -->
     <string name="nearby_other_close">Close</string>
+    <string name="nearby_other_close_section">Close other devices</string>
     <string name="nearby_other_info">About other devices</string>
     <string name="other_info_title">Other devices</string>
     <string name="other_info_what">Nearby Bluetooth signals with no name, or of a kind that is hard to tell. They can be a neighbour’s devices, home appliances, TVs or beacons.</string>

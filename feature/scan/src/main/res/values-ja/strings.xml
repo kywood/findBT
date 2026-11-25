@@ -39,6 +39,7 @@
     <string name="nearby_other_section">その他のデバイス · %1$d</string>
     <!-- Other devices: close and explanation (#142) -->
     <string name="nearby_other_close">閉じる</string>
+    <string name="nearby_other_close_section">その他のデバイスを閉じる</string>
     <string name="nearby_other_info">その他のデバイスについて</string>
     <string name="other_info_title">その他のデバイス</string>
     <string name="other_info_what">名前がない、または種類がわからない近くのBluetooth信号です。近所の機器、家電、テレビ、ビーコンなどが含まれることがあります。</string>

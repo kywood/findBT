@@ -39,6 +39,7 @@
     <string name="nearby_other_section">Otros dispositivos · %1$d</string>
     <!-- Other devices: close and explanation (#142) -->
     <string name="nearby_other_close">Cerrar</string>
+    <string name="nearby_other_close_section">Cerrar otros dispositivos</string>
     <string name="nearby_other_info">Acerca de otros dispositivos</string>
     <string name="other_info_title">Otros dispositivos</string>
     <string name="other_info_what">Señales Bluetooth cercanas sin nombre o de un tipo difícil de identificar. Pueden ser dispositivos de vecinos, electrodomésticos, televisores o balizas.</string>
