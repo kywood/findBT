@@ -735,13 +735,12 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
         return true
     }
 
-    private fun overlaps(left: Float, bottom: Float, right: Float, top: Float, other: FloatArray, at: Int): Boolean =
-        !(
-            left - TAG_PADDING >= other[at + 2] ||
-                right + TAG_PADDING <= other[at] ||
-                bottom - TAG_PADDING >= other[at + 3] ||
-                top + TAG_PADDING <= other[at + 1]
-            )
+    private fun overlaps(left: Float, bottom: Float, right: Float, top: Float, other: FloatArray, at: Int): Boolean = !(
+        left - TAG_PADDING >= other[at + 2] ||
+            right + TAG_PADDING <= other[at] ||
+            bottom - TAG_PADDING >= other[at + 3] ||
+            top + TAG_PADDING <= other[at + 1]
+        )
 
     /** Where "me" stands on screen this frame, from the floor to the top of the chevron; empty when behind. */
     private fun measureMe() {
