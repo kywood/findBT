@@ -43,7 +43,7 @@ None of these services receive your Bluetooth scan results, your saved devices o
 - **Vibration:** for haptic feedback while finding.
 
 ### Ads and your choices
-- In the EEA, the UK and Switzerland, we ask for your consent before showing personalized ads, and usage analytics stay off until you have answered. You can change your choice at any time in the app's settings (**Settings › Privacy options**).
+- In the EEA, the UK and Switzerland, we ask for your consent before showing personalized ads, and usage analytics and crash reports stay off unless you agree to storage on your device. You can change your choice at any time in the app's settings (**Settings › Privacy options**).
 - Rewarded ads are optional. You choose to watch one in exchange for 24 hours of Premium, at most once a day. Full-screen ads appear only after you finish finding a device, never while you are searching.
 - You can reset or delete your advertising ID, or opt out of personalized ads, in Android **Settings › Google › Ads** (the wording varies by device).
 - Buying Nearo Premium removes ads. So does an active 24-hour pass.
@@ -99,7 +99,7 @@ Nearo: 블루투스 기기 찾기(이하 "Nearo" 또는 "앱")는 [DEVELOPER NAM
 - **진동:** 찾는 중 진동으로 알려주기 위해 사용합니다.
 
 ### 광고와 선택권
-- EEA·영국·스위스에서는 맞춤 광고 전에 동의를 받고, 답하기 전에는 사용 통계 수집도 꺼 둡니다. 앱 설정(**설정 › 개인정보 옵션**)에서 언제든 바꿀 수 있습니다.
+- EEA·영국·스위스에서는 맞춤 광고 전에 동의를 받고, 기기 저장에 동의하지 않으면 사용 통계와 오류 보고서 수집도 꺼 둡니다. 앱 설정(**설정 › 개인정보 옵션**)에서 언제든 바꿀 수 있습니다.
 - 보상 광고는 선택입니다. 하루 한 번까지, 광고를 보고 프리미엄을 24시간 쓸 수 있습니다. 전면 광고는 기기를 찾은 뒤에만 나오고, 찾는 중에는 나오지 않습니다.
 - Android **설정 › Google › 광고**(기기마다 다를 수 있음)에서 광고 ID를 재설정·삭제하거나 맞춤 광고를 끌 수 있습니다.
 - Nearo 프리미엄을 구매하면 광고가 사라집니다. 24시간 이용권을 쓰는 동안에도 광고가 나오지 않습니다.
