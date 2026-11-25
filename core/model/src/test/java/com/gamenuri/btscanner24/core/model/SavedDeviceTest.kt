@@ -37,6 +37,33 @@ class SavedDeviceTest {
     }
 
     @Test
+    fun `what else it advertised round-trips, and devices saved without it are still read`() {
+        val signed = keys.copy(signature = AdvertSignature(0x0157, setOf(0xFE95, 0x180F), DeviceCategory.TRACKER))
+        assertEquals(listOf(signed, bag), SavedDeviceCodec.decode(SavedDeviceCodec.encode(listOf(signed, bag))))
+        val old = "1\tAA:00:00:00:00:01\tTRACKER\t1000\tTagly 0006\tMy keys"
+        assertEquals(listOf(keys), SavedDeviceCodec.decode(old))
+    }
+
+    @Test
+    fun `a signature needs every kept part to agree and is never met when blank`() {
+        val heard = BleDevice(
+            address = "7F",
+            name = "Tagly 0006",
+            rssi = -60,
+            firstSeen = 0,
+            lastSeen = 0,
+            companyId = 0x0157,
+            category = DeviceCategory.TRACKER,
+            serviceUuids16 = listOf(0xFE95),
+        )
+        assertTrue(AdvertSignature.of(heard).matches(heard))
+        assertTrue(AdvertSignature(0x0157, emptySet(), DeviceCategory.UNKNOWN).matches(heard))
+        assertFalse(AdvertSignature(0x004C, setOf(0xFE95), DeviceCategory.TRACKER).matches(heard))
+        assertFalse(AdvertSignature(0x0157, setOf(0x180F), DeviceCategory.TRACKER).matches(heard))
+        assertFalse(AdvertSignature(null, emptySet(), DeviceCategory.UNKNOWN).matches(heard))
+    }
+
+    @Test
     fun `tabs and line breaks in a name cannot break the format`() {
         val odd = keys.copy(name = "My\tkeys\nspare ")
         val read = SavedDeviceCodec.decode(SavedDeviceCodec.encode(listOf(odd)))

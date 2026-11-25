@@ -76,7 +76,13 @@ class LastSeenRecorder(
 
         /**
          * The user's devices that are being heard right now and whose record is old enough to write
-         * again, as listed address to the time of the sighting. Matching is the My devices tab's own.
+         * again, as listed address to the time of the sighting.
+         *
+         * The My devices tab also lists a device heard under another address when only its name is the
+         * same, which a neighbour's device of the same model would be too. That is not enough to write a
+         * place down: a saved device heard under a new address counts only when the company ID, service
+         * UUIDs and type kept at saving agree as well ([AdvertSignature]); with nothing kept, only its
+         * own address counts. Paired devices are bonded to this phone and keep counting by name.
          */
         internal fun due(
             paired: List<PairedDevice>,
@@ -86,10 +92,15 @@ class LastSeenRecorder(
             now: Long,
         ): List<Pair<String, Long>> {
             val state = MyDevices.build(paired, seen, hidden = emptySet(), now = now, saved = saved) { null }
+            val signatures = saved.associate { it.address to it.signature }
             return (state.saved + state.nearby + state.notNearby + state.others).mapNotNull { item ->
                 val sighting = item.sighting ?: return@mapNotNull null
                 if (now - sighting.lastSeen > MyDevices.ACTIVE_WINDOW_MS) return@mapNotNull null
                 val address = item.paired.address
+                val sameAddress = sighting.address == address
+                if (item.isSaved && !sameAddress && signatures[address]?.matches(sighting) != true) {
+                    return@mapNotNull null
+                }
                 if (LastSeenPolicy.isDue(known[address], sighting.lastSeen)) address to sighting.lastSeen else null
             }
         }

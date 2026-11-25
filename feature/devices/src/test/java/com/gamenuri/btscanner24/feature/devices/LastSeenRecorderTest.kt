@@ -1,10 +1,12 @@
 package com.gamenuri.btscanner24.feature.devices
 
+import com.gamenuri.btscanner24.core.model.AdvertSignature
 import com.gamenuri.btscanner24.core.model.BleDevice
 import com.gamenuri.btscanner24.core.model.DeviceCategory
 import com.gamenuri.btscanner24.core.model.LastSeen
 import com.gamenuri.btscanner24.core.model.LastSeenPolicy
 import com.gamenuri.btscanner24.core.model.PairedDevice
+import com.gamenuri.btscanner24.core.model.SavedDevice
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -17,8 +19,46 @@ class LastSeenRecorderTest {
     private fun seen(address: String, name: String?, lastSeen: Long = now) =
         BleDevice(address = address, name = name, rssi = -60, firstSeen = 0, lastSeen = lastSeen)
 
-    private fun due(seen: List<BleDevice>, known: Map<String, LastSeen> = emptyMap()) =
-        LastSeenRecorder.due(listOf(buds), emptyList(), seen, known, now)
+    private fun due(
+        seen: List<BleDevice>,
+        known: Map<String, LastSeen> = emptyMap(),
+        saved: List<SavedDevice> = emptyList(),
+    ) = LastSeenRecorder.due(listOf(buds), saved, seen, known, now)
+
+    private val tag = SavedDevice(
+        address = "BB:00:00:00:00:01",
+        name = "My keys",
+        category = DeviceCategory.TRACKER,
+        advertisedName = "Tagly 0006",
+        savedAt = 5L,
+        signature = AdvertSignature(companyId = 0x0157, serviceUuids16 = setOf(0xFE95), DeviceCategory.TRACKER),
+    )
+
+    private fun tagHeard(address: String) = seen(address, "Tagly 0006").copy(
+        companyId = 0x0157,
+        serviceUuids16 = listOf(0xFE95),
+        category = DeviceCategory.TRACKER,
+    )
+
+    @Test
+    fun `a saved device under a new address is written when its advertisement still agrees`() {
+        assertEquals(listOf(tag.address to now), due(listOf(tagHeard("7F:00:00:00:00:10")), saved = listOf(tag)))
+    }
+
+    @Test
+    fun `the same name alone never writes a saved device`() {
+        val sameModel = tagHeard("7F:00:00:00:00:11").copy(companyId = 0x004C)
+        val nameOnly = seen("7F:00:00:00:00:12", "Tagly 0006")
+        assertTrue(due(listOf(sameModel), saved = listOf(tag)).isEmpty())
+        assertTrue(due(listOf(nameOnly), saved = listOf(tag)).isEmpty())
+    }
+
+    @Test
+    fun `a saved device with nothing kept counts under its own address only`() {
+        val bare = tag.copy(signature = null)
+        assertTrue(due(listOf(tagHeard("7F:00:00:00:00:13")), saved = listOf(bare)).isEmpty())
+        assertEquals(listOf(tag.address to now), due(listOf(tagHeard(tag.address)), saved = listOf(bare)))
+    }
 
     @Test
     fun `a paired device being heard is written under its paired address`() {

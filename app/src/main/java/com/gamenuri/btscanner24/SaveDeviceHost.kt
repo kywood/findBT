@@ -15,6 +15,7 @@ import com.gamenuri.btscanner24.core.billing.PremiumStore
 import com.gamenuri.btscanner24.core.ble.BleDependencies
 import com.gamenuri.btscanner24.core.data.DataDependenciesProvider
 import com.gamenuri.btscanner24.core.data.SavedDevicesRepository
+import com.gamenuri.btscanner24.core.model.AdvertSignature
 import com.gamenuri.btscanner24.core.model.BleDevice
 import com.gamenuri.btscanner24.core.model.DeviceCategory
 import com.gamenuri.btscanner24.core.model.SaveLimit
@@ -37,6 +38,8 @@ data class SaveTarget(
     val category: DeviceCategory,
     /** Renaming a device that is saved already: never locked, keeps its place and date. */
     val savedAt: Long? = null,
+    /** What tells it apart from other devices of the same name; a rename keeps what was saved. */
+    val signature: AdvertSignature? = null,
 ) {
     companion object {
         fun of(device: BleDevice) = SaveTarget(
@@ -44,10 +47,17 @@ data class SaveTarget(
             advertisedName = device.name,
             name = device.modelName ?: device.name.orEmpty(),
             category = device.category,
+            signature = AdvertSignature.of(device),
         )
 
-        fun of(saved: SavedDevice) =
-            SaveTarget(saved.address, saved.advertisedName, saved.name, saved.category, saved.savedAt)
+        fun of(saved: SavedDevice) = SaveTarget(
+            address = saved.address,
+            advertisedName = saved.advertisedName,
+            name = saved.name,
+            category = saved.category,
+            savedAt = saved.savedAt,
+            signature = saved.signature,
+        )
     }
 }
 
@@ -106,7 +116,9 @@ fun SaveDeviceHost(
             onSave = { name, category ->
                 scope.launch {
                     val savedAt = target.savedAt ?: System.currentTimeMillis()
-                    repository.save(SavedDevice(target.address, name, category, target.advertisedName, savedAt))
+                    repository.save(
+                        SavedDevice(target.address, name, category, target.advertisedName, savedAt, target.signature),
+                    )
                     onSaved(isNew)
                 }
             },
