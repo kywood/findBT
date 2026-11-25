@@ -85,6 +85,18 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
         // Where it is drawn this frame: [angle] and [radius], moved to stay below the chips (#193).
         var drawAngle = 0f
         var drawRadius = 0f
+
+        /**
+         * How far a device without a measured direction slides along its ring (degrees, eased) when the
+         * camera may not step back far enough to show it whole at its own place (#193).
+         */
+        var tuck = 0f
+
+        /** Where [tuck] is heading; other devices keep clear of this, so the choice does not flicker. */
+        var tuckGoal = 0f
+
+        /** The angle it is heading to this frame, the one the others keep clear of. */
+        var goalAngle = 0f
     }
 
     private val models = HashMap<DeviceModel, Model>()
@@ -110,6 +122,11 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
     private var zoom = 1f
     private var zoomKnown = false
     private var zoomEase = 1f
+
+    /** The step-back the camera eases to; it only comes closer after everything fits with room for a while. */
+    private var heldZoom = 1f
+    private var relaxSeconds = 0f
+    private var frameSeconds = 0f
 
     /** The "me" marker on screen (left, bottom, right, top in pixels from the lower edge): no tag lies on it. */
     private val meRect = FloatArray(RECT_FLOATS)
@@ -234,6 +251,7 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
         }
         val fast = 1f - exp(-dt / POSE_SMOOTH_SECONDS)
         zoomEase = 1f - exp(-dt / ZOOM_SMOOTH_SECONDS)
+        frameSeconds = dt
         val slow = 1f - exp(-dt / MOVE_SMOOTH_SECONDS)
         heading += wrap(state.headingDegrees - heading) * fast
         elevation += (targetElevation - elevation) * fast
@@ -280,8 +298,12 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
         val bottom = state.clipBottom.coerceIn(top, 1f)
         val above = top + (bottom - top) * state.centerY.coerceIn(0f, 1f)
         frame(above, 1f)
-        val wanted = fitZoom(above, top, bottom)
-        zoom = if (!zoomKnown || state.reduceMotion) wanted else zoom + (wanted - zoom) * zoomEase
+        val room = FitRoom(above, top, bottom)
+        tuckPins(room)
+        val wanted = fitZoom(room)
+        val instant = !zoomKnown || state.reduceMotion
+        holdZoom(wanted, instant)
+        zoom = if (instant) heldZoom else zoom + (heldZoom - zoom) * zoomEase
         zoomKnown = true
         frame(above, zoom)
     }
@@ -293,35 +315,157 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
         Matrix.multiplyMM(viewProjection, 0, projection, 0, view, 0)
     }
 
-    /**
-     * How far to step back so every device, with room for its tag above it, is whole between the chips
-     * and the sheet and inside the sides (#193). Never closer than the design's view. Stepping back
-     * scales everything about the view's axis at [above], so one pass over the devices is enough.
-     */
-    private fun fitZoom(above: Float, top: Float, bottom: Float): Float {
-        val turn = worldTurn()
+    /** The band left for the scene, as shares of the view height, and the axis the camera scales about. */
+    private class FitRoom(val above: Float, top: Float, bottom: Float) {
         val topRoom = above - top - FIT_TOP_ROOM
         val bottomRoom = bottom - FIT_EDGE - above
         val sideRoom = 0.5f - FIT_EDGE
+    }
+
+    /**
+     * How far to step back so every device, with room for its tag above it, is whole between the chips
+     * and the sheet and inside the sides (#193). Never closer than the design's view, never further than
+     * [MAX_ZOOM] so the models still read as 3D at thumbnail size. Stepping back scales everything about
+     * the view's axis at [FitRoom.above], so one pass over the devices is enough. Call with the
+     * design's view framed.
+     */
+    private fun fitZoom(room: FitRoom): Float {
+        val turn = worldTurn()
         var wanted = 1f
         for (pin in state.pins) {
             val spot = spots[pin.key] ?: continue
-            val a = radians(spot.angle - if (pin.measured) turn else 0f)
-            val x = sin(a) * spot.radius
-            val z = -cos(a) * spot.radius
-            val floor = MapFloor.height(spot.radius)
-            for (lift in 0..1) {
-                project(x, floor + lift * PIN_TOP * PIN_SIZE, z)
-                val w = projected[3]
-                if (w <= 0f) continue
-                val fromTop = (1f - projected[1] / w) / 2f
-                val across = (projected[0] / w + 1f) / 2f
-                if (fromTop < above && topRoom > 0f) wanted = maxOf(wanted, (above - fromTop) / topRoom)
-                if (fromTop > above && bottomRoom > 0f) wanted = maxOf(wanted, (fromTop - above) / bottomRoom)
-                wanted = maxOf(wanted, abs(across - 0.5f) / sideRoom)
-            }
+            val angle = if (pin.measured) spot.angle - turn else spot.angle + spot.tuck
+            wanted = maxOf(wanted, need(room, angle, spot.radius))
         }
         return wanted.coerceAtMost(MAX_ZOOM)
+    }
+
+    /** The step-back one device at [angle] on a ring of [radius] needs to be whole on screen. */
+    private fun need(room: FitRoom, angle: Float, radius: Float): Float {
+        val a = radians(angle)
+        val x = sin(a) * radius
+        val z = -cos(a) * radius
+        val floor = MapFloor.height(radius)
+        var wanted = 1f
+        for (lift in 0..1) {
+            project(x, floor + lift * PIN_TOP * PIN_SIZE, z)
+            val w = projected[3]
+            if (w <= 0f) continue
+            val fromTop = (1f - projected[1] / w) / 2f
+            val across = (projected[0] / w + 1f) / 2f
+            val above = room.above
+            if (fromTop < above && room.topRoom > 0f) wanted = maxOf(wanted, (above - fromTop) / room.topRoom)
+            if (fromTop > above && room.bottomRoom > 0f) wanted = maxOf(wanted, (fromTop - above) / room.bottomRoom)
+            wanted = maxOf(wanted, abs(across - 0.5f) / room.sideRoom)
+        }
+        return wanted
+    }
+
+    /**
+     * Steps back as soon as a device does not fit, but only comes closer once everything has fitted with
+     * [RELAX_MARGIN] to spare for [RELAX_SECONDS], so the view does not breathe as distances wobble.
+     */
+    private fun holdZoom(wanted: Float, instant: Boolean) {
+        when {
+            instant || wanted >= heldZoom -> {
+                heldZoom = wanted
+                relaxSeconds = 0f
+            }
+            wanted * RELAX_MARGIN <= heldZoom -> {
+                relaxSeconds += frameSeconds
+                if (relaxSeconds >= RELAX_SECONDS) {
+                    heldZoom = wanted
+                    relaxSeconds = 0f
+                }
+            }
+            else -> relaxSeconds = 0f
+        }
+    }
+
+    /**
+     * Devices without a measured direction have no real bearing, so when one would need the camera to
+     * step back beyond [MAX_ZOOM], it slides along its own ring to the nearest place that fits and is
+     * not on another device (#193). Measured devices never move. The farthest are placed first.
+     */
+    private fun tuckPins(room: FitRoom) {
+        val turn = worldTurn()
+        val still = state.reduceMotion || !zoomKnown
+        val ease = 1f - exp(-frameSeconds / MOVE_SMOOTH_SECONDS)
+        val placed = ArrayList<Spot>(state.pins.size)
+        for (pin in state.pins) {
+            val spot = spots[pin.key] ?: continue
+            if (pin.measured) {
+                spot.tuck = 0f
+                spot.tuckGoal = 0f
+                spot.goalAngle = spot.angle - turn
+                spot.drawAngle = spot.angle - turn
+                placed += spot
+            }
+        }
+        // Those that fit at their own place stay there, and the others keep clear of them.
+        val loose = ArrayList<Spot>()
+        for (pin in state.pins) {
+            val spot = spots[pin.key] ?: continue
+            if (pin.measured) continue
+            if (fits(room, spot)) {
+                spot.tuckGoal = 0f
+                spot.goalAngle = spot.angle
+                placed += spot
+            } else {
+                loose += spot
+            }
+        }
+        loose.sortByDescending { it.radius }
+        for (spot in placed) {
+            if (spot.tuck != 0f && spot.tuckGoal == 0f) {
+                spot.tuck = if (still) 0f else spot.tuck * (1f - ease)
+                if (abs(spot.tuck) < TUCK_SETTLED_DEGREES) spot.tuck = 0f
+            }
+        }
+        for (spot in loose) {
+            val target = tuckTarget(room, spot, placed)
+            spot.tuckGoal = target
+            spot.goalAngle = spot.angle + target
+            spot.tuck = if (still) target else spot.tuck + wrap(target - spot.tuck) * ease
+            spot.drawAngle = spot.angle + spot.tuck
+            placed += spot
+        }
+    }
+
+    /**
+     * Whether a device fits at its own place within [MAX_ZOOM]. One already slid needs some room to
+     * spare before it goes back, so it does not hop to and fro at the edge.
+     */
+    private fun fits(room: FitRoom, spot: Spot): Boolean {
+        val limit = if (spot.tuckGoal != 0f) MAX_ZOOM * TUCK_FIT_SHARE else MAX_ZOOM
+        return need(room, spot.angle, spot.radius) <= limit
+    }
+
+    /** The smallest slide along the ring, either way, that fits within [MAX_ZOOM] and keeps clear of [placed]. */
+    private fun tuckTarget(room: FitRoom, spot: Spot, placed: List<Spot>): Float {
+        val limit = MAX_ZOOM * TUCK_FIT_SHARE
+        val gap = degrees(TUCK_GAP / spot.radius.coerceAtLeast(MIN_TUCK_RADIUS))
+        var best = spot.tuckGoal
+        var bestNeed = Float.MAX_VALUE
+        var step = TUCK_STEP_DEGREES
+        while (step <= MAX_TUCK_DEGREES) {
+            for (side in SIDES) {
+                val slide = side * step
+                val angle = spot.angle + slide
+                val clear = placed.none {
+                    abs(it.radius - spot.radius) < TUCK_RING_TOLERANCE && abs(wrap(it.goalAngle - angle)) < gap
+                }
+                if (!clear) continue
+                val needed = need(room, angle, spot.radius)
+                if (needed <= limit) return slide
+                if (needed < bestNeed) {
+                    bestNeed = needed
+                    best = slide
+                }
+            }
+            step += TUCK_STEP_DEGREES
+        }
+        return best
     }
 
     /** How far measured devices are turned round the middle: with the phone, or not at all in a still view. */
@@ -502,7 +646,7 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
         val turn = worldTurn()
         for (pin in pins) {
             val spot = spots[pin.key] ?: continue
-            spot.drawAngle = spot.angle - if (pin.measured) turn else 0f
+            spot.drawAngle = if (pin.measured) spot.angle - turn else spot.angle + spot.tuck
             spot.drawRadius = spot.radius
         }
     }
@@ -1096,8 +1240,24 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
         /** Shares of the view: room for a tag over the highest device, and a margin at the sheet and sides. */
         const val FIT_TOP_ROOM = 0.06f
         const val FIT_EDGE = 0.07f
-        const val MAX_ZOOM = 2.2f
+
+        /** Never further back than this: models stay at least 60 % of the design's size (PM, #193). */
+        const val MAX_ZOOM = 1f / 0.6f
         const val ZOOM_SMOOTH_SECONDS = 0.6f
+
+        /** The camera comes closer only after everything fits with this much to spare for this long. */
+        const val RELAX_MARGIN = 1.08f
+        const val RELAX_SECONDS = 3f
+
+        // Sliding devices without a measured direction along their ring when the step-back runs out (#193).
+        const val TUCK_STEP_DEGREES = 4f
+        const val MAX_TUCK_DEGREES = 180f
+        const val TUCK_FIT_SHARE = 0.94f
+        const val TUCK_SETTLED_DEGREES = 0.2f
+        const val TUCK_GAP = 1.1f
+        const val MIN_TUCK_RADIUS = 1f
+        const val TUCK_RING_TOLERANCE = 0.3f
+        val SIDES = floatArrayOf(1f, -1f)
         const val HIT_RADIUS = 0.7f
         const val MIN_HIT_SHARE = 0.06f
 
@@ -1110,6 +1270,8 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
         }
 
         fun radians(degrees: Float): Float = degrees * PI.toFloat() / 180f
+
+        fun degrees(radians: Float): Float = radians * 180f / PI.toFloat()
 
         /** Into −180..180. */
         fun wrap(degrees: Float): Float = ((degrees % 360f) + 540f) % 360f - 180f
