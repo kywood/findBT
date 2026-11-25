@@ -161,7 +161,9 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         Matrix.translateM(model, 0, 0f, hover, 0f)
         Matrix.rotateM(model, 0, -yaw, 0f, 1f, 0f)
         val arrowScale = (1f - here) * MESH_SCALE
-        Matrix.scaleM(model, 0, width * arrowScale, arrowScale, arrowScale)
+        // Across the screen the arrow is smaller on its floor (#134); its thickness stays as it was.
+        val across = if (state.fullBleed) FULL_BLEED_ARROW else 1f
+        Matrix.scaleM(model, 0, width * across * arrowScale, arrowScale, across * arrowScale)
         Matrix.setIdentityM(markerModel, 0)
         Matrix.translateM(markerModel, 0, 0f, PUCK_HEIGHT + bob, 0f)
         Matrix.scaleM(markerModel, 0, here * MESH_SCALE, here * MESH_SCALE, here * MESH_SCALE)
@@ -173,7 +175,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         // Both shadows first (blended onto the floor), then the solids.
         if (showArrow) drawShadow(meshBuffer, meshVertices, model)
         if (showPuck) drawShadow(puckBuffer, puckVertices, markerModel)
-        if (showArrow) drawSolid(meshBuffer, meshVertices, model, state.arrowColor, stretch = width)
+        if (showArrow) drawSolid(meshBuffer, meshVertices, model, state.arrowColor, stretch = width, across = across)
         if (showPuck) drawSolid(puckBuffer, puckVertices, markerModel, state.accentColor)
         if (state.fullBleed) drawMarker(yaw)
     }
@@ -565,13 +567,17 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         GLES20.glDisableVertexAttribArray(position)
     }
 
-    /** A lit mesh; [stretch] is how much wider than its model it is drawn (the low-confidence arrow). */
+    /**
+     * A lit mesh; [stretch] is how much wider than its model it is drawn (the low-confidence arrow) and
+     * [across] how much it is shrunk along the floor while keeping its height.
+     */
     private fun drawSolid(
         buffer: Int,
         vertices: Int,
         model: FloatArray,
         color: Int,
         stretch: Float = 1f,
+        across: Float = 1f,
         soft: Boolean = false,
     ) {
         GLES20.glEnable(GLES20.GL_DEPTH_TEST)
@@ -591,7 +597,14 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         GLES20.glUniformMatrix4fv(GLES20.glGetUniformLocation(arrowProgram, "uMvp"), 1, false, mvp, 0)
         GLES20.glUniformMatrix4fv(GLES20.glGetUniformLocation(arrowProgram, "uModel"), 1, false, model, 0)
         // Normals of a mesh stretched sideways: divide by the stretch twice (inverse transpose).
-        GLES20.glUniform3f(GLES20.glGetUniformLocation(arrowProgram, "uInvScale"), 1f / (stretch * stretch), 1f, 1f)
+        // [across] shrinks it along the floor only, so the same holds for both floor directions.
+        val sideways = stretch * across
+        GLES20.glUniform3f(
+            GLES20.glGetUniformLocation(arrowProgram, "uInvScale"),
+            1f / (sideways * sideways),
+            1f,
+            1f / (across * across),
+        )
         GLES20.glUniform3f(
             GLES20.glGetUniformLocation(arrowProgram, "uBase"),
             red(color) * BASE_BRIGHTNESS,
@@ -753,6 +766,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         // Design #76, in units of the ring radius R (RING_OUTER). [ArrowMesh] is in R already; its
         // underside floats 0.22 R above the floor (centre 0.29 R), bobbing by ± 0.02 R.
         const val MESH_SCALE = RING_OUTER
+        const val FULL_BLEED_ARROW = 0.72f
         const val HOVER_HEIGHT = 0.29f * RING_OUTER
         const val HOVER_BOB = 0.027f
         const val HOVER_PERIOD_SECONDS = 2.4f
