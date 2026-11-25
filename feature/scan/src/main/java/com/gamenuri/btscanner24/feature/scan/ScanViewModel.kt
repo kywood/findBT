@@ -185,6 +185,9 @@ class ScanViewModel(
 
     fun setSort(sort: DeviceSort) = updatePreferences { it.copy(sort = sort) }
 
+    /** List or 3D map on the Nearby tab (#86); remembered like the sort. */
+    fun setShowMap(show: Boolean) = updatePreferences { it.copy(showMap = show) }
+
     /** "N other devices hidden · Show" at the end of the list (#82): same as turning the switch on. */
     fun showOther() = updateFilter { it.copy(showOther = true) }
 

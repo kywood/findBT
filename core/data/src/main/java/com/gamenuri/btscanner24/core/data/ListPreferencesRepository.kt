@@ -31,6 +31,7 @@ class ListPreferencesRepository(private val store: DataStore<Preferences>) {
             val next = transform(prefs.toListPreferences())
             val filter = next.filter
             prefs[SORT] = next.sort.name
+            prefs[SHOW_MAP] = next.showMap
             prefs[NAMED_ONLY] = !filter.showUnnamed
             prefs[GROUPS] = filter.types.mapTo(HashSet()) { it.name }
             prefs[HIDE_GONE] = filter.hideGone
@@ -61,6 +62,7 @@ class ListPreferencesRepository(private val store: DataStore<Preferences>) {
                 manufacturers = this[MANUFACTURERS] ?: defaults.manufacturers,
                 hideGone = this[HIDE_GONE] ?: defaults.hideGone,
             ),
+            showMap = this[SHOW_MAP] ?: false,
         )
     }
 
@@ -73,6 +75,7 @@ class ListPreferencesRepository(private val store: DataStore<Preferences>) {
         val DISTANCES = stringSetPreferencesKey("distances")
         val SIGNALS = stringSetPreferencesKey("signals")
         val MANUFACTURERS = stringSetPreferencesKey("manufacturers")
+        val SHOW_MAP = booleanPreferencesKey("show_map")
     }
 }
 

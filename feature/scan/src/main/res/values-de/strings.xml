@@ -91,4 +91,6 @@
     <string name="map_step_mid_ft">15 ft</string>
     <string name="map_step_far_ft">30 ft+</string>
     <string name="map_unavailable">Dieses Telefon kann die 3D-Karte nicht anzeigen. Die Liste unten zeigt dieselben Geräte.</string>
+    <string name="map_view_list">Liste</string>
+    <string name="map_view_map">Karte</string>
 </resources>

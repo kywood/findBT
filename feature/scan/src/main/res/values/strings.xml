@@ -93,4 +93,6 @@
     <string name="map_step_mid_ft">15 ft</string>
     <string name="map_step_far_ft">30 ft+</string>
     <string name="map_unavailable">This phone cannot draw the 3D map. The list below shows the same devices.</string>
+    <string name="map_view_list">List</string>
+    <string name="map_view_map">Map</string>
 </resources>

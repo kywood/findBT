@@ -89,4 +89,6 @@
     <string name="map_step_mid_ft">15ft</string>
     <string name="map_step_far_ft">30ft+</string>
     <string name="map_unavailable">このスマートフォンでは3Dマップを表示できません。下のリストで同じデバイスを確認できます。</string>
+    <string name="map_view_list">リスト</string>
+    <string name="map_view_map">マップ</string>
 </resources>

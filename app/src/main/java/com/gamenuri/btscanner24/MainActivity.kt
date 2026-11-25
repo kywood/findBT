@@ -54,6 +54,8 @@ import com.gamenuri.btscanner24.feature.onboarding.OnboardingActions
 import com.gamenuri.btscanner24.feature.onboarding.OnboardingContent
 import com.gamenuri.btscanner24.feature.onboarding.OnboardingPage
 import com.gamenuri.btscanner24.feature.onboarding.OnboardingScreen
+import com.gamenuri.btscanner24.feature.scan.LocalNearbyMap
+import com.gamenuri.btscanner24.feature.scan.NearbyMapOptions
 import com.gamenuri.btscanner24.feature.settings.AppInfo
 import com.gamenuri.btscanner24.feature.settings.LicensesScreen
 import com.gamenuri.btscanner24.feature.settings.PrivacyOptions
@@ -85,6 +87,11 @@ class MainActivity : ComponentActivity() {
                         LocalDistanceUnit provides (pickedUnit ?: DistanceUnit.forRegion(region)),
                         LocalArFindScene provides (demo?.arScene != false),
                         LocalFindScenePose provides (demo?.findState == null || demo.followPose),
+                        // `--es demo map` opens the Nearby tab on its 3D map, with the design's fixed view.
+                        LocalNearbyMap provides NearbyMapOptions(
+                            startOnMap = demo?.screen == "map",
+                            followPose = demo == null || demo.followPose,
+                        ),
                     ) {
                         when {
                             findState != null -> DemoMode.FindScreen(findState, onClose = ::finish)
