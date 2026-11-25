@@ -86,12 +86,14 @@ class BtScannerApp :
         )
     }
 
-    private fun adUnits(): AdUnits {
-        val test = AdUnits.TEST
-        return AdUnits(
-            banner = BuildConfig.ADMOB_BANNER.ifBlank { test.banner },
-            interstitial = BuildConfig.ADMOB_INTERSTITIAL.ifBlank { test.interstitial },
-            rewarded = BuildConfig.ADMOB_REWARDED.ifBlank { test.rewarded },
-        )
-    }
+    /**
+     * As the build was given them: real units in a release, which does not build without them (#35),
+     * and Google's test units in debug and benchmark builds. No fallback here, so a test ID can never
+     * reach a release through this code.
+     */
+    private fun adUnits(): AdUnits = AdUnits(
+        banner = BuildConfig.ADMOB_BANNER,
+        interstitial = BuildConfig.ADMOB_INTERSTITIAL,
+        rewarded = BuildConfig.ADMOB_REWARDED,
+    )
 }

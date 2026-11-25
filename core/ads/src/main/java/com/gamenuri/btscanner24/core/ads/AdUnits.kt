@@ -1,13 +1,7 @@
 package com.gamenuri.btscanner24.core.ads
 
-/** AdMob ad unit IDs (#31). The app passes Google's test IDs until the real ones are set for release (#35). */
-data class AdUnits(val banner: String, val interstitial: String, val rewarded: String) {
-    companion object {
-        /** Google's public sample units: always fill, never pay, safe to tap. */
-        val TEST = AdUnits(
-            banner = "ca-app-pub-3940256099942544/9214589741",
-            interstitial = "ca-app-pub-3940256099942544/1033173712",
-            rewarded = "ca-app-pub-3940256099942544/5224354917",
-        )
-    }
-}
+/**
+ * AdMob ad unit IDs (#31), as the app's build config has them: real ones in a release, Google's test
+ * units in debug builds (#35). The test IDs live in the app's build script only, not in code.
+ */
+data class AdUnits(val banner: String, val interstitial: String, val rewarded: String)

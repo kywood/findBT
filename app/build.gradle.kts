@@ -28,6 +28,17 @@ val hasReleaseSigning =
 // A release must never ship Google's test ads or go out unsigned (#35): building or bundling it stops
 // with the list of what is missing. Debug and benchmark builds keep the test IDs.
 val admobTestPublisher = "ca-app-pub-3940256099942544"
+
+// Google's public sample IDs: always fill, never pay, safe to tap. Only the debug and benchmark
+// build types fall back to them; release code and the release manifest have no fallback at all.
+val admobTestAppId = "$admobTestPublisher~3347511713"
+val admobTestUnits = mapOf(
+    "banner" to "$admobTestPublisher/9214589741",
+    "interstitial" to "$admobTestPublisher/1033173712",
+    "rewarded" to "$admobTestPublisher/5224354917",
+)
+
+fun admob(key: String): String = localProperties.getProperty("nearo.admob.$key", "").trim()
 val missingForRelease = listOf("appId", "banner", "interstitial", "rewarded")
     .map { "nearo.admob.$it" }
     .filter { key ->
@@ -69,12 +80,11 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // AdMob (#31). Google's public test IDs unless local.properties has the real ones (release, #35).
-        manifestPlaceholders["admobAppId"] =
-            localProperties.getProperty("nearo.admob.appId", "ca-app-pub-3940256099942544~3347511713")
-        for (unit in listOf("banner", "interstitial", "rewarded")) {
-            val value = localProperties.getProperty("nearo.admob.$unit", "")
-            buildConfigField("String", "ADMOB_${unit.uppercase()}", "\"$value\"")
+        // AdMob (#31): what local.properties has, and nothing when it has nothing. The release build
+        // stops above without real IDs (#35); debug and benchmark put Google's test IDs in below.
+        manifestPlaceholders["admobAppId"] = admob("appId")
+        for (unit in admobTestUnits.keys) {
+            buildConfigField("String", "ADMOB_${unit.uppercase()}", "\"${admob(unit)}\"")
         }
 
         buildConfigField("String", "SUPPORT_EMAIL", "\"${localProperties.getProperty("nearo.supportEmail", "")}\"")
@@ -98,6 +108,10 @@ android {
             // Installs next to the Play Store build on test phones; release applicationId is unchanged.
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
+            manifestPlaceholders["admobAppId"] = admob("appId").ifBlank { admobTestAppId }
+            for ((unit, testId) in admobTestUnits) {
+                buildConfigField("String", "ADMOB_${unit.uppercase()}", "\"${admob(unit).ifBlank { testId }}\"")
+            }
         }
         release {
             // R8 drops the unused part of material-icons-extended and friends; a much smaller dex
@@ -119,6 +133,11 @@ android {
             isProfileable = true
             applicationIdSuffix = ".benchmark"
             versionNameSuffix = "-benchmark"
+            // Not a release: measured on test phones with test ads, like debug.
+            manifestPlaceholders["admobAppId"] = admob("appId").ifBlank { admobTestAppId }
+            for ((unit, testId) in admobTestUnits) {
+                buildConfigField("String", "ADMOB_${unit.uppercase()}", "\"${admob(unit).ifBlank { testId }}\"")
+            }
         }
     }
     sourceSets {

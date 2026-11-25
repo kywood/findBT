@@ -14,10 +14,9 @@ nearo.signing.storePassword=...                        # [NEARO_SIGNING_STORE_PA
 nearo.signing.keyAlias=...                             # [NEARO_SIGNING_KEY_ALIAS]
 nearo.signing.keyPassword=...                          # [NEARO_SIGNING_KEY_PASSWORD]
 
-# Real AdMob IDs. Without them the build uses Google's test IDs.
+# Real AdMob IDs. Without them a release build stops; debug and benchmark builds use Google's test IDs.
 nearo.admob.appId=ca-app-pub-XXXXXXXXXXXXXXXX~XXXXXXXXXX
 nearo.admob.banner=ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX
-nearo.admob.native=ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX
 nearo.admob.interstitial=ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX
 nearo.admob.rewarded=ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX
 
