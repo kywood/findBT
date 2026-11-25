@@ -74,6 +74,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -223,6 +224,11 @@ fun FinderContent(
     val stage = rememberStageRise(palette)
     val content by animateColorAsState(palette.content, tween(COLOR_FADE_MS), label = "findContent")
     val accent by animateColorAsState(palette.accent, tween(COLOR_FADE_MS), label = "findAccent")
+    // The 3D scene (#76) is a layer behind the whole screen, not a box in the layout; without
+    // working GL the dial draws the Canvas arrow in its place.
+    var sceneFailed by remember { mutableStateOf(false) }
+    val scene3d = LocalArFindScene.current && !sceneFailed && !LocalInspectionMode.current
+    val dialSlot = remember { SceneSlot() }
     // A new stage colour rises like water over the old one (#90); the content stays where it is.
     Box(
         modifier
@@ -236,7 +242,15 @@ fun FinderContent(
                 .waterRise(progress = { stage.progress.value }, glint = STAGE_GLINT, pressMs = 0)
                 .background(palette.brush()),
         )
-        FinderScaffold(state, actions, content, accent, background)
+        if (scene3d && state.showsScene()) {
+            FindSceneLayer(dialSlot, fadeOutsideSlot = true) { centerY, topFade, bottomFade ->
+                CompositionLocalProvider(LocalContentColor provides accent) {
+                    val fades = SceneFades(topFade, bottomFade)
+                    ArrowScene(state, centerY, fades, onUnavailable = { sceneFailed = true })
+                }
+            }
+        }
+        FinderScaffold(state, actions, content, accent, background, scene3d, dialSlot)
     }
 }
 
@@ -282,6 +296,8 @@ private fun FinderScaffold(
     content: Color,
     accent: Color,
     background: Color,
+    sceneBehind: Boolean,
+    dialSlot: SceneSlot,
 ) {
     Scaffold(
         containerColor = Color.Transparent,
@@ -319,11 +335,15 @@ private fun FinderScaffold(
                 StageText(state)
                 // The dial takes what is left and shrinks on short screens (Flip3 cover, small phones).
                 Box(
-                    modifier = Modifier.weight(1f).fillMaxWidth().padding(vertical = 12.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .padding(vertical = 12.dp)
+                        .sceneSlot(dialSlot),
                     contentAlignment = Alignment.Center,
                 ) {
                     CompositionLocalProvider(LocalContentColor provides accent) {
-                        DirectionDial(state, Modifier.heightIn(min = DIAL_MIN))
+                        DirectionDial(state, Modifier.heightIn(min = DIAL_MIN), sceneBehind)
                     }
                 }
                 DistanceBlock(state)
