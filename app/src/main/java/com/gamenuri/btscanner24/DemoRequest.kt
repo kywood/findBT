@@ -13,6 +13,12 @@ internal data class DemoRequest(
     val locale: String? = null,
     /** Onboarding page for screen "onboarding": intro, permission, denied (+ "_legacy" for Android 11 copy). */
     val onboardingPage: String? = null,
+    /** The 3D, AR-style find arrow (#76); `--ez demo_ar false` shows the Canvas fallback instead. */
+    val arScene: Boolean = true,
+    /** Keeps (test) ads on in a demo launch, for ad placement shots (`--ez demo_ads true`). Off otherwise. */
+    val showAds: Boolean = false,
+    /** Lets the 3D find camera follow the phone's real tilt in a demo launch (`--ez demo_pose true`). */
+    val followPose: Boolean = false,
 ) {
     val startOnMyDevices: Boolean get() = screen == "devices"
 

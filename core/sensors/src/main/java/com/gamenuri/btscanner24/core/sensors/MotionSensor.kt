@@ -43,7 +43,6 @@ class MotionSensor(context: Context) {
         }
         val walkingDetector = WalkingDetector()
         val matrix = FloatArray(9)
-        val orientation = FloatArray(3)
 
         val listener = object : SensorEventListener {
             override fun onSensorChanged(event: SensorEvent) {
@@ -55,8 +54,8 @@ class MotionSensor(context: Context) {
                     }
                     else -> {
                         SensorManager.getRotationMatrixFromVector(matrix, event.values)
-                        SensorManager.getOrientation(matrix, orientation)
-                        val heading = Angles.normalize(Math.toDegrees(orientation[0].toDouble()))
+                        // Stable whether the phone lies flat or is held upright (#76).
+                        val heading = DevicePose.fromRotationMatrix(matrix).headingDegrees
                         trySend(MotionSample(now, heading, walkingDetector.walking))
                     }
                 }

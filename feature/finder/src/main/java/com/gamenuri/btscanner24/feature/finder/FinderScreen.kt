@@ -33,13 +33,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.VolumeOff
-import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.AcUnit
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.LocalFireDepartment
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -77,7 +74,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.style.TextAlign
@@ -97,6 +96,7 @@ import com.gamenuri.btscanner24.core.designsystem.theme.NearoTextStyles
 import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
 import com.gamenuri.btscanner24.core.model.DeviceLabel
 import com.gamenuri.btscanner24.core.model.NameSource
+import com.gamenuri.btscanner24.core.ui.R as UiR
 import com.gamenuri.btscanner24.core.ui.distanceText
 import com.gamenuri.btscanner24.core.ui.text
 import java.util.Locale
@@ -109,6 +109,8 @@ fun FinderScreen(
     address: String,
     /** Leaves the screen; [Brush] is the background on screen now, for the drain over Home (#101). */
     onClose: (cover: Brush) -> Unit,
+    /** "Done" on the Found screen, right before [onClose]; the app may show its full-screen ad then (#81). */
+    onFoundDone: () -> Unit = {},
     /** Water level of the entry from Home (#90), 0..1 over the press and the rise; 1 shows it fully. */
     entryProgress: () -> Float = { 1f },
     viewModel: FinderViewModel = viewModel(key = "finder-$address", factory = FinderViewModel.factory(address)),
@@ -127,7 +129,14 @@ fun FinderScreen(
     // System back drains the same way as ✕ and Done.
     BackHandler { close() }
     foundAfterSeconds?.let { seconds ->
-        FoundRise(state, seconds, onDone = { close() })
+        FoundRise(
+            state,
+            seconds,
+            onDone = {
+                onFoundDone()
+                close()
+            },
+        )
         return
     }
 
@@ -215,6 +224,11 @@ fun FinderContent(
     val stage = rememberStageRise(palette)
     val content by animateColorAsState(palette.content, tween(COLOR_FADE_MS), label = "findContent")
     val accent by animateColorAsState(palette.accent, tween(COLOR_FADE_MS), label = "findAccent")
+    // The 3D scene (#76) is a layer behind the whole screen, not a box in the layout; without
+    // working GL the dial draws the Canvas arrow in its place.
+    var sceneFailed by remember { mutableStateOf(false) }
+    val scene3d = LocalArFindScene.current && !sceneFailed && !LocalInspectionMode.current
+    val dialSlot = remember { SceneSlot() }
     // A new stage colour rises like water over the old one (#90); the content stays where it is.
     Box(
         modifier
@@ -228,7 +242,15 @@ fun FinderContent(
                 .waterRise(progress = { stage.progress.value }, glint = STAGE_GLINT, pressMs = 0)
                 .background(palette.brush()),
         )
-        FinderScaffold(state, actions, content, accent, background)
+        if (scene3d && state.showsScene()) {
+            FindSceneLayer(dialSlot, fadeOutsideSlot = true) { centerY, topFade, bottomFade ->
+                CompositionLocalProvider(LocalContentColor provides accent) {
+                    val fades = SceneFades(topFade, bottomFade)
+                    ArrowScene(state, centerY, fades, onUnavailable = { sceneFailed = true })
+                }
+            }
+        }
+        FinderScaffold(state, actions, content, accent, background, scene3d, dialSlot)
     }
 }
 
@@ -274,6 +296,8 @@ private fun FinderScaffold(
     content: Color,
     accent: Color,
     background: Color,
+    sceneBehind: Boolean,
+    dialSlot: SceneSlot,
 ) {
     Scaffold(
         containerColor = Color.Transparent,
@@ -311,11 +335,15 @@ private fun FinderScaffold(
                 StageText(state)
                 // The dial takes what is left and shrinks on short screens (Flip3 cover, small phones).
                 Box(
-                    modifier = Modifier.weight(1f).fillMaxWidth().padding(vertical = 12.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .padding(vertical = 12.dp)
+                        .sceneSlot(dialSlot),
                     contentAlignment = Alignment.Center,
                 ) {
                     CompositionLocalProvider(LocalContentColor provides accent) {
-                        DirectionDial(state, Modifier.heightIn(min = DIAL_MIN))
+                        DirectionDial(state, Modifier.heightIn(min = DIAL_MIN), sceneBehind)
                     }
                 }
                 DistanceBlock(state)
@@ -409,11 +437,9 @@ private fun SoundButton(sound: SoundState, onClick: () -> Unit, content: Color) 
         border = BorderStroke(1.dp, content.copy(alpha = 0.5f)),
     ) {
         Icon(
-            imageVector = if (sound == SoundState.PLAYING) {
-                Icons.AutoMirrored.Filled.VolumeOff
-            } else {
-                Icons.AutoMirrored.Filled.VolumeUp
-            },
+            painter = painterResource(
+                if (sound == SoundState.PLAYING) UiR.drawable.ic_sound_off else UiR.drawable.ic_sound,
+            ),
             contentDescription = null,
             modifier = Modifier.size(18.dp),
         )
@@ -489,7 +515,7 @@ private fun StageText(state: FinderUiState) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         // A vector lock instead of the 🔒 emoji, which looks different on every phone (#71).
         if (state.stage == FinderStage.LOCKED) {
-            Icon(Icons.Filled.Lock, contentDescription = null, modifier = Modifier.size(18.dp))
+            Icon(painterResource(UiR.drawable.ic_lock), contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(6.dp))
         }
         Text(stringResource(title), style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)

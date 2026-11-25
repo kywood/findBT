@@ -8,6 +8,9 @@
     <string name="settings_premium_buy_no_price">Get Premium</string>
     <string name="settings_premium_active">Premium active</string>
     <string name="settings_premium_active_body">Thank you! Ads are off.</string>
+    <string name="settings_day_pass_title">Premium for 24 hours</string>
+    <string name="settings_day_pass_until">Until %1$s</string>
+    <string name="settings_day_pass_on">Premium is on for 24 hours · until %1$s</string>
     <string name="settings_restore">Restore purchase</string>
     <string name="settings_restore_ok">Premium restored</string>
     <string name="settings_restore_none">No purchase to restore</string>

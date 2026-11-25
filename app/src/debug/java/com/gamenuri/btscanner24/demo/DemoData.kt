@@ -89,6 +89,14 @@ internal object DemoData {
                 trend = ProximityTrend.CLOSER,
                 sound = if (name == "sound") SoundState.PLAYING else base.sound,
             ).distance(3.0, ProximityBand.NEAR)
+            // World-anchored for the 3D scene (#76): the arrow keeps its place in the room as the phone turns.
+            "ar" -> base.copy(
+                stage = FinderStage.WALK,
+                arrowDegrees = 0f,
+                bearingDegrees = 0f,
+                confidence = ArrowConfidence.HIGH,
+                trend = ProximityTrend.CLOSER,
+            ).distance(3.0, ProximityBand.NEAR)
             "locked" -> base.copy(
                 stage = FinderStage.LOCKED,
                 arrowDegrees = 0f,

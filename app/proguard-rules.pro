@@ -19,3 +19,6 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+# WorkManager (pulled in by play-services-ads) builds its Room database by reflection
+# (WorkDatabase_Impl). Without this R8 renames it and the app crashes at startup (#31).
+-keep class * extends androidx.room.RoomDatabase { <init>(); }
