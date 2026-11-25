@@ -108,7 +108,7 @@ fun FoundContent(
         ) {
             // The same full-width 3D layer as the find screen; the layout below keeps its place free.
             if (scene3d) {
-                FindSceneLayer(heroSlot, pop) { centerY, _ ->
+                FindSceneLayer(heroSlot, pop) { centerY, _, _ ->
                     FindScene3d(
                         spec = FindSceneSpec(
                             found = true,

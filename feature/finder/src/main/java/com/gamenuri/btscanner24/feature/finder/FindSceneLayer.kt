@@ -19,15 +19,16 @@ import androidx.compose.ui.layout.onGloballyPositioned
  * width, from the top of the screen down to a little past the middle, where its floor has faded
  * out. The title and the state text lie on top of it; the distance number and the buttons sit
  * below the fade. The middle of the floor follows the middle of [slot], the place the screen's
- * layout keeps free for it, and the far floor fades out above the slot's top when [fadeAboveSlot]
- * (text sits there); [scene] gets both as shares of the layer's height (the fade negative when off).
+ * layout keeps free for it, and the far floor fades out above the slot's top and below its
+ * bottom when [fadeOutsideSlot] (text sits there); [scene] gets all three as shares of the layer's
+ * height (the fades negative when off).
  */
 @Composable
 internal fun BoxScope.FindSceneLayer(
     slot: SceneSlot,
     modifier: Modifier = Modifier,
-    fadeAboveSlot: Boolean = false,
-    scene: @Composable (centerY: Float, topFade: Float) -> Unit,
+    fadeOutsideSlot: Boolean = false,
+    scene: @Composable (centerY: Float, topFade: Float, bottomFade: Float) -> Unit,
 ) {
     var top by remember { mutableFloatStateOf(0f) }
     var height by remember { mutableFloatStateOf(0f) }
@@ -44,8 +45,9 @@ internal fun BoxScope.FindSceneLayer(
     ) {
         val placed = !slot.centerY.isNaN() && height > 0f
         val center = if (placed) ((slot.centerY - top) / height).coerceIn(MIN_CENTER, MAX_CENTER) else DEFAULT_CENTER
-        val topFade = if (placed && fadeAboveSlot) ((slot.topY - top) / height).coerceIn(0f, 1f) else NO_FADE
-        scene(center, topFade)
+        val topFade = if (placed && fadeOutsideSlot) ((slot.topY - top) / height).coerceIn(0f, 1f) else NO_FADE
+        val bottomFade = if (placed && fadeOutsideSlot) ((slot.bottomY - top) / height).coerceIn(0f, 1f) else NO_FADE
+        scene(center, topFade, bottomFade)
     }
 }
 
@@ -53,6 +55,7 @@ internal fun BoxScope.FindSceneLayer(
 internal class SceneSlot {
     var centerY by mutableFloatStateOf(Float.NaN)
     var topY by mutableFloatStateOf(Float.NaN)
+    var bottomY by mutableFloatStateOf(Float.NaN)
 }
 
 /** Reports this place to [slot] for [FindSceneLayer]. */
@@ -60,6 +63,7 @@ internal fun Modifier.sceneSlot(slot: SceneSlot): Modifier = onGloballyPositione
     val bounds = it.boundsInRoot()
     slot.centerY = bounds.center.y
     slot.topY = bounds.top
+    slot.bottomY = bounds.bottom
 }
 
 private const val SCENE_LAYER_HEIGHT = 0.62f

@@ -48,6 +48,8 @@ data class FindSceneSpec(
     val centerY: Float = 0.5f,
     /** The far floor fades out above this share of the layer's height, under the text; negative: never. */
     val topFade: Float = -1f,
+    /** The far floor fades out below this share of the layer's height (the distance); negative: by screen height. */
+    val bottomFade: Float = -1f,
     /** The mint marker on the far ring, where the arrow points (only with [fullBleed]). */
     val showTarget: Boolean = false,
 )
@@ -102,6 +104,7 @@ fun FindScene3d(
                 fullBleed = spec.fullBleed
                 centerY = spec.centerY
                 topFade = spec.topFade
+                bottomFade = spec.bottomFade
                 ringFraction = if (spec.fullBleed) FULL_BLEED_RING_FRACTION else SceneState.BOXED_RING_FRACTION
                 showTarget = spec.showTarget
             }

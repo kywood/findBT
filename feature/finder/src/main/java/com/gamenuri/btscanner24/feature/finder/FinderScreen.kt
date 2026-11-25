@@ -235,9 +235,10 @@ fun FinderContent(
                 .background(palette.brush()),
         )
         if (scene3d && state.showsScene()) {
-            FindSceneLayer(dialSlot, fadeAboveSlot = true) { centerY, topFade ->
+            FindSceneLayer(dialSlot, fadeOutsideSlot = true) { centerY, topFade, bottomFade ->
                 CompositionLocalProvider(LocalContentColor provides accent) {
-                    ArrowScene(state, centerY, topFade, onUnavailable = { sceneFailed = true })
+                    val fades = SceneFades(topFade, bottomFade)
+                    ArrowScene(state, centerY, fades, onUnavailable = { sceneFailed = true })
                 }
             }
         }

@@ -54,6 +54,13 @@ internal class SceneState {
      */
     @Volatile var topFade: Float = -1f
 
+    /**
+     * The same from below: the far floor is gone below this share of the view's height (where the
+     * distance label starts) and whole a little above it. Negative: the screen-height rule of
+     * [fadeFullY] and [fadeClearY] is used instead.
+     */
+    @Volatile var bottomFade: Float = -1f
+
     /** Where the middle of the floor sits in the view, 0 = top edge, 1 = bottom edge. */
     @Volatile var centerY: Float = 0.5f
 

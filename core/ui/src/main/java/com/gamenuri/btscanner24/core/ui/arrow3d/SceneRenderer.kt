@@ -495,19 +495,27 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         GLES20.glUniform1f(GLES20.glGetUniformLocation(flatProgram, "uEdge"), if (soft) edge else 0f)
         if (soft) {
             GLES20.glUniform2f(GLES20.glGetUniformLocation(flatProgram, "uViewport"), viewportWidth, viewportHeight)
-            // Without a real range (not laid out yet) the fade is switched off.
+            // From below: gone where the distance label starts when the layout says where that is,
+            // else between 50 % and 60 % of the screen; without either (not laid out yet) no fade.
+            val bottom = state.bottomFade
             val fades = state.fadeFullY > state.fadeClearY
-            GLES20.glUniform2f(
-                GLES20.glGetUniformLocation(flatProgram, "uFade"),
-                if (fades) state.fadeClearY else -2f,
-                if (fades) state.fadeFullY else -1f,
-            )
+            val goneY = when {
+                bottom >= 0f -> (1f - bottom) * viewportHeight
+                fades -> state.fadeClearY
+                else -> -2f
+            }
+            val wholeY = when {
+                bottom >= 0f -> goneY + FADE_BAND * viewportHeight
+                fades -> state.fadeFullY
+                else -> -1f
+            }
+            GLES20.glUniform2f(GLES20.glGetUniformLocation(flatProgram, "uFade"), goneY, wholeY)
             // From the top: gone above the state text's lower edge, whole a little below it.
             val top = state.topFade
             val clearY = if (top >= 0f) (1f - top) * viewportHeight else NO_TOP_FADE
             GLES20.glUniform2f(
                 GLES20.glGetUniformLocation(flatProgram, "uTop"),
-                clearY - TOP_FADE_BAND * viewportHeight,
+                clearY - FADE_BAND * viewportHeight,
                 clearY,
             )
         }
@@ -615,7 +623,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         const val EDGE_FADE = 0.12f
         const val NO_EDGE_FADE = 0.0001f
         const val NO_TOP_FADE = 12_000f
-        const val TOP_FADE_BAND = 0.06f
+        const val FADE_BAND = 0.06f
 
         // Full-bleed floor (design find-flow-3d v1.1, the designer's scene values): the ring at
         // 45 % with a 7 % fill, a ring at 1.76 R (30 %), a dashed one at 2.64 R (48 dashes, 55 %
