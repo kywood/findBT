@@ -99,6 +99,7 @@ import com.gamenuri.btscanner24.core.model.DeviceLabel
 import com.gamenuri.btscanner24.core.model.NameSource
 import com.gamenuri.btscanner24.core.ui.R as UiR
 import com.gamenuri.btscanner24.core.ui.distanceText
+import com.gamenuri.btscanner24.core.ui.help.NotDetectedHelpSheet
 import com.gamenuri.btscanner24.core.ui.text
 import java.util.Locale
 import kotlin.math.roundToInt
@@ -436,6 +437,7 @@ private fun FinderScaffold(
                 // always takes its space, so the rows above keep their place (#60).
                 Box(Modifier.fillMaxWidth().heightIn(min = BOTTOM_SLOT), contentAlignment = Alignment.Center) {
                     val noSignal = state.stage == FinderStage.NOT_FOUND || state.stage == FinderStage.SIGNAL_LOST
+                    var helpOpen by rememberSaveable { mutableStateOf(false) }
                     if (noSignal) {
                         // Never a dead end (#117): scan afresh, or leave for the list.
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -445,7 +447,14 @@ private fun FinderScaffold(
                             TextButton(onClick = actions.onClose) {
                                 Text(stringResource(R.string.finder_back_to_list), color = content)
                             }
+                            // Why it may not be picked up and what to try (#154); scan failures say their own reason.
+                            if (state.scanFailure == null) {
+                                TextButton(onClick = { helpOpen = true }) {
+                                    Text(stringResource(UiR.string.help_not_detected_short), color = content)
+                                }
+                            }
                         }
+                        if (helpOpen) NotDetectedHelpSheet(onDismiss = { helpOpen = false })
                     } else if (state.showConfirmHint) {
                         // Names can be vague ("hiot0"); confirming by touch matters more than the name (#46).
                         Text(

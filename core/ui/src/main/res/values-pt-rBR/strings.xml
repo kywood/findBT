@@ -75,4 +75,14 @@
     <string name="save_locked_ad_used">Já usado hoje</string>
     <string name="save_locked_later">Agora não</string>
     <string name="device_more_for">Mais opções para %1$s</string>
+    <!-- Help when a device is not detected (#154). -->
+    <string name="help_not_detected_link">O dispositivo não aparece?</string>
+    <string name="help_not_detected_short">Ajuda</string>
+    <string name="help_not_detected_title">Quando um dispositivo não aparece</string>
+    <string name="help_not_detected_case">Fones dentro de um estojo fechado não emitem sinal. Abra a tampa ou tire os fones.</string>
+    <string name="help_not_detected_battery">Um dispositivo desligado ou sem bateria não emite sinal.</string>
+    <string name="help_not_detected_range">O Bluetooth alcança cerca de 10 m em ambientes internos, e menos com paredes. Comece onde você usou pela última vez e ande devagar.</string>
+    <string name="help_not_detected_one_bud">Perdeu só um fone? Guarde o que você tem no estojo e feche a tampa, para que só o perdido seja detectado.</string>
+    <string name="help_not_detected_settings">Verifique se o Bluetooth e a localização estão ativados nas configurações do celular.</string>
+    <string name="help_not_detected_ok">Entendi</string>
 </resources>
