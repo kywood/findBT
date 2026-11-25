@@ -20,7 +20,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gamenuri.btscanner24.core.ads.AdBanner
-import com.gamenuri.btscanner24.core.ads.NativeAdCard
 import com.gamenuri.btscanner24.core.billing.PremiumStore
 import com.gamenuri.btscanner24.core.ui.R as UiR
 import com.gamenuri.btscanner24.feature.devices.DevicesScreen
@@ -70,8 +69,6 @@ fun HomeScreen(onFind: (address: String) -> Unit, onOpenSettings: () -> Unit, st
                 onDeviceClick = { onFind(it.address) },
                 modifier = content,
                 onOpenSettings = onOpenSettings,
-                // The one native card, after the last row (#81 ②).
-                listFooter = { NativeAdCard() },
             )
             // Saving unpaired trackers comes with device storage; until then "Add a tracker" opens Nearby.
             HomeTab.MY_DEVICES ->
