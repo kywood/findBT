@@ -70,4 +70,4 @@ private const val SCENE_LAYER_HEIGHT = 0.62f
 private const val DEFAULT_CENTER = 0.7f
 private const val NO_FADE = -1f
 private const val MIN_CENTER = 0.35f
-private const val MAX_CENTER = 0.7f
+private const val MAX_CENTER = 0.74f
