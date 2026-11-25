@@ -246,7 +246,8 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, ringVertices)
         GLES20.glDisableVertexAttribArray(position)
 
-        if (state.fullBleed) drawRims()
+        // Only the middle rim: this close the far ones would be cut off by the layer's lower edge.
+        if (state.fullBleed) drawRims(outer = false)
         drawShadow(medalBuffer, medalVertices, markerModel)
         drawSolid(medalBuffer, medalVertices, markerModel, state.arrowColor)
         drawSolid(checkBuffer, checkVertices, markerModel, accent)
@@ -378,12 +379,15 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
     private fun targetRadius(x: Float, z: Float): Float {
         val top = state.topFade
         if (top < 0f) return FAR_RING
-        // Normalised height (−1 bottom, +1 top) of the highest place for the marker's middle.
+        // A device model stands taller than the ball: its top is what has to stay under the text.
+        val tall = (PEDESTAL_THICKNESS + MARKER_FLOAT + MARKER_MODEL) * MESH_SCALE + MARKER_BOB
+        val reach = if (modelVertices > 0) tall else 0f
+        // Normalised height (−1 bottom, +1 top) of the highest place for the marker.
         val limit = 1f - 2f * (top + TARGET_CLEARANCE)
         var radius = FAR_RING
         while (radius > TARGET_MIN_RADIUS) {
             probe[0] = x * radius
-            probe[1] = 0f
+            probe[1] = if (reach > 0f) stepHeight(radius) + reach else 0f
             probe[2] = z * radius
             probe[3] = 1f
             Matrix.multiplyMV(projected, 0, viewProjection, 0, probe, 0)
@@ -536,7 +540,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         GLES20.glEnable(GLES20.GL_BLEND)
         val top = STAND_THICKNESS * grown + SHADOW_LIFT
         val stride = DeviceModel.FLOATS_PER_VERTEX * BYTES_PER_FLOAT
-        drawShadow(modelBuffer, modelVertices, deviceModel, stride, height = top, spread = STAND_SHADOW_SPREAD)
+        drawShadow(modelBuffer, modelVertices, deviceModel, stride, top, STAND_SHADOW_SPREAD, STAND_SHADOW_ALPHA)
         GLES20.glDepthMask(true)
         drawModel(deviceModel)
     }
@@ -681,6 +685,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         stride: Int = STRIDE_BYTES,
         height: Float = 0f,
         spread: Float = 1f,
+        alpha: Float = SHADOW_LAYER_ALPHA,
     ) {
         GLES20.glUseProgram(flatProgram)
         val position = GLES20.glGetAttribLocation(flatProgram, "aPos")
@@ -693,10 +698,10 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         GLES20.glUniform1f(GLES20.glGetUniformLocation(flatProgram, "uEdge"), 0f)
         GLES20.glUniform4f(
             GLES20.glGetUniformLocation(flatProgram, "uColor"),
-            SHADOW_RED * SHADOW_LAYER_ALPHA,
-            SHADOW_GREEN * SHADOW_LAYER_ALPHA,
-            SHADOW_BLUE * SHADOW_LAYER_ALPHA,
-            SHADOW_LAYER_ALPHA,
+            SHADOW_RED * alpha,
+            SHADOW_GREEN * alpha,
+            SHADOW_BLUE * alpha,
+            alpha,
         )
         GLES20.glStencilFunc(GLES20.GL_EQUAL, 0, 0xFF)
         for (scale in SHADOW_SCALES) {
@@ -776,8 +781,9 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
     }
 
     /** The rims of the three steps: lit, so their tops and walls read as solid edges of a real floor. */
-    private fun drawRims() {
+    private fun drawRims(outer: Boolean = true) {
         for (step in rims.indices.reversed()) {
+            if (step > 0 && !outer) continue
             Matrix.setIdentityM(rimModel, 0)
             Matrix.translateM(rimModel, 0, 0f, -step * STEP_HEIGHT, 0f)
             Matrix.scaleM(rimModel, 0, MESH_SCALE, MESH_SCALE, MESH_SCALE)
@@ -1011,7 +1017,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         // 0.064 over its stand, bobbing ± 0.024, turned 20° towards the viewer. "Right here": longest
         // side 0.74, its underside 0.24 over the floor, bobbing ± 0.032, one turn in about 9 s, leaning
         // 7° forward, over a white stand (radius 0.42, 0.096 high) that carries a mint ring (0.32).
-        const val MARKER_MODEL = 0.50f
+        const val MARKER_MODEL = 0.44f
         const val MARKER_FLOAT = 0.064f
         const val MARKER_BOB = 0.024f * RING_OUTER
         const val MARKER_BOB_SPEED = 2.6f
@@ -1030,6 +1036,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         const val STAND_RING_WIDTH = 0.02f
         const val STAND_RING_HEIGHT = 0.012f
         const val STAND_SHADOW_SPREAD = 0.85f
+        const val STAND_SHADOW_ALPHA = 0.05f
         const val SHADOW_LIFT = 0.004f
 
         // Leaving on "Found it": up 0.4, about half a turn, gone in the first fifth of the medal's rise.
