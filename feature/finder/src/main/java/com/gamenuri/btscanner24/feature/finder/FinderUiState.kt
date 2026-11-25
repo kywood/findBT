@@ -78,6 +78,11 @@ data class FinderUiState(
      * a signal, and the screen asks whether the earbuds are in someone's ears first.
      */
     val soundViaPhone: Boolean = false,
+    /**
+     * Connected for audio, but the phone's media goes to another output: the screen explains it and
+     * opens the system's output picker instead of hiding the sound button (#153).
+     */
+    val soundNeedsOutput: Boolean = false,
 )
 
 /** Immediate Alert (0x1802) "Play sound" state (#28). */

@@ -68,4 +68,6 @@
     <string name="finder_sound_ear_body">Um som alto vai tocar neste dispositivo e aumentar aos poucos. Se estiver usando, tire primeiro.</string>
     <string name="finder_sound_ear_confirm">Tocar som</string>
     <string name="finder_sound_ear_cancel">Cancelar</string>
+    <string name="finder_sound_output_note">Está conectado, mas o som está saindo por outra saída. Mude a saída para este dispositivo para tocar um som nele.</string>
+    <string name="finder_sound_output_button">Mudar saída de som</string>
 </resources>

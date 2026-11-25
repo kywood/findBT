@@ -73,4 +73,6 @@
     <string name="finder_sound_ear_body">A loud sound will play through this device and get louder. If you are wearing it, take it out first.</string>
     <string name="finder_sound_ear_confirm">Play sound</string>
     <string name="finder_sound_ear_cancel">Cancel</string>
+    <string name="finder_sound_output_note">It is connected, but sound is going to another output. Switch the output to this device to play a sound on it.</string>
+    <string name="finder_sound_output_button">Switch sound output</string>
 </resources>

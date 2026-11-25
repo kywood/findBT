@@ -1,10 +1,13 @@
 package com.gamenuri.btscanner24.feature.finder
 
+import android.content.ActivityNotFoundException
 import android.content.Context
+import android.content.Intent
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
@@ -254,6 +257,7 @@ private fun FinderLive(
             onSpinAgain = viewModel::spinAgain,
             onToggleSound = viewModel::toggleSound,
             onRetry = viewModel::retry,
+            onOpenOutput = { openMediaOutput(context) },
         ),
     )
 }
@@ -265,6 +269,7 @@ data class FinderActions(
     val onSpinAgain: () -> Unit = {},
     val onToggleSound: () -> Unit = {},
     val onRetry: () -> Unit = {},
+    val onOpenOutput: () -> Unit = {},
 )
 
 /**
@@ -506,12 +511,56 @@ private fun ActionRow(state: FinderUiState, actions: FinderActions, content: Col
                 onDismiss = { earCheckOpen = false },
             )
         }
-        if (state.showSoundButton) {
+        if (state.soundNeedsOutput) {
+            OutputGuide(actions.onOpenOutput, content)
+            respin?.invoke(Modifier.fillMaxWidth())
+        } else if (state.showSoundButton) {
             SoundButton(state.sound, onSound, content, respin)
         } else {
             respin?.invoke(Modifier.fillMaxWidth())
         }
         MainActions(state, actions, content, background)
+    }
+}
+
+/**
+ * Android does not let an app choose where sound goes, so when the earbuds are connected but media
+ * plays somewhere else, the user switches the output and the sound button takes over (#153).
+ */
+@Composable
+private fun OutputGuide(onOpen: () -> Unit, content: Color) {
+    Text(
+        text = stringResource(R.string.finder_sound_output_note),
+        modifier = Modifier.fillMaxWidth(),
+        style = MaterialTheme.typography.bodySmall,
+        color = content.copy(alpha = MUTED_ALPHA),
+        textAlign = TextAlign.Center,
+    )
+    OutlinedButton(
+        onClick = onOpen,
+        modifier = Modifier.fillMaxWidth(),
+        colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.Transparent, contentColor = content),
+        border = BorderStroke(1.dp, content.copy(alpha = 0.5f)),
+    ) {
+        Icon(painterResource(UiR.drawable.ic_sound), contentDescription = null, modifier = Modifier.size(18.dp))
+        Spacer(Modifier.size(8.dp))
+        Text(stringResource(R.string.finder_sound_output_button), maxLines = 1, overflow = TextOverflow.Ellipsis)
+    }
+}
+
+/** The system's media output picker (Android 10 and 11); Bluetooth settings where that panel is gone. */
+private fun openMediaOutput(context: Context) {
+    val panel = Intent("com.android.settings.panel.action.MEDIA_OUTPUT")
+        .putExtra("com.android.settings.panel.extra.PACKAGE_NAME", context.packageName)
+    for (intent in listOf(panel, Intent(Settings.ACTION_BLUETOOTH_SETTINGS))) {
+        try {
+            context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            return
+        } catch (_: ActivityNotFoundException) {
+            // Try the next one.
+        } catch (_: SecurityException) {
+            // Some phones keep the panel to themselves.
+        }
     }
 }
 
