@@ -25,10 +25,7 @@ import kotlinx.coroutines.launch
  * list, and the find screen takes the same water over once it has drawn.
  */
 @Stable
-class FindEntryWater internal constructor(
-    private val scope: CoroutineScope,
-    private val reduceMotion: () -> Boolean,
-) {
+class FindEntryWater internal constructor(private val scope: CoroutineScope, private val reduceMotion: () -> Boolean) {
     internal val motion = WaterMotion()
 
     /** True from the tap until the find screen draws under this water itself. */
