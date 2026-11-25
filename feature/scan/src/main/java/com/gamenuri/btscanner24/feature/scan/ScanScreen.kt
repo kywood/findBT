@@ -675,23 +675,28 @@ private fun OtherHeader(count: Int, sort: DeviceSort, onClose: () -> Unit, onInf
             modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(start = 16.dp, end = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column(Modifier.weight(1f, fill = false)) {
-                Text(
-                    text = stringResource(R.string.nearby_other_section, count),
-                    style = MaterialTheme.typography.titleMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+            // The text column takes all the width the close button leaves, so the order line fits (#142).
+            Column(Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = stringResource(R.string.nearby_other_section, count),
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
+                    OtherInfoButton(onInfo)
+                }
                 Text(
                     // Sorted like this when last sorted; devices heard since then wait at the bottom (#143).
                     text = stringResource(R.string.nearby_other_order, stringResource(sort.labelRes())),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
-            OtherInfoButton(onInfo)
-            Spacer(Modifier.weight(1f))
+            Spacer(Modifier.width(8.dp))
             FilledTonalButton(
                 onClick = onClose,
                 modifier = Modifier.heightIn(min = 40.dp),
