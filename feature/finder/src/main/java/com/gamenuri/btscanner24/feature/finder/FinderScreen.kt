@@ -242,7 +242,13 @@ fun FinderContent(
                 .background(palette.brush()),
         )
         if (scene3d && state.showsScene()) {
-            FindSceneLayer(dialSlot, fadeOutsideSlot = true) { centerY, topFade, bottomFade ->
+            // Lower than the slot's middle (design find-flow v1.4): the ring sits just over the distance
+            // block, which leaves the far step and the device marker the room above it.
+            FindSceneLayer(
+                dialSlot,
+                fadeOutsideSlot = true,
+                centerBias = SCENE_CENTER_BIAS,
+            ) { centerY, topFade, bottomFade ->
                 CompositionLocalProvider(LocalContentColor provides accent) {
                     val fades = SceneFades(topFade, bottomFade)
                     ArrowScene(state, centerY, fades, onUnavailable = { sceneFailed = true })
@@ -767,6 +773,7 @@ private fun vibrator(context: Context): Vibrator? {
     return vibrator?.takeIf { it.hasVibrator() }
 }
 
+private const val SCENE_CENTER_BIAS = 0.64f
 private const val HAPTIC_MS = 40L
 private const val LONG_HAPTIC_MS = 400L
 private const val COLOR_FADE_MS = 400
