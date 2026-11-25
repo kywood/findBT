@@ -20,6 +20,12 @@
     <string name="settings_distance_unit_meters">Metros</string>
     <string name="settings_distance_unit_feet">Pies</string>
     <string name="settings_section_privacy">Privacidad</string>
+    <string name="settings_place_recording">Registrar la última ubicación</string>
+    <string name="settings_place_recording_body">Guarda el lugar aproximado donde se detectó un dispositivo por última vez, solo en este teléfono</string>
+    <string name="settings_place_off_title">¿Borrar también los lugares guardados?</string>
+    <string name="settings_place_off_body">El registro se desactiva en ambos casos. La hora de la última detección se conserva.</string>
+    <string name="settings_place_off_delete">Borrar lugares</string>
+    <string name="settings_place_off_keep">Conservar lugares</string>
     <string name="settings_privacy_options">Opciones de privacidad</string>
     <string name="settings_privacy_options_body">Consentimiento de anuncios</string>
     <string name="settings_privacy_policy">Política de privacidad</string>

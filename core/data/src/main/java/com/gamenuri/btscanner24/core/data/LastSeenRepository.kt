@@ -40,6 +40,9 @@ interface LastSeenStore {
     val recordsPlace: Flow<Boolean>
 
     suspend fun setRecordsPlace(on: Boolean)
+
+    /** Drops the place from every record and keeps the time, when the user turns recording off and says so. */
+    suspend fun forgetPlaces()
 }
 
 /** [LastSeenStore] in a file on the phone only, gone when the device is taken off My devices. */
@@ -71,6 +74,13 @@ class LastSeenRepository(private val store: DataStore<Preferences>) : LastSeenSt
 
     override suspend fun setRecordsPlace(on: Boolean) {
         store.edit { preferences -> preferences[RECORDS_PLACE] = on }
+    }
+
+    override suspend fun forgetPlaces() {
+        store.edit { preferences ->
+            val records = LastSeenCodec.decode(preferences[RECORDS].orEmpty())
+            preferences[RECORDS] = LastSeenCodec.encode(records.values.map { it.copy(place = null) })
+        }
     }
 
     private companion object {

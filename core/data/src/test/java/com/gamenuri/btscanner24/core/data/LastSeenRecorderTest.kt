@@ -115,6 +115,10 @@ class LastSeenRecorderTest {
         override val recordsPlace: Flow<Boolean> = MutableStateFlow(true)
 
         override suspend fun setRecordsPlace(on: Boolean) = Unit
+
+        override suspend fun forgetPlaces() {
+            records.value = records.value.mapValues { it.value.copy(place = null) }
+        }
     }
 
     private val home = LastSeen.Place(37.5, 127.0, 300f)
