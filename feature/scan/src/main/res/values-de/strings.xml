@@ -24,7 +24,7 @@
     <!-- Filter screen and other devices (#85, #82) -->
     <string name="filter_close">Schließen</string>
     <string name="filter_section_show">Anzeigen</string>
-    <string name="filter_show_other_body">Beacons, TVs, Sensoren und mehr · %1$d</string>
+    <string name="filter_show_other_body">Signale ohne Namen oder schwer erkennbarer Art · %1$d</string>
     <string name="filter_show_unnamed">Geräte ohne Namen anzeigen</string>
     <string name="filter_distance">Entfernung</string>
     <string name="filter_distance_within_5">Bis 5 m</string>
@@ -37,6 +37,16 @@
     <string name="filter_no_results">Keine Ergebnisse</string>
     <string name="nearby_other_show">Anzeigen</string>
     <string name="nearby_other_section">Andere Geräte · %1$d</string>
+    <!-- Other devices: close and explanation (#142) -->
+    <string name="nearby_other_close">Schließen</string>
+    <string name="nearby_other_close_section">Andere Geräte schließen</string>
+    <string name="nearby_other_order">%1$s · neue unten</string>
+    <string name="nearby_other_info">Über andere Geräte</string>
+    <string name="other_info_title">Andere Geräte</string>
+    <string name="other_info_what">Bluetooth-Signale in der Nähe ohne Namen oder von schwer erkennbarer Art. Das können Geräte von Nachbarn, Haushaltsgeräte, Fernseher oder Beacons sein.</string>
+    <string name="other_info_why">Sie sind zunächst ausgeblendet, weil es meist viele sind und die meisten nicht dir gehören.</string>
+    <string name="other_info_mine">Wenn eines davon dir gehört, tippe darauf, um die Suche zu starten. Achte darauf, ob die Entfernung beim Näherkommen sinkt.</string>
+    <string name="other_info_ok">OK</string>
     <string name="nearby_empty_personal">Keine eigenen Geräte in der Nähe</string>
     <plurals name="filter_show_results">
         <item quantity="one">%1$d Gerät anzeigen</item>

@@ -52,6 +52,15 @@ class DeviceNamingTest {
     }
 
     @Test
+    fun `unnamed Apple Find My signal is marked, a named one is not`() {
+        val tracker = device(manufacturer = "Apple", category = DeviceCategory.TRACKER).copy(companyId = 0x004C)
+        assertTrue((DeviceNaming.label(tracker) as DeviceLabel.Generic).appleFindMy)
+        assertTrue(DeviceNaming.label(tracker, userName = "Keys") is DeviceLabel.Named)
+        val other = device(manufacturer = "Tile", category = DeviceCategory.TRACKER).copy(companyId = 0x00C7)
+        assertFalse((DeviceNaming.label(other) as DeviceLabel.Generic).appleFindMy)
+    }
+
+    @Test
     fun `blank alias and blank name are ignored`() {
         val label = DeviceNaming.label(device(name = "  "), pairedAlias = " ")
         assertTrue(label is DeviceLabel.Generic)

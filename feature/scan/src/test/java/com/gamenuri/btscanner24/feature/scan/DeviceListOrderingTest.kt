@@ -219,4 +219,31 @@ class DeviceListOrderingTest {
         assertFalse(items.any { it.isNew })
         assertFalse(reorder)
     }
+
+    @Test
+    fun `other devices keep their places through an automatic re-sort`() {
+        val ordering = OrderingState()
+        val shown = ListPreferences(filter = DeviceFilter(showOther = true))
+        fun other(address: String, rssi: Int) = device(address, rssi = rssi, category = DeviceCategory.UNKNOWN)
+        ordering.update(
+            listOf(device("A", rssi = -50), device("B", rssi = -60), other("X", -55), other("Y", -65)),
+            shown,
+            "",
+            0,
+            now,
+        )
+        // Later every signal has flipped. Other devices alone never ask for a new order.
+        val later = now + OrderingState.SETTLE_MS + 1
+        val flippedOther = listOf(device("A", rssi = -50), device("B", rssi = -60), other("X", -90), other("Y", -40))
+        val (still, chip, _) = ordering.update(flippedOther, shown, "", 0, later)
+        assertEquals(listOf("A", "B", "X", "Y"), still.map { it.device.address })
+        assertFalse(chip)
+        // The untapped re-sort moves the personal rows only.
+        val flipped = listOf(device("A", rssi = -80), device("B", rssi = -40), other("X", -90), other("Y", -40))
+        val (auto, _, _) = ordering.update(flipped, shown, "", 0, later + 1, autoToken = 1)
+        assertEquals(listOf("B", "A", "X", "Y"), auto.map { it.device.address })
+        // A tap on the chip sorts everything.
+        val (tapped, _, _) = ordering.update(flipped, shown, "", 1, later + 2, autoToken = 1)
+        assertEquals(listOf("B", "A", "Y", "X"), tapped.map { it.device.address })
+    }
 }
