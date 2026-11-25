@@ -76,7 +76,13 @@ class WaterMotion(full: Boolean = false) {
             if (reachedBrimAt < 0f && water.level < BRIM_NEAR) reachedBrimAt = seconds
             // To the brim first, so the overshoot and ripples show at the top, then over it.
             val overfill = reachedBrimAt >= 0f && seconds - reachedBrimAt >= BRIM_HOLD_SECONDS
-            if (overfill && water.level < COVERED_LEVEL) null else if (overfill) OVERFILL_LEVEL else BRIM_LEVEL
+            if (overfill && water.level < COVERED_LEVEL) {
+                null
+            } else if (overfill) {
+                OVERFILL_LEVEL
+            } else {
+                BRIM_LEVEL
+            }
         }
         if (mine == run) fill()
     }
@@ -110,12 +116,7 @@ class WaterMotion(full: Boolean = false) {
     }
 
     /** Steps [water] every frame towards the level [target] returns, until it returns null. */
-    private suspend fun simulate(
-        mine: Int,
-        water: WaterSim,
-        slope: () -> Float,
-        target: (seconds: Float) -> Float?,
-    ) {
+    private suspend fun simulate(mine: Int, water: WaterSim, slope: () -> Float, target: (seconds: Float) -> Float?) {
         var last = withFrameNanos { it }
         var seconds = 0f
         var owed = 0f

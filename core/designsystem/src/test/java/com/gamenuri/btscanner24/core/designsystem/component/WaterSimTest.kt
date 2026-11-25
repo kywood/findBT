@@ -1,9 +1,9 @@
 package com.gamenuri.btscanner24.core.designsystem.component
 
+import kotlin.math.abs
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import kotlin.math.abs
 
 class WaterSimTest {
     private fun WaterSim.run(seconds: Float, target: Float, slope: Float = 0f) {
