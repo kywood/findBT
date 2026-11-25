@@ -65,6 +65,28 @@ class NearoAds(
     private var rewarded: RewardedAd? = null
     private var rewardedLoading = false
 
+    private val _statisticsAllowed = MutableStateFlow(false)
+
+    /**
+     * Usage statistics and crash reports may be collected (#33): where no consent is required, or
+     * once the user agreed to storage on the device (TCF purpose 1) in the consent form. Stays
+     * false until the consent step has run, and follows later changes in "Privacy options".
+     */
+    val statisticsAllowed: StateFlow<Boolean> = _statisticsAllowed.asStateFlow()
+
+    private fun updateStatisticsConsent() {
+        _statisticsAllowed.value = when (consent.consentStatus) {
+            ConsentInformation.ConsentStatus.NOT_REQUIRED -> true
+            ConsentInformation.ConsentStatus.OBTAINED -> {
+                // Written by the consent form: one character per TCF purpose, "1" = agreed.
+                val prefs = app.getSharedPreferences(app.packageName + "_preferences", Context.MODE_PRIVATE)
+                val purposes = prefs.getString(TCF_PURPOSES, "")
+                purposes.orEmpty().startsWith("1")
+            }
+            else -> false
+        }
+    }
+
     /** The EEA/UK "Privacy options" entry Settings must offer (#31). */
     val isPrivacyOptionsRequired: Boolean
         get() = consent.privacyOptionsRequirementStatus ==
@@ -81,15 +103,21 @@ class NearoAds(
         consent.requestConsentInfoUpdate(
             activity,
             ConsentRequestParameters.Builder().build(),
-            { UserMessagingPlatform.loadAndShowConsentFormIfRequired(activity) { initializeIfAllowed() } },
+            {
+                UserMessagingPlatform.loadAndShowConsentFormIfRequired(activity) {
+                    updateStatisticsConsent()
+                    initializeIfAllowed()
+                }
+            },
             { initializeIfAllowed() },
         )
         // Consent given in an earlier session: start right away.
+        updateStatisticsConsent()
         initializeIfAllowed()
     }
 
     fun showPrivacyOptions(activity: Activity) {
-        UserMessagingPlatform.showPrivacyOptionsForm(activity) { }
+        UserMessagingPlatform.showPrivacyOptionsForm(activity) { updateStatisticsConsent() }
     }
 
     private fun initializeIfAllowed() {
@@ -181,6 +209,9 @@ class NearoAds(
     }
 
     companion object {
+        /** IAB TCF v2 key in the default shared preferences, written by the UMP consent form. */
+        private const val TCF_PURPOSES = "IABTCF_PurposeConsents"
+
         fun from(context: Context): NearoAds? = (context.applicationContext as? Provider)?.ads
     }
 }

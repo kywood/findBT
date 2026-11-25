@@ -4,6 +4,7 @@ import android.app.Application
 import com.gamenuri.btscanner24.core.ads.AdUnits
 import com.gamenuri.btscanner24.core.ads.InterstitialPolicy
 import com.gamenuri.btscanner24.core.ads.NearoAds
+import com.gamenuri.btscanner24.core.analytics.Analytics
 import com.gamenuri.btscanner24.core.billing.DayPassPremiumStore
 import com.gamenuri.btscanner24.core.billing.PlayPremiumStore
 import com.gamenuri.btscanner24.core.billing.PremiumStore
@@ -26,7 +27,8 @@ class BtScannerApp :
     BleDependencies.Provider,
     DataDependenciesProvider,
     PremiumStore.Provider,
-    NearoAds.Provider {
+    NearoAds.Provider,
+    Analytics.Provider {
 
     private val companies by lazy { CompanyDirectory(this) }
 
@@ -84,6 +86,15 @@ class BtScannerApp :
             premium = premium,
             policy = InterstitialPolicy(InterstitialPolicy.SharedPreferencesStorage(prefs), installedAt),
         )
+    }
+
+    /**
+     * Usage events and crash reports (#33) only in the real release build: never in debug, the
+     * benchmark build or the demo mode, and not at all when the build has no google-services.json.
+     * Collection itself starts off; MainActivity turns it on once consent allows.
+     */
+    override val analytics: Analytics by lazy {
+        if (BuildConfig.BUILD_TYPE != "release" || demo != null) Analytics.None else Analytics.create(this)
     }
 
     private fun adUnits(): AdUnits {
