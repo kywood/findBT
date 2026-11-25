@@ -69,6 +69,7 @@ internal object DemoData {
     fun findState(name: String): FinderUiState {
         val base = FinderUiState(
             deviceLabel = DeviceLabel.Named("My Earbuds", NameSource.ADVERTISED, suffix = "0001"),
+            category = DeviceCategory.EARBUDS,
             advanced = AdvancedInfo(address = address(0)),
             // The demo earbuds can ring, so every in-range state shows the same bottom bar (#28, #60).
             sound = SoundState.READY,

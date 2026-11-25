@@ -24,6 +24,9 @@ internal class SceneState {
     /** Direction locked: the arrow settles with a small overshoot. */
     @Volatile var locked: Boolean = false
 
+    /** No signal to point at (not found, signal lost): only the floor, the arrow sinks away. */
+    @Volatile var noArrow: Boolean = false
+
     /** Within reach: the arrow gives way to a puck with rings pulsing out over the floor. */
     @Volatile var rightHere: Boolean = false
 
@@ -69,6 +72,12 @@ internal class SceneState {
 
     /** The mint marker on the far ring, where the arrow points: shown once there is a direction. */
     @Volatile var showTarget: Boolean = false
+
+    /**
+     * The found device's model ([DeviceModel.FLOATS_PER_VERTEX] floats per vertex), once it is read;
+     * null until then, and the scene shows its plain marker and puck.
+     */
+    @Volatile var modelMesh: FloatArray? = null
 
     companion object {
         /** In its 280 dp box the ring is 108 dp: the same picture as a 30° field of view. */
