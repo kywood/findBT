@@ -43,7 +43,7 @@
     <!-- Protection mode and left-behind alerts (#163) -->
     <string name="devices_protection_menu">Protection mode</string>
     <string name="devices_protection_off_title">Protection mode is off</string>
-    <string name="devices_protection_off_body">Left-behind alerts are paused</string>
+    <string name="devices_protection_off_body">Left-behind alerts and tracker detection are paused</string>
     <string name="devices_protection_turn_on">Turn on</string>
     <string name="devices_left_behind_title">%1$s · May be left behind</string>
     <string name="devices_left_behind_body">Last detected %1$s</string>

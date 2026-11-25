@@ -7,6 +7,7 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,6 +22,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -49,6 +51,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -62,6 +65,8 @@ import com.gamenuri.btscanner24.core.model.DeviceCategory
 import com.gamenuri.btscanner24.core.model.PairedDevice
 import com.gamenuri.btscanner24.core.model.ProtectionSettings
 import com.gamenuri.btscanner24.core.model.SavedDevice
+import com.gamenuri.btscanner24.core.model.TrackerAlert
+import com.gamenuri.btscanner24.core.sensors.MoveTrigger
 import com.gamenuri.btscanner24.core.ui.DeviceIcon
 import com.gamenuri.btscanner24.core.ui.label
 import kotlinx.coroutines.launch
@@ -89,13 +94,14 @@ internal fun protectionChoices(
 }
 
 /**
- * Protection mode (#163, design protection-screens-v2): what it does and the button to turn it on;
- * once on, the main switch and one left-behind switch per device.
+ * Protection mode (#163, #79, design protection-screens-v2): what it does and the button to turn it
+ * on; once on, the main switch, one left-behind switch per device and unknown-tracker detection.
  *
  * @param turnOnNow opened from the "protection is off" notification: carries on as if the button was pressed.
+ * @param onOpenTracker opens the details of the unknown tracker at that address.
  */
 @Composable
-fun ProtectionScreen(onBack: () -> Unit, turnOnNow: Boolean = false) {
+fun ProtectionScreen(onBack: () -> Unit, turnOnNow: Boolean = false, onOpenTracker: (address: String) -> Unit = {}) {
     val context = LocalContext.current
     val app = context.applicationContext
     val data = app as DataDependenciesProvider
@@ -106,6 +112,7 @@ fun ProtectionScreen(onBack: () -> Unit, turnOnNow: Boolean = false) {
     val hidden by data.hiddenDevices.hidden.collectAsStateWithLifecycle(initialValue = emptySet())
     val paired = remember { if (bonded.hasPermission()) bonded.list() else emptyList() }
     val choices = remember(saved, paired, hidden) { protectionChoices(saved, paired, hidden) }
+    val canDetectTrackers = remember { MoveTrigger(app).isAvailable }
 
     var refused by rememberSaveable { mutableStateOf(false) }
     fun start() {
@@ -139,6 +146,7 @@ fun ProtectionScreen(onBack: () -> Unit, turnOnNow: Boolean = false) {
         settings = settings,
         choices = choices,
         refused = refused,
+        canDetectTrackers = canDetectTrackers,
         actions = ProtectionActions(
             onBack = onBack,
             onTurnOn = ::turnOn,
@@ -146,6 +154,8 @@ fun ProtectionScreen(onBack: () -> Unit, turnOnNow: Boolean = false) {
             onWatch = { address, watched ->
                 scope.launch { data.protection.setWatched(address, watched) }
             },
+            onTrackers = { on -> scope.launch { data.protection.setTrackers(on) } },
+            onOpenTracker = onOpenTracker,
         ),
     )
 }
@@ -166,6 +176,8 @@ internal class ProtectionActions(
     val onTurnOn: () -> Unit = {},
     val onTurnOff: () -> Unit = {},
     val onWatch: (address: String, watched: Boolean) -> Unit = { _, _ -> },
+    val onTrackers: (Boolean) -> Unit = {},
+    val onOpenTracker: (address: String) -> Unit = {},
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -176,6 +188,8 @@ internal fun ProtectionContent(
     choices: List<ProtectionChoice>,
     refused: Boolean,
     actions: ProtectionActions,
+    /** False on a phone without the motion sensor tracker detection is built on. */
+    canDetectTrackers: Boolean = true,
 ) {
     Scaffold(
         topBar = {
@@ -194,7 +208,8 @@ internal fun ProtectionContent(
     ) { padding ->
         when {
             settings == null -> Unit
-            settings.enabled -> WatchedDevices(settings, choices, actions, Modifier.padding(padding))
+            settings.enabled ->
+                WatchedDevices(settings, choices, canDetectTrackers, actions, Modifier.padding(padding))
             else -> Intro(refused, actions, Modifier.padding(padding))
         }
     }
@@ -223,6 +238,7 @@ private fun Intro(refused: Boolean, actions: ProtectionActions, modifier: Modifi
         Card(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 Point(R.string.protection_point_alert)
+                Point(R.string.protection_point_tracker)
                 Point(R.string.protection_point_notification)
                 Point(R.string.protection_point_battery)
                 Point(R.string.protection_point_privacy)
@@ -264,9 +280,11 @@ private fun Point(@StringRes text: Int) {
 private fun WatchedDevices(
     settings: ProtectionSettings,
     choices: List<ProtectionChoice>,
+    canDetectTrackers: Boolean,
     actions: ProtectionActions,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     LazyColumn(modifier = modifier.fillMaxSize()) {
         item(key = "main") {
             Card(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
@@ -291,14 +309,7 @@ private fun WatchedDevices(
                 }
             }
         }
-        item(key = "h-left-behind") {
-            Text(
-                text = stringResource(R.string.protection_section_left_behind),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp),
-            )
-        }
+        item(key = "h-left-behind") { SectionTitle(R.string.protection_section_left_behind) }
         if (choices.isEmpty()) {
             item(key = "none") { Note(stringResource(R.string.protection_no_devices)) }
         }
@@ -322,8 +333,84 @@ private fun WatchedDevices(
                 )
             }
         }
+        item(key = "h-trackers") { SectionTitle(R.string.protection_section_trackers) }
+        item(key = "trackers") {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .toggleable(
+                        value = settings.trackers && canDetectTrackers,
+                        enabled = canDetectTrackers,
+                        role = Role.Switch,
+                        onValueChange = actions.onTrackers,
+                    )
+                    .heightIn(min = 64.dp)
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        stringResource(R.string.protection_tracker_setting),
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                    Text(
+                        text = stringResource(R.string.protection_point_tracker),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
+                // The whole row is the switch for TalkBack and touch.
+                Switch(
+                    checked = settings.trackers && canDetectTrackers,
+                    onCheckedChange = null,
+                    enabled = canDetectTrackers,
+                )
+            }
+        }
+        items(settings.trackerAlerts, key = { "t-" + it.address }) { alert ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { actions.onOpenTracker(alert.address) }
+                    .heightIn(min = 64.dp)
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                DeviceIcon(DeviceCategory.TRACKER)
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        stringResource(R.string.protection_tracker_title),
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                    Text(
+                        text = stringResource(R.string.protection_tracker_last, context.formatTime(alert.lastHeardAt)),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        }
+        item(key = "trackers-how") {
+            Note(
+                stringResource(
+                    if (canDetectTrackers) R.string.protection_tracker_how else R.string.protection_tracker_unavailable,
+                ),
+            )
+        }
         item(key = "footer") { Note(stringResource(R.string.protection_footer)) }
     }
+}
+
+@Composable
+private fun SectionTitle(@StringRes text: Int) {
+    Text(
+        text = stringResource(text),
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp),
+    )
 }
 
 @Composable
@@ -341,7 +428,10 @@ private fun Note(text: String) {
 private fun ProtectionOnPreview() {
     NearoTheme {
         ProtectionContent(
-            settings = ProtectionSettings(enabled = true),
+            settings = ProtectionSettings(
+                enabled = true,
+                trackerAlerts = listOf(TrackerAlert("7A:00:00:00:00:01", 0L, 2_400_000L)),
+            ),
             choices = listOf(
                 ProtectionChoice("A", "Keys Tag", DeviceCategory.TRACKER, isSaved = true),
                 ProtectionChoice("B", "Running Watch", DeviceCategory.WATCH, isSaved = false),

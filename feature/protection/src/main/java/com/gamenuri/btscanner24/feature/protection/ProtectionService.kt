@@ -15,6 +15,7 @@ import android.os.SystemClock
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import com.gamenuri.btscanner24.core.ble.BleDependencies
+import com.gamenuri.btscanner24.core.ble.BleScanner
 import com.gamenuri.btscanner24.core.ble.ScanEvent
 import com.gamenuri.btscanner24.core.ble.ScanFailure
 import com.gamenuri.btscanner24.core.ble.ScanWatch
@@ -27,6 +28,7 @@ import com.gamenuri.btscanner24.core.model.LastSeenPolicy
 import com.gamenuri.btscanner24.core.model.LeftBehindWatch
 import com.gamenuri.btscanner24.core.model.ProtectionSettings
 import com.gamenuri.btscanner24.core.model.SavedDevice
+import com.gamenuri.btscanner24.core.model.TrackerWatch
 import com.gamenuri.btscanner24.core.sensors.MoveTrigger
 import com.gamenuri.btscanner24.core.sensors.PhoneLocation
 import com.gamenuri.btscanner24.core.ui.R as UiR
@@ -41,8 +43,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 /**
- * Protection mode (#163): while the user has it on, listens for the devices they picked and tells
- * them when one may have been left behind (rules in [LeftBehindWatch]).
+ * Protection mode (#163, #79): while the user has it on, listens for the devices they picked and
+ * tells them when one may have been left behind (rules in [LeftBehindWatch]), and for trackers that
+ * are not theirs and may be moving with them (rules in [TrackerWatch]).
  *
  * - A foreground service with a notification that stays; started only from the open app.
  * - Listens with a filtered low-power scan, the only kind Android keeps delivering with the screen
@@ -67,6 +70,14 @@ class ProtectionService : Service() {
     private var devices: List<WatchedDevice> = emptyList()
     private var scanJob: Job? = null
 
+    /** Every device of the user's and what they hid from the list: never reported as an unknown tracker. */
+    private var own: List<WatchedDevice> = emptyList()
+    private var hidden: Set<String> = emptySet()
+    private var trackerWatch = TrackerWatch()
+
+    /** Whether the running scan also listens for trackers (#79). */
+    private var trackers = false
+
     /** Why the scan cannot hear right now; null while it can. */
     private var blind: ScanFailure? = null
 
@@ -78,6 +89,7 @@ class ProtectionService : Service() {
                 ProtectionNotifications.ACTION_STOP -> Protection.turnOff(this@ProtectionService)
                 ProtectionNotifications.ACTION_MUTE_HOUR -> address?.let { mute(it, clock() + HOUR_MS) }
                 ProtectionNotifications.ACTION_MUTE_TODAY -> address?.let { mute(it, endOfToday()) }
+                ProtectionNotifications.ACTION_TRACKER_KNOWN -> address?.let(::knowTracker)
             }
         }
     }
@@ -135,13 +147,18 @@ class ProtectionService : Service() {
             addAction(ProtectionNotifications.ACTION_STOP)
             addAction(ProtectionNotifications.ACTION_MUTE_HOUR)
             addAction(ProtectionNotifications.ACTION_MUTE_TODAY)
+            addAction(ProtectionNotifications.ACTION_TRACKER_KNOWN)
         }
         ContextCompat.registerReceiver(this, receiver, actions, ContextCompat.RECEIVER_NOT_EXPORTED)
-        moveTrigger.start { watch.onMoved(clock()) }
+        moveTrigger.start {
+            val now = clock()
+            watch.onMoved(now)
+            trackerWatch.onMoved(now)
+        }
         scope.launch { protection.setEnabled(true) }
         scope.launch {
-            combine(protection.settings, data.savedDevices.saved) { next, saved -> next to saved }
-                .collect { (next, saved) -> onSettings(next, saved) }
+            combine(protection.settings, data.savedDevices.saved, data.hiddenDevices.hidden, ::Triple)
+                .collect { (next, saved, hiddenNow) -> onSettings(next, saved, hiddenNow) }
         }
         scheduleTick()
         return true
@@ -162,18 +179,31 @@ class ProtectionService : Service() {
         else -> listOf(ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE)
     }
 
-    private fun onSettings(next: ProtectionSettings, saved: List<SavedDevice>) {
+    private fun onSettings(next: ProtectionSettings, saved: List<SavedDevice>, hiddenNow: Set<String>) {
+        val before = settings
         settings = next
+        hidden = hiddenNow
         val bonded = ble.bondedDevices
         val paired = if (bonded.hasPermission()) bonded.list() else emptyList()
+        own = WatchList.own(saved, paired)
+        // Alerts answered on a screen ("I know this device") or dropped with the switch.
+        val standing = next.trackerAlerts.mapTo(HashSet()) { it.address }
+        for (alert in before.trackerAlerts) {
+            if (alert.address !in standing) notifications.cancelTracker(alert.address)
+        }
+        for (address in next.knownTrackers.keys - before.knownTrackers.keys) trackerWatch.forget(address)
+        // Without the motion sensor nothing could ever count as "moving with you": do not listen at all.
+        val wantTrackers = next.trackers && moveTrigger.isAvailable
+        if (!wantTrackers && trackers) trackerWatch = TrackerWatch()
         val listed = WatchList.build(next, saved, paired)
         val gone = devices.map { it.address } - listed.mapTo(HashSet()) { it.address }
         for (address in gone) {
             watch.forget(address)
             notifications.cancelAlert(address)
         }
-        val changed = WatchList.targets(listed) != WatchList.targets(devices)
+        val changed = WatchList.targets(listed) != WatchList.targets(devices) || wantTrackers != trackers
         devices = listed
+        trackers = wantTrackers
         if (changed || scanJob?.isActive != true) restartScan()
         refreshStatus()
     }
@@ -182,11 +212,13 @@ class ProtectionService : Service() {
         scanJob?.cancel()
         scanJob = null
         val targets = WatchList.targets(devices)
-        if (targets.isEmpty()) return
+        val withTrackers = trackers
+        if (targets.isEmpty() && !withTrackers) return
         val scanner = ble.scanner
         scanJob = scope.launch {
             // Started again every 20 minutes: Android quietly downgrades a scan that runs for 30.
-            scanner.scanContinuously(watch = ScanWatch.FILTERED, source = { scanner.watch(targets) })
+            val source = { scanner.watch(targets, withTrackers) }
+            scanner.scanContinuously(watch = ScanWatch.FILTERED, source = source)
                 .collect { event ->
                     when (event) {
                         is ScanEvent.Result -> onResult(event.result)
@@ -205,13 +237,25 @@ class ProtectionService : Service() {
         // (#162). Not while a screen scans: the shared scan hears the same advertisement and feeding it
         // twice would skew the distance smoothing (#177).
         if (!ble.scanSession.isScanning) ble.repository.onScanResult(result)
-        val device = WatchList.match(devices, result.device.address, result.scanRecord?.deviceName) ?: return
         if (blind != null) {
             blind = null
             refreshStatus()
         }
-        heard(device.address, clock())
+        val address = result.device.address
+        val name = result.scanRecord?.deviceName
+        val device = WatchList.match(devices, address, name)
+        when {
+            device != null -> heard(device.address, clock())
+            trackers && isUnknownTracker(result, address, name) -> trackerWatch.onHeard(address, clock(), result.rssi)
+        }
     }
+
+    /** A tracker format, and not one of the user's own devices, hidden by them or marked as known. */
+    private fun isUnknownTracker(result: ScanResult, address: String, name: String?): Boolean =
+        BleScanner.isTracker(result) &&
+            address !in hidden &&
+            address !in settings.knownTrackers &&
+            WatchList.match(own, address, name) == null
 
     private fun heard(address: String, now: Long) {
         val wasAlerted = watch.onHeard(address, now)
@@ -233,6 +277,7 @@ class ProtectionService : Service() {
         val watched = devices.mapTo(HashSet()) { it.address }
         for (alert in watch.due(watched, connected, settings.mutedUntil, now)) raise(alert)
         if (linked.isNotEmpty()) scope.launch { recordConnected(linked, now) }
+        if (trackers) checkTrackers(now)
         refreshStatus()
         scheduleTick()
     }
@@ -254,6 +299,34 @@ class ProtectionService : Service() {
         scope.launch { protection.raiseAlert(alert.address, alert.lastHeardAt) }
     }
 
+    /**
+     * New tracker alerts, and for the standing ones how long the tracker has been around by now, so
+     * the details screen does not stop at the moment of the alert. Whatever was last heard more than
+     * [TrackerWatch.KEEP_MS] ago goes with the same write.
+     */
+    private fun checkTrackers(now: Long) {
+        val keepSince = now - TrackerWatch.KEEP_MS
+        for (alert in trackerWatch.due(settings.knownTrackers.keys, now)) {
+            notifications.tracker(alert)
+            scope.launch { protection.keepTrackerAlert(alert, keepSince) }
+        }
+        for (alert in settings.trackerAlerts) {
+            val heardAt = trackerWatch.lastHeardAt(alert.address) ?: continue
+            if (heardAt - alert.lastHeardAt >= TICK_MS) {
+                scope.launch { protection.keepTrackerAlert(alert.copy(lastHeardAt = heardAt), keepSince) }
+            }
+        }
+        if (settings.trackerAlerts.any { it.lastHeardAt < keepSince }) {
+            scope.launch { protection.dropTrackerAlerts(before = keepSince) }
+        }
+    }
+
+    private fun knowTracker(address: String) {
+        notifications.cancelTracker(address)
+        trackerWatch.forget(address)
+        scope.launch { protection.markTrackerKnown(address, clock()) }
+    }
+
     private fun mute(address: String, until: Long) {
         notifications.cancelAlert(address)
         scope.launch { protection.mute(address, until) }
@@ -273,10 +346,10 @@ class ProtectionService : Service() {
         lastSeen.record(due.map { LastSeenPolicy.next(known[it], it, now, place) })
     }
 
-    private fun status() = notifications.status(devices.size, blind)
+    private fun status() = notifications.status(devices.size, blind, trackers)
 
     private fun refreshStatus() {
-        if (started) notifications.updateStatus(devices.size, blind)
+        if (started) notifications.updateStatus(devices.size, blind, trackers)
     }
 
     private fun scheduleTick() {
@@ -293,6 +366,8 @@ class ProtectionService : Service() {
             getSystemService(AlarmManager::class.java)?.cancel(tick)
             unregisterReceiver(receiver)
             moveTrigger.stop()
+            // Their records go with protection; a notification about them must not stay behind.
+            for (alert in settings.trackerAlerts) notifications.cancelTracker(alert.address)
             isRunning = false
         }
         scope.cancel()

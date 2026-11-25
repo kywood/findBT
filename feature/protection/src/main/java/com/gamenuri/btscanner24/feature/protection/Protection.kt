@@ -22,6 +22,9 @@ object Protection {
 
     /** My devices, with the last-seen card of [EXTRA_ADDRESS]. */
     const val OPEN_LAST_SEEN = "last_seen"
+
+    /** The details of the unknown tracker at [EXTRA_ADDRESS] (#79). */
+    const val OPEN_TRACKER = "tracker"
     const val EXTRA_ADDRESS = "nearo.protection.address"
 
     /** Starts the service; it marks protection as on once it runs. Call while the app is on screen. */

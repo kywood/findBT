@@ -43,7 +43,7 @@
     <!-- Protection mode and left-behind alerts (#163) -->
     <string name="devices_protection_menu">보호 모드</string>
     <string name="devices_protection_off_title">보호 모드 꺼짐</string>
-    <string name="devices_protection_off_body">두고 가면 알림이 멈춰 있어요</string>
+    <string name="devices_protection_off_body">두고 가면 알림과 트래커 감지가 멈춰 있어요</string>
     <string name="devices_protection_turn_on">켜기</string>
     <string name="devices_left_behind_title">%1$s · 두고 온 것 같아요</string>
     <string name="devices_left_behind_body">마지막 감지 %1$s</string>

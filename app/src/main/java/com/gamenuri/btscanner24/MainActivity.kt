@@ -60,6 +60,7 @@ import com.gamenuri.btscanner24.feature.onboarding.OnboardingPage
 import com.gamenuri.btscanner24.feature.onboarding.OnboardingScreen
 import com.gamenuri.btscanner24.feature.protection.Protection
 import com.gamenuri.btscanner24.feature.protection.ProtectionScreen
+import com.gamenuri.btscanner24.feature.protection.TrackerScreen
 import com.gamenuri.btscanner24.feature.scan.LocalNearbyMap
 import com.gamenuri.btscanner24.feature.scan.NearbyMapOptions
 import com.gamenuri.btscanner24.feature.settings.AppInfo
@@ -187,20 +188,27 @@ private fun AppNavHost(
     val findEntry = rememberFindEntryWater()
     // "View" on the find screen's saved bar goes back to Home on the My devices tab (#152).
     var myDevicesRequests by remember { mutableIntStateOf(0) }
-    // A tapped protection notification (#163): the last-seen card on My devices, or the protection screen.
+    // A tapped protection notification (#163, #79): the last-seen card on My devices, an unknown tracker's
+    // details, or the protection screen.
     val asked by protectionRequest.collectAsStateWithLifecycle()
     var lastSeenRequest by remember { mutableStateOf<String?>(null) }
     var turnOnProtection by remember { mutableStateOf(false) }
     LaunchedEffect(asked) {
         val request = asked ?: return@LaunchedEffect
         protectionRequest.value = null
-        if (request.open == Protection.OPEN_LAST_SEEN) {
-            lastSeenRequest = request.address
-            myDevicesRequests++
-            navController.popBackStack(Routes.HOME, inclusive = false)
-        } else {
-            turnOnProtection = request.open == Protection.OPEN_TURN_ON
-            navController.navigate(Routes.PROTECTION) { launchSingleTop = true }
+        val address = request.address
+        when {
+            request.open == Protection.OPEN_LAST_SEEN -> {
+                lastSeenRequest = address
+                myDevicesRequests++
+                navController.popBackStack(Routes.HOME, inclusive = false)
+            }
+            request.open == Protection.OPEN_TRACKER && address != null ->
+                navController.navigate(Routes.tracker(address)) { launchSingleTop = true }
+            else -> {
+                turnOnProtection = request.open == Protection.OPEN_TURN_ON
+                navController.navigate(Routes.PROTECTION) { launchSingleTop = true }
+            }
         }
     }
     val activity = LocalActivity.current
@@ -277,7 +285,21 @@ private fun AppNavHost(
                 )
             }
             composable(Routes.PROTECTION) {
-                ProtectionScreen(onBack = { navController.popBackStack() }, turnOnNow = turnOnProtection)
+                ProtectionScreen(
+                    onBack = { navController.popBackStack() },
+                    turnOnNow = turnOnProtection,
+                    onOpenTracker = { navController.navigate(Routes.tracker(it)) { launchSingleTop = true } },
+                )
+            }
+            composable(Routes.TRACKER) { entry ->
+                TrackerScreen(
+                    address = entry.arguments?.getString(Routes.ADDRESS_ARG).orEmpty(),
+                    onBack = { if (!navController.popBackStack()) navController.navigate(Routes.HOME) },
+                    onFind = { address ->
+                        findEntry.start(tapX[0])
+                        navController.navigate(Routes.finder(address)) { launchSingleTop = true }
+                    },
+                )
             }
             composable(Routes.LICENSES) {
                 LicensesScreen(librariesRes = R.raw.aboutlibraries, onBack = { navController.popBackStack() })
@@ -378,5 +400,9 @@ private object Routes {
     const val ADDRESS_ARG = "address"
     const val FINDER = "finder/{$ADDRESS_ARG}"
 
+    const val TRACKER = "tracker/{$ADDRESS_ARG}"
+
     fun finder(address: String) = "finder/${Uri.encode(address)}"
+
+    fun tracker(address: String) = "tracker/${Uri.encode(address)}"
 }

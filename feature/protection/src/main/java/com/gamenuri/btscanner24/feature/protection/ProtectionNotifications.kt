@@ -9,12 +9,13 @@ import android.content.Intent
 import android.text.format.DateFormat
 import androidx.core.app.NotificationCompat
 import com.gamenuri.btscanner24.core.ble.ScanFailure
+import com.gamenuri.btscanner24.core.model.TrackerAlert
 import java.util.Date
 
 /**
- * Everything protection mode (#163) puts in the notification shade: the one that stays while it is
- * on, the left-behind alert and the reminder after a restart. Device names appear only here, on the
- * user's own phone (#19).
+ * Everything protection mode (#163, #79) puts in the notification shade: the one that stays while it
+ * is on, the left-behind alert, the unknown-tracker alert and the reminder after a restart. Device
+ * names appear only here, on the user's own phone (#19).
  */
 internal class ProtectionNotifications(private val context: Context) {
     private val manager = context.getSystemService(NotificationManager::class.java)
@@ -34,15 +35,28 @@ internal class ProtectionNotifications(private val context: Context) {
                 NotificationManager.IMPORTANCE_HIGH,
             ),
         )
+        manager?.createNotificationChannel(
+            NotificationChannel(
+                CHANNEL_TRACKERS,
+                context.getString(R.string.protection_channel_trackers),
+                NotificationManager.IMPORTANCE_HIGH,
+            ),
+        )
     }
 
-    /** The notification that stays while protection is on. [blind]: why it cannot hear right now. */
-    fun status(watched: Int, blind: ScanFailure?): Notification {
+    /**
+     * The notification that stays while protection is on. [blind]: why it cannot hear right now;
+     * [trackers]: unknown trackers are looked for as well (#79).
+     */
+    fun status(watched: Int, blind: ScanFailure?, trackers: Boolean): Notification {
         val text = when {
             blind == ScanFailure.BLUETOOTH_OFF -> context.getString(R.string.protection_status_bluetooth_off)
             blind == ScanFailure.LOCATION_OFF -> context.getString(R.string.protection_status_location_off)
             blind != null -> context.getString(R.string.protection_status_cannot_scan)
+            watched == 0 && trackers -> context.getString(R.string.protection_status_trackers_only)
             watched == 0 -> context.getString(R.string.protection_status_none)
+            trackers ->
+                context.resources.getQuantityString(R.plurals.protection_status_watching_trackers, watched, watched)
             else -> context.resources.getQuantityString(R.plurals.protection_status_watching, watched, watched)
         }
         return NotificationCompat.Builder(context, CHANNEL_STATUS)
@@ -58,8 +72,40 @@ internal class ProtectionNotifications(private val context: Context) {
             .build()
     }
 
-    fun updateStatus(watched: Int, blind: ScanFailure?) {
-        notify(STATUS_ID, status(watched, blind))
+    fun updateStatus(watched: Int, blind: ScanFailure?, trackers: Boolean) {
+        notify(STATUS_ID, status(watched, blind, trackers))
+    }
+
+    /**
+     * "An unknown tracker may be moving with you" (#79), one per tracker. Worded as a possibility: a
+     * Bluetooth signal cannot tell whose it is. Nothing about the tracker itself is shown here.
+     */
+    fun tracker(alert: TrackerAlert) {
+        val minutes = ((alert.lastHeardAt - alert.firstHeardAt) / MINUTE_MS).toInt().coerceAtLeast(1)
+        val text = context.resources.getQuantityString(R.plurals.protection_tracker_alert_text, minutes, minutes)
+        val view = open(trackerId(alert.address), Protection.OPEN_TRACKER, alert.address)
+        val notification = NotificationCompat.Builder(context, CHANNEL_TRACKERS)
+            .setSmallIcon(R.drawable.ic_protection)
+            .setContentTitle(context.getString(R.string.protection_tracker_alert_title))
+            .setContentText(text)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(text))
+            .setAutoCancel(true)
+            .setOnlyAlertOnce(true)
+            .setCategory(NotificationCompat.CATEGORY_STATUS)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setContentIntent(view)
+            .addAction(0, context.getString(R.string.protection_tracker_details), view)
+            .addAction(
+                0,
+                context.getString(R.string.protection_tracker_known),
+                button(trackerId(alert.address), ACTION_TRACKER_KNOWN, alert.address),
+            )
+            .build()
+        notify(trackerId(alert.address), notification)
+    }
+
+    fun cancelTracker(address: String) {
+        manager?.cancel(trackerId(address))
     }
 
     /** "You may have left Keys behind", one per device, replaced when it happens again. */
@@ -144,15 +190,21 @@ internal class ProtectionNotifications(private val context: Context) {
 
     private fun alertId(address: String): Int = ALERT_ID_BASE + (address.hashCode() and ALERT_ID_MASK)
 
+    private fun trackerId(address: String): Int = TRACKER_ID_BASE + (address.hashCode() and ALERT_ID_MASK)
+
     companion object {
         const val STATUS_ID = 1630
         const val ACTION_STOP = "com.gamenuri.btscanner24.protection.STOP"
         const val ACTION_MUTE_HOUR = "com.gamenuri.btscanner24.protection.MUTE_HOUR"
         const val ACTION_MUTE_TODAY = "com.gamenuri.btscanner24.protection.MUTE_TODAY"
         const val ACTION_TICK = "com.gamenuri.btscanner24.protection.TICK"
+        const val ACTION_TRACKER_KNOWN = "com.gamenuri.btscanner24.protection.TRACKER_KNOWN"
 
         private const val CHANNEL_STATUS = "protection_status"
         private const val CHANNEL_ALERTS = "protection_alerts"
+        private const val CHANNEL_TRACKERS = "protection_trackers"
+        private const val TRACKER_ID_BASE = 4_000_000
+        private const val MINUTE_MS = 60_000L
         private const val TURNED_OFF_ID = 1631
         private const val ALERT_ID_BASE = 2_000_000
         private const val ALERT_ID_MASK = 0xFFFFF

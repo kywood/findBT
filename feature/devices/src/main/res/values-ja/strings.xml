@@ -43,7 +43,7 @@
     <!-- Protection mode and left-behind alerts (#163) -->
     <string name="devices_protection_menu">保護モード</string>
     <string name="devices_protection_off_title">保護モードはオフです</string>
-    <string name="devices_protection_off_body">置き忘れアラートは停止中です</string>
+    <string name="devices_protection_off_body">置き忘れアラートとトラッカーの検出は停止中です</string>
     <string name="devices_protection_turn_on">オンにする</string>
     <string name="devices_left_behind_title">%1$s · 置き忘れたかもしれません</string>
     <string name="devices_left_behind_body">最後の検出 %1$s</string>

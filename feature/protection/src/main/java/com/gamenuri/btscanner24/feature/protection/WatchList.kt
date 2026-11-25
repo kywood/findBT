@@ -31,16 +31,18 @@ internal object WatchList {
      */
     fun build(settings: ProtectionSettings, saved: List<SavedDevice>, paired: List<PairedDevice>): List<WatchedDevice> {
         val savedAddresses = saved.mapTo(HashSet()) { it.address }
-        return OwnDevices.list(paired, saved)
-            .filter { settings.watches(it.device.address, isSaved = it.device.address in savedAddresses) }
-            .map { own ->
-                WatchedDevice(
-                    address = own.device.address,
-                    name = own.device.name?.takeIf { it.isNotBlank() },
-                    advertisedNames = own.matchNames.filterTo(LinkedHashSet()) { it.isNotBlank() },
-                )
-            }
+        return own(saved, paired).filter { settings.watches(it.address, isSaved = it.address in savedAddresses) }
     }
+
+    /** Every device of the user's, watched or not: what unknown-tracker detection (#79) must not report. */
+    fun own(saved: List<SavedDevice>, paired: List<PairedDevice>): List<WatchedDevice> =
+        OwnDevices.list(paired, saved).map { own ->
+            WatchedDevice(
+                address = own.device.address,
+                name = own.device.name?.takeIf { it.isNotBlank() },
+                advertisedNames = own.matchNames.filterTo(LinkedHashSet()) { it.isNotBlank() },
+            )
+        }
 
     /** What the filtered scan asks Android for: each address and each name on its own. */
     fun targets(devices: List<WatchedDevice>): List<WatchTarget> = devices.flatMap { device ->

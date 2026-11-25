@@ -3,7 +3,7 @@
     <!-- Protection mode and left-behind alerts (#163) -->
     <string name="protection_title">Modo de proteção</string>
     <string name="protection_back">Voltar</string>
-    <string name="protection_intro_headline">Fica de olho nos dispositivos que você deixa para trás</string>
+    <string name="protection_intro_headline">Fica de olho nos dispositivos que você deixa para trás e em rastreadores estranhos</string>
     <string name="protection_point_alert">Avisa quando você se afasta de um dispositivo salvo</string>
     <string name="protection_point_notification">Uma notificação fica visível enquanto ele está ativado</string>
     <string name="protection_point_battery">O uso da bateria pode aumentar um pouco</string>
@@ -34,5 +34,49 @@
     <plurals name="protection_status_watching">
         <item quantity="one">Monitorando %d dispositivo</item>
         <item quantity="other">Monitorando %d dispositivos</item>
+    </plurals>
+    <!-- Unknown tracker detection (#79) -->
+    <string name="protection_point_tracker">Avisa quando um rastreador que não é seu continua se movendo com você</string>
+    <string name="protection_section_trackers">Rastreadores</string>
+    <string name="protection_tracker_setting">Detecção de rastreadores estranhos</string>
+    <string name="protection_tracker_how">Se ele se move com você é avaliado pelo movimento do celular e pelo tempo que passou.</string>
+    <string name="protection_tracker_unavailable">Este celular não tem sensor de movimento, então a detecção de rastreadores não está disponível</string>
+    <string name="protection_channel_trackers">Alertas de rastreadores estranhos</string>
+    <string name="protection_status_trackers_only">Monitorando rastreadores estranhos</string>
+    <string name="protection_tracker_alert_title">Talvez um rastreador estranho esteja se movendo com você</string>
+    <string name="protection_tracker_details">Ver detalhes</string>
+    <string name="protection_tracker_known">Conheço este dispositivo</string>
+    <string name="protection_tracker_title">Rastreador estranho</string>
+    <string name="protection_tracker_last">Detectado pela última vez às %1$s</string>
+    <string name="protection_tracker_first">Primeira detecção</string>
+    <string name="protection_tracker_duration">Tempo se movendo com você</string>
+    <string name="protection_tracker_type">Tipo</string>
+    <string name="protection_tracker_type_value">Rastreador (provável)</string>
+    <string name="protection_tracker_calm_title">Na maioria das vezes é de alguém por perto</string>
+    <string name="protection_tracker_calm_body">Em lugares movimentados, como um ônibus ou um café, o rastreador de outra pessoa pode aparecer por um tempo.</string>
+    <string name="protection_tracker_find">Começar a procurar</string>
+    <string name="protection_tracker_what">O que devo fazer?</string>
+    <string name="protection_tracker_gone">Não há mais nada guardado sobre este rastreador</string>
+    <string name="protection_help_title">O que você pode fazer</string>
+    <string name="protection_help_1_title">Primeiro procure</string>
+    <string name="protection_help_1_body">Use a tela de busca para conferir sua bolsa, seus bolsos e o carro.</string>
+    <string name="protection_help_2_title">Veja se é de alguém que você conhece</string>
+    <string name="protection_help_2_body">Se for de alguém da família ou de quem está com você, marque como conhecido e você não será avisado de novo.</string>
+    <string name="protection_help_3_title">Se não for seu, desligue</string>
+    <string name="protection_help_3_body">A maioria dos rastreadores desliga quando a bateria é removida. Veja as instruções do fabricante.</string>
+    <string name="protection_help_4_title">Se você se sentir em risco, peça ajuda</string>
+    <string name="protection_help_4_body">Vá para um lugar seguro e fale com a polícia.</string>
+    <string name="protection_help_note">Só o sinal Bluetooth não mostra de quem é um rastreador.</string>
+    <plurals name="protection_status_watching_trackers">
+        <item quantity="one">Monitorando %d dispositivo e rastreadores estranhos</item>
+        <item quantity="other">Monitorando %d dispositivos e rastreadores estranhos</item>
+    </plurals>
+    <plurals name="protection_tracker_alert_text">
+        <item quantity="one">Detectado por perto durante %d minuto. Pode ser de alguém da família ou de quem está com você.</item>
+        <item quantity="other">Detectado por perto durante %d minutos. Pode ser de alguém da família ou de quem está com você.</item>
+    </plurals>
+    <plurals name="protection_tracker_duration_value">
+        <item quantity="one">Cerca de %d min</item>
+        <item quantity="other">Cerca de %d min</item>
     </plurals>
 </resources>

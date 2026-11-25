@@ -12,9 +12,13 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.location.LocationManager
 import android.os.Build
+import android.os.ParcelUuid
 import android.os.SystemClock
 import androidx.core.content.ContextCompat
 import androidx.core.location.LocationManagerCompat
+import com.gamenuri.btscanner24.core.model.TrackerSignal
+import com.gamenuri.btscanner24.core.model.TrackerSignals
+import java.util.Locale
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -74,20 +78,34 @@ open class BleScanner(context: Context) {
     open fun scan(): Flow<ScanEvent> = results(filters = null, mode = ScanSettings.SCAN_MODE_LOW_LATENCY)
 
     /**
-     * A low-power scan that only reports [targets] (#163). Unlike [scan] it keeps delivering with the
-     * screen off, which Android allows for filtered scans only. No targets, no scan: the flow just
-     * stays open.
+     * A low-power scan that only reports [targets] (#163) and, with [trackers], the tracker formats
+     * of [TrackerSignals] (#79). Unlike [scan] it keeps delivering with the screen off, which Android
+     * allows for filtered scans only. Nothing to listen for, no scan: the flow just stays open.
      */
-    open fun watch(targets: Collection<WatchTarget>): Flow<ScanEvent> {
-        val filters = targets.flatMap { target ->
+    open fun watch(targets: Collection<WatchTarget>, trackers: Boolean = false): Flow<ScanEvent> {
+        val own = targets.flatMap { target ->
             listOfNotNull(
                 target.address?.takeIf(BluetoothAdapter::checkBluetoothAddress)
                     ?.let { ScanFilter.Builder().setDeviceAddress(it).build() },
                 target.name?.takeIf { it.isNotBlank() }?.let { ScanFilter.Builder().setDeviceName(it).build() },
             )
         }
+        val filters = if (trackers) own + TrackerSignals.all.map(::filterFor) else own
         if (filters.isEmpty()) return callbackFlow { awaitClose { } }
         return results(filters, ScanSettings.SCAN_MODE_LOW_POWER)
+    }
+
+    private fun filterFor(signal: TrackerSignal): ScanFilter {
+        val builder = ScanFilter.Builder()
+        val companyId = signal.companyId
+        val serviceData = signal.serviceData16
+        val service = signal.serviceUuid16
+        when {
+            companyId != null -> builder.setManufacturerData(companyId, signal.prefix, signal.mask)
+            serviceData != null -> builder.setServiceData(parcelUuid16(serviceData), signal.prefix, signal.mask)
+            service != null -> builder.setServiceUuid(parcelUuid16(service))
+        }
+        return builder.build()
     }
 
     @SuppressLint("MissingPermission") // checked by hasScanPermission()
@@ -152,6 +170,21 @@ open class BleScanner(context: Context) {
     }
 
     companion object {
+        /** A 16-bit Bluetooth SIG UUID in its full form. */
+        fun parcelUuid16(uuid16: Int): ParcelUuid =
+            ParcelUuid.fromString(String.format(Locale.US, "0000%04x-0000-1000-8000-00805f9b34fb", uuid16))
+
+        /** Whether [result] is one of the tracker formats unknown-tracker detection listens for (#79). */
+        fun isTracker(result: ScanResult): Boolean {
+            val record = result.scanRecord ?: return false
+            return TrackerSignals.matches(
+                makerData = { record.getManufacturerSpecificData(it) },
+                serviceData = { record.getServiceData(parcelUuid16(it)) },
+                serviceUuids16 = TrackerSignals.all.mapNotNull { it.serviceUuid16 }
+                    .filter { record.serviceUuids?.contains(parcelUuid16(it)) == true },
+            )
+        }
+
         private const val START_WINDOW_MS = 30_000L
         private const val MAX_STARTS_PER_WINDOW = 5
 

@@ -126,7 +126,8 @@ private class DemoScanner(context: Context) : BleScanner(context) {
 
     override fun scan(): Flow<ScanEvent> = flow { awaitCancellation() }
 
-    override fun watch(targets: Collection<WatchTarget>): Flow<ScanEvent> = flow { awaitCancellation() }
+    override fun watch(targets: Collection<WatchTarget>, trackers: Boolean): Flow<ScanEvent> =
+        flow { awaitCancellation() }
 }
 
 private class DemoPremiumStore(isPremium: Boolean) : PremiumStore {

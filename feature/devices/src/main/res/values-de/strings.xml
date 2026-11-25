@@ -43,7 +43,7 @@
     <!-- Protection mode and left-behind alerts (#163) -->
     <string name="devices_protection_menu">Schutzmodus</string>
     <string name="devices_protection_off_title">Schutzmodus ist aus</string>
-    <string name="devices_protection_off_body">Hinweise bei zurückgelassenen Geräten sind pausiert</string>
+    <string name="devices_protection_off_body">Hinweise bei zurückgelassenen Geräten und die Tracker-Erkennung sind pausiert</string>
     <string name="devices_protection_turn_on">Einschalten</string>
     <string name="devices_left_behind_title">%1$s · Vielleicht zurückgelassen</string>
     <string name="devices_left_behind_body">Zuletzt erkannt: %1$s</string>

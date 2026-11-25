@@ -1,8 +1,9 @@
 package com.gamenuri.btscanner24.core.model
 
 /**
- * Protection mode as the user set it (#163): whether it is on, which of their devices raise a
- * left-behind alert, which are muted for now and which alerts are still standing. On the phone only.
+ * Protection mode as the user set it (#163, #79): whether it is on, which of their devices raise a
+ * left-behind alert, which are muted for now, which alerts are still standing, and the same for
+ * trackers that are not theirs. On the phone only.
  */
 data class ProtectionSettings(
     val enabled: Boolean = false,
@@ -14,6 +15,12 @@ data class ProtectionSettings(
     val mutedUntil: Map<String, Long> = emptyMap(),
     /** Devices that may have been left behind, with the time each was last heard; gone when heard again. */
     val alerts: Map<String, Long> = emptyMap(),
+    /** Whether trackers that are not the user's are looked for (#79). */
+    val trackers: Boolean = true,
+    /** Trackers that may be moving with the user, newest first; none is kept beyond [TrackerWatch.KEEP_MS]. */
+    val trackerAlerts: List<TrackerAlert> = emptyList(),
+    /** Trackers the user said they know, with when they said so: never alerted about again. */
+    val knownTrackers: Map<String, Long> = emptyMap(),
 ) {
     /**
      * Whether [address] raises a left-behind alert. Until the user touches its switch a device they

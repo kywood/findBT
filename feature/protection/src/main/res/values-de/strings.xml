@@ -3,7 +3,7 @@
     <!-- Protection mode and left-behind alerts (#163) -->
     <string name="protection_title">Schutzmodus</string>
     <string name="protection_back">Zurück</string>
-    <string name="protection_intro_headline">Achtet auf Geräte, die du zurücklässt</string>
+    <string name="protection_intro_headline">Achtet auf zurückgelassene Geräte und fremde Tracker</string>
     <string name="protection_point_alert">Sagt dir Bescheid, wenn du dich von einem gespeicherten Gerät entfernst</string>
     <string name="protection_point_notification">Solange er an ist, bleibt eine Benachrichtigung sichtbar</string>
     <string name="protection_point_battery">Der Akkuverbrauch kann leicht steigen</string>
@@ -34,5 +34,49 @@
     <plurals name="protection_status_watching">
         <item quantity="one">%d Gerät wird beobachtet</item>
         <item quantity="other">%d Geräte werden beobachtet</item>
+    </plurals>
+    <!-- Unknown tracker detection (#79) -->
+    <string name="protection_point_tracker">Sagt dir Bescheid, wenn ein Tracker, der dir nicht gehört, sich länger mit dir bewegt</string>
+    <string name="protection_section_trackers">Tracker</string>
+    <string name="protection_tracker_setting">Fremde Tracker erkennen</string>
+    <string name="protection_tracker_how">Ob er sich mit dir bewegt, wird aus der Bewegung des Handys und der vergangenen Zeit geschlossen.</string>
+    <string name="protection_tracker_unavailable">Dieses Handy hat keinen Bewegungssensor, daher ist die Tracker-Erkennung nicht verfügbar</string>
+    <string name="protection_channel_trackers">Hinweise auf fremde Tracker</string>
+    <string name="protection_status_trackers_only">Achtet auf fremde Tracker</string>
+    <string name="protection_tracker_alert_title">Ein fremder Tracker bewegt sich vielleicht mit dir</string>
+    <string name="protection_tracker_details">Details ansehen</string>
+    <string name="protection_tracker_known">Ich kenne dieses Gerät</string>
+    <string name="protection_tracker_title">Fremder Tracker</string>
+    <string name="protection_tracker_last">Zuletzt erkannt um %1$s</string>
+    <string name="protection_tracker_first">Zuerst erkannt</string>
+    <string name="protection_tracker_duration">Zeit in Bewegung mit dir</string>
+    <string name="protection_tracker_type">Art</string>
+    <string name="protection_tracker_type_value">Tracker (vermutlich)</string>
+    <string name="protection_tracker_calm_title">Meist gehört er jemandem in der Nähe</string>
+    <string name="protection_tracker_calm_body">An belebten Orten wie im Bus oder im Café kann der Tracker einer anderen Person eine Weile auftauchen.</string>
+    <string name="protection_tracker_find">Suche starten</string>
+    <string name="protection_tracker_what">Was soll ich tun?</string>
+    <string name="protection_tracker_gone">Zu diesem Tracker ist nichts mehr gespeichert</string>
+    <string name="protection_help_title">Das kannst du tun</string>
+    <string name="protection_help_1_title">Zuerst danach suchen</string>
+    <string name="protection_help_1_body">Prüfe mit der Suchansicht deine Tasche, deine Kleidung und dein Auto.</string>
+    <string name="protection_help_2_title">Prüfen, ob er jemandem gehört, den du kennst</string>
+    <string name="protection_help_2_body">Gehört er jemandem aus der Familie oder deiner Begleitung, markiere ihn als bekannt. Dann gibt es keinen Hinweis mehr.</string>
+    <string name="protection_help_3_title">Wenn er dir nicht gehört, ausschalten</string>
+    <string name="protection_help_3_body">Die meisten Tracker gehen aus, wenn man die Batterie entfernt. Sieh in der Anleitung des Herstellers nach.</string>
+    <string name="protection_help_4_title">Wenn du dich unsicher fühlst, hol dir Hilfe</string>
+    <string name="protection_help_4_body">Geh an einen sicheren Ort und wende dich an die Polizei.</string>
+    <string name="protection_help_note">Ein Bluetooth-Signal allein verrät nicht, wem ein Tracker gehört.</string>
+    <plurals name="protection_status_watching_trackers">
+        <item quantity="one">Achtet auf %d Gerät und fremde Tracker</item>
+        <item quantity="other">Achtet auf %d Geräte und fremde Tracker</item>
+    </plurals>
+    <plurals name="protection_tracker_alert_text">
+        <item quantity="one">Seit %d Minute in der Nähe erkannt. Er kann jemandem aus der Familie oder deiner Begleitung gehören.</item>
+        <item quantity="other">Seit %d Minuten in der Nähe erkannt. Er kann jemandem aus der Familie oder deiner Begleitung gehören.</item>
+    </plurals>
+    <plurals name="protection_tracker_duration_value">
+        <item quantity="one">Etwa %d Min.</item>
+        <item quantity="other">Etwa %d Min.</item>
     </plurals>
 </resources>

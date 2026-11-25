@@ -3,7 +3,7 @@
     <!-- Protection mode and left-behind alerts (#163) -->
     <string name="protection_title">保護モード</string>
     <string name="protection_back">戻る</string>
-    <string name="protection_intro_headline">置き忘れたデバイスを見守ります</string>
+    <string name="protection_intro_headline">置き忘れたデバイスと知らないトラッカーを見守ります</string>
     <string name="protection_point_alert">保存したデバイスから離れるとお知らせします</string>
     <string name="protection_point_notification">オンの間は通知が表示されたままになります</string>
     <string name="protection_point_battery">バッテリー消費が少し増えることがあります</string>
@@ -33,5 +33,46 @@
     <string name="protection_turn_on_short">オンにする</string>
     <plurals name="protection_status_watching">
         <item quantity="other">%d台のデバイスを見守り中</item>
+    </plurals>
+    <!-- Unknown tracker detection (#79) -->
+    <string name="protection_point_tracker">自分のものではないトラッカーが一緒に移動し続けるとお知らせします</string>
+    <string name="protection_section_trackers">トラッカー</string>
+    <string name="protection_tracker_setting">知らないトラッカーの検出</string>
+    <string name="protection_tracker_how">一緒に移動しているかどうかは、スマートフォンの動きと経過時間から判断します。</string>
+    <string name="protection_tracker_unavailable">このスマートフォンにはモーションセンサーがないため、トラッカーの検出は使えません</string>
+    <string name="protection_channel_trackers">知らないトラッカーのアラート</string>
+    <string name="protection_status_trackers_only">知らないトラッカーを見守り中</string>
+    <string name="protection_tracker_alert_title">知らないトラッカーが一緒に移動しているかもしれません</string>
+    <string name="protection_tracker_details">詳しく見る</string>
+    <string name="protection_tracker_known">知っているデバイスです</string>
+    <string name="protection_tracker_title">知らないトラッカー</string>
+    <string name="protection_tracker_last">最後に検出: %1$s</string>
+    <string name="protection_tracker_first">最初に検出</string>
+    <string name="protection_tracker_duration">一緒に移動した時間</string>
+    <string name="protection_tracker_type">種類</string>
+    <string name="protection_tracker_type_value">トラッカー(推定)</string>
+    <string name="protection_tracker_calm_title">たいていは近くにいる人の持ち物です</string>
+    <string name="protection_tracker_calm_body">バスやカフェのように人の多い場所では、他の人のトラッカーがしばらく検出されることがあります。</string>
+    <string name="protection_tracker_find">探し始める</string>
+    <string name="protection_tracker_what">どうすればいいですか?</string>
+    <string name="protection_tracker_gone">このトラッカーの記録はもう残っていません</string>
+    <string name="protection_help_title">できること</string>
+    <string name="protection_help_1_title">まず探してみる</string>
+    <string name="protection_help_1_body">探す画面を使って、バッグやポケット、車の中を確認してください。</string>
+    <string name="protection_help_2_title">知っている人のものか確認する</string>
+    <string name="protection_help_2_body">家族や同行者のものなら「知っているデバイスです」を選んでください。今後はお知らせしません。</string>
+    <string name="protection_help_3_title">心当たりがなければオフにする</string>
+    <string name="protection_help_3_body">ほとんどのトラッカーは電池を外すとオフになります。メーカーの案内を確認してください。</string>
+    <string name="protection_help_4_title">不安なときは助けを求める</string>
+    <string name="protection_help_4_body">安全な場所に移動して、警察に連絡してください。</string>
+    <string name="protection_help_note">Bluetoothの信号だけでは、誰のトラッカーかはわかりません。</string>
+    <plurals name="protection_status_watching_trackers">
+        <item quantity="other">%d台のデバイスと知らないトラッカーを見守り中</item>
+    </plurals>
+    <plurals name="protection_tracker_alert_text">
+        <item quantity="other">%d分間、近くで検出されました。家族や同行者の持ち物かもしれません。</item>
+    </plurals>
+    <plurals name="protection_tracker_duration_value">
+        <item quantity="other">約%d分</item>
     </plurals>
 </resources>

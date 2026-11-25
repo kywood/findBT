@@ -43,7 +43,7 @@
     <!-- Protection mode and left-behind alerts (#163) -->
     <string name="devices_protection_menu">Modo de proteção</string>
     <string name="devices_protection_off_title">O modo de proteção está desativado</string>
-    <string name="devices_protection_off_body">Os alertas de esquecimento estão pausados</string>
+    <string name="devices_protection_off_body">Os alertas de esquecimento e a detecção de rastreadores estão pausados</string>
     <string name="devices_protection_turn_on">Ativar</string>
     <string name="devices_left_behind_title">%1$s · Pode ter ficado para trás</string>
     <string name="devices_left_behind_body">Última detecção: %1$s</string>
