@@ -33,7 +33,11 @@ val missingForRelease = listOf("appId", "banner", "interstitial", "rewarded")
     .filter { key ->
         val value = localProperties.getProperty(key)
         value.isNullOrBlank() || value.startsWith(admobTestPublisher) || value.contains("XXXX")
-    } + if (hasReleaseSigning) emptyList() else listOf("nearo.signing.* (storeFile, storePassword, keyAlias, keyPassword)")
+    } + if (hasReleaseSigning) {
+    emptyList()
+} else {
+    listOf("nearo.signing.* (storeFile, storePassword, keyAlias, keyPassword)")
+}
 
 gradle.taskGraph.whenReady {
     val buildsRelease = allTasks.any { task ->
