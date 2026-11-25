@@ -37,6 +37,10 @@ android {
             buildConfigField("String", "ADMOB_${unit.uppercase()}", "\"$value\"")
         }
 
+        // The find tone through connected earbuds (#153). `nearo.feature.earbudTone=false` in
+        // local.properties leaves it out of a build without touching the code.
+        val earbudTone = localProperties.getProperty("nearo.feature.earbudTone", "true").toBoolean()
+        buildConfigField("boolean", "EARBUD_TONE", earbudTone.toString())
         buildConfigField("String", "SUPPORT_EMAIL", "\"${localProperties.getProperty("nearo.supportEmail", "")}\"")
         // GitHub Pages copy of docs/privacy (#57).
         buildConfigField("String", "PRIVACY_POLICY_URL", "\"https://kywood.github.io/findBT/privacy/\"")

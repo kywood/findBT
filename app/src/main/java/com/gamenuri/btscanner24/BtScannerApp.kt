@@ -13,6 +13,7 @@ import com.gamenuri.btscanner24.core.ble.BondedDevices
 import com.gamenuri.btscanner24.core.ble.CompanyDirectory
 import com.gamenuri.btscanner24.core.ble.ConnectedDevices
 import com.gamenuri.btscanner24.core.ble.DeviceRepository
+import com.gamenuri.btscanner24.core.ble.MediaFindTone
 import com.gamenuri.btscanner24.core.data.AppStateRepository
 import com.gamenuri.btscanner24.core.data.DataDependenciesProvider
 import com.gamenuri.btscanner24.core.data.HiddenDevicesRepository
@@ -42,6 +43,7 @@ class BtScannerApp :
             repository = DeviceRepository(companies),
             bondedDevices = BondedDevices(this),
             connectedDevices = ConnectedDevices(this),
+            mediaFindTone = if (BuildConfig.EARBUD_TONE) MediaFindTone(this) else null,
         ).also { ScanCensus.start(it.repository) }
     }
 

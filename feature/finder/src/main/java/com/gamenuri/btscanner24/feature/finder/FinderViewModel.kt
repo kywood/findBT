@@ -338,7 +338,7 @@ class FinderViewModel(
                     pairedAlias = paired?.name,
                     connectedDevices = ble.connectedDevices,
                     paired = paired,
-                    tone = MediaFindTone(app),
+                    tone = ble.mediaFindTone,
                 )
             }
         }
