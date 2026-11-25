@@ -20,6 +20,12 @@
     <string name="settings_distance_unit_meters">Meter</string>
     <string name="settings_distance_unit_feet">Fuß</string>
     <string name="settings_section_privacy">Datenschutz</string>
+    <string name="settings_place_recording">Letzten Ort aufzeichnen</string>
+    <string name="settings_place_recording_body">Speichert den ungefähren Ort, an dem ein Gerät zuletzt erkannt wurde, nur auf diesem Handy</string>
+    <string name="settings_place_off_title">Gespeicherte Orte auch löschen?</string>
+    <string name="settings_place_off_body">Die Aufzeichnung wird in beiden Fällen ausgeschaltet. Die Zeit der letzten Erkennung bleibt erhalten.</string>
+    <string name="settings_place_off_delete">Orte löschen</string>
+    <string name="settings_place_off_keep">Orte behalten</string>
     <string name="settings_privacy_options">Datenschutzoptionen</string>
     <string name="settings_privacy_options_body">Werbe-Einwilligung</string>
     <string name="settings_privacy_policy">Datenschutzerklärung</string>

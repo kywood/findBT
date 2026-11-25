@@ -20,6 +20,12 @@
     <string name="settings_distance_unit_meters">メートル</string>
     <string name="settings_distance_unit_feet">フィート</string>
     <string name="settings_section_privacy">プライバシー</string>
+    <string name="settings_place_recording">最後の場所を記録</string>
+    <string name="settings_place_recording_body">デバイスを最後に検出したおおよその場所を、このスマートフォンにだけ保存します</string>
+    <string name="settings_place_off_title">保存した場所も削除しますか?</string>
+    <string name="settings_place_off_body">どちらを選んでも記録はオフになります。最後に検出した時刻は残ります。</string>
+    <string name="settings_place_off_delete">場所を削除</string>
+    <string name="settings_place_off_keep">場所を残す</string>
     <string name="settings_privacy_options">プライバシー設定</string>
     <string name="settings_privacy_options_body">広告の同意</string>
     <string name="settings_privacy_policy">プライバシーポリシー</string>

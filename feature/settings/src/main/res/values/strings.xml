@@ -20,6 +20,12 @@
     <string name="settings_distance_unit_meters">Meters</string>
     <string name="settings_distance_unit_feet">Feet</string>
     <string name="settings_section_privacy">Privacy</string>
+    <string name="settings_place_recording">Record last location</string>
+    <string name="settings_place_recording_body">Saves the approximate place where a device was last detected, on this phone only</string>
+    <string name="settings_place_off_title">Delete saved places too?</string>
+    <string name="settings_place_off_body">Recording turns off either way. The time of the last detection is kept.</string>
+    <string name="settings_place_off_delete">Delete places</string>
+    <string name="settings_place_off_keep">Keep places</string>
     <string name="settings_privacy_options">Privacy options</string>
     <string name="settings_privacy_options_body">Ad consent</string>
     <string name="settings_privacy_policy">Privacy policy</string>

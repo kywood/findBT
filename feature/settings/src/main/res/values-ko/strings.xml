@@ -20,6 +20,12 @@
     <string name="settings_distance_unit_meters">미터</string>
     <string name="settings_distance_unit_feet">피트</string>
     <string name="settings_section_privacy">개인정보</string>
+    <string name="settings_place_recording">마지막 위치 기록</string>
+    <string name="settings_place_recording_body">기기를 마지막으로 감지한 대략적인 장소를 이 폰에만 저장해요</string>
+    <string name="settings_place_off_title">저장된 장소도 지울까요?</string>
+    <string name="settings_place_off_body">어느 쪽을 골라도 기록은 꺼져요. 마지막으로 감지한 시각은 남아요.</string>
+    <string name="settings_place_off_delete">장소 지우기</string>
+    <string name="settings_place_off_keep">장소 남기기</string>
     <string name="settings_privacy_options">개인정보 옵션</string>
     <string name="settings_privacy_options_body">광고 동의</string>
     <string name="settings_privacy_policy">개인정보처리방침</string>

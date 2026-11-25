@@ -1,12 +1,16 @@
 package com.gamenuri.btscanner24.feature.settings
 
+import android.Manifest
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.text.format.DateUtils
 import androidx.activity.compose.LocalActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -20,6 +24,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -31,9 +36,11 @@ import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Mail
+import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material.icons.outlined.PrivacyTip
 import androidx.compose.material.icons.outlined.Restore
 import androidx.compose.material.icons.outlined.Straighten
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -46,13 +53,18 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -60,6 +72,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -98,6 +111,12 @@ data class PrivacyOptions(val isRequired: Boolean, val show: () -> Unit)
  */
 data class RewardedOffer(val isReady: Boolean, val show: (onDayPass: (until: Long) -> Unit) -> Unit)
 
+/**
+ * Recording where the user's devices were last detected (#178). Turning it on asks for the location
+ * permission first where it is missing; turning it off asks whether the stored places go too.
+ */
+data class PlaceRecording(val isOn: Boolean, val onTurnOn: () -> Unit, val onTurnOff: (deletePlaces: Boolean) -> Unit)
+
 data class SettingsActions(
     val onBack: () -> Unit = {},
     val onGetPremium: () -> Unit = {},
@@ -107,6 +126,7 @@ data class SettingsActions(
     val onContact: () -> Unit = {},
     val onLicenses: () -> Unit = {},
     val onDistanceUnit: (DistanceUnit) -> Unit = {},
+    val onPlaceRecording: (Boolean) -> Unit = {},
 )
 
 /** ⋮ → Settings (#56, design settings-v3). No ads on this screen. */
@@ -119,6 +139,7 @@ fun SettingsScreen(
     onDistanceUnit: (DistanceUnit) -> Unit = {},
     privacyOptions: PrivacyOptions? = null,
     rewarded: RewardedOffer? = null,
+    placeRecording: PlaceRecording? = null,
     /** Opens the paywall sheet right away (debug demo shots, later "Go Premium" links). */
     openPaywall: Boolean = false,
 ) {
@@ -147,6 +168,12 @@ fun SettingsScreen(
         }
     }
 
+    var askDeletePlaces by rememberSaveable { mutableStateOf(false) }
+    val askLocation = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        // Refused: the switch stays off, so it never claims a recording that cannot happen.
+        if (granted) placeRecording?.onTurnOn?.invoke()
+    }
+
     val subject = stringResource(
         R.string.settings_contact_subject,
         appInfo.versionName,
@@ -158,6 +185,7 @@ fun SettingsScreen(
         appInfo = appInfo,
         premium = state.premium,
         showPrivacyOptions = privacyOptions?.isRequired == true,
+        recordsPlace = placeRecording?.isOn,
         snackbar = snackbar,
         modifier = modifier,
         actions = SettingsActions(
@@ -174,8 +202,39 @@ fun SettingsScreen(
             },
             onLicenses = onLicenses,
             onDistanceUnit = onDistanceUnit,
+            onPlaceRecording = { on ->
+                when {
+                    !on -> askDeletePlaces = true
+                    context.hasLocationAccess() -> placeRecording?.onTurnOn?.invoke()
+                    else -> askLocation.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
+                }
+            },
         ),
     )
+
+    if (askDeletePlaces) {
+        AlertDialog(
+            onDismissRequest = { askDeletePlaces = false },
+            title = { Text(stringResource(R.string.settings_place_off_title)) },
+            text = { Text(stringResource(R.string.settings_place_off_body)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        askDeletePlaces = false
+                        placeRecording?.onTurnOff?.invoke(true)
+                    },
+                ) { Text(stringResource(R.string.settings_place_off_delete)) }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        askDeletePlaces = false
+                        placeRecording?.onTurnOff?.invoke(false)
+                    },
+                ) { Text(stringResource(R.string.settings_place_off_keep)) }
+            },
+        )
+    }
 
     if (state.showPaywall) {
         PaywallSheet(
@@ -206,6 +265,12 @@ private fun Context.formatUntil(until: Long): String = DateUtils.formatDateTime(
     DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_TIME or DateUtils.FORMAT_ABBREV_MONTH,
 )
 
+/** Approximate is enough: places are kept to about 100 m anyway. */
+private fun Context.hasLocationAccess(): Boolean =
+    listOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION).any {
+        checkSelfPermission(it) == PackageManager.PERMISSION_GRANTED
+    }
+
 private fun Context.openUri(intent: Intent) {
     try {
         startActivity(intent)
@@ -224,6 +289,8 @@ fun SettingsContent(
     actions: SettingsActions,
     modifier: Modifier = Modifier,
     snackbar: SnackbarHostState = remember { SnackbarHostState() },
+    /** Null hides the row, e.g. where the caller has no last-seen records to switch. */
+    recordsPlace: Boolean? = null,
 ) {
     Scaffold(
         modifier = modifier,
@@ -254,6 +321,7 @@ fun SettingsContent(
             SectionHeader(R.string.settings_section_display)
             DistanceUnitRow(LocalDistanceUnit.current, actions.onDistanceUnit)
             SectionHeader(R.string.settings_section_privacy)
+            if (recordsPlace != null) PlaceRecordingRow(recordsPlace, actions.onPlaceRecording)
             if (showPrivacyOptions) {
                 SettingsRow(
                     icon = Icons.Outlined.PrivacyTip,
@@ -413,6 +481,34 @@ private fun SettingsRow(
                 modifier = Modifier.size(20.dp),
             )
         }
+    }
+}
+
+/** Off until the user turns it on here or from a device's last-seen sheet (#178). */
+@Composable
+private fun PlaceRecordingRow(isOn: Boolean, onChange: (Boolean) -> Unit) {
+    val variant = MaterialTheme.colorScheme.onSurfaceVariant
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .toggleable(value = isOn, role = Role.Switch, onValueChange = onChange)
+            .heightIn(min = 64.dp)
+            .padding(horizontal = 20.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(Icons.Outlined.Place, null, tint = variant, modifier = Modifier.size(24.dp))
+        Spacer(Modifier.width(16.dp))
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(R.string.settings_place_recording), style = MaterialTheme.typography.bodyLarge)
+            Text(
+                stringResource(R.string.settings_place_recording_body),
+                style = MaterialTheme.typography.bodyMedium,
+                color = variant,
+            )
+        }
+        Spacer(Modifier.width(12.dp))
+        // The whole row is the switch for TalkBack and touch.
+        Switch(checked = isOn, onCheckedChange = null)
     }
 }
 

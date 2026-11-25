@@ -25,6 +25,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerEventPass
@@ -40,6 +41,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.gamenuri.btscanner24.core.ads.NearoAds
 import com.gamenuri.btscanner24.core.ble.BleScanner
+import com.gamenuri.btscanner24.core.data.DataDependenciesProvider
 import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
 import com.gamenuri.btscanner24.core.model.DistanceUnit
 import com.gamenuri.btscanner24.core.ui.LocalDistanceUnit
@@ -58,11 +60,13 @@ import com.gamenuri.btscanner24.feature.scan.LocalNearbyMap
 import com.gamenuri.btscanner24.feature.scan.NearbyMapOptions
 import com.gamenuri.btscanner24.feature.settings.AppInfo
 import com.gamenuri.btscanner24.feature.settings.LicensesScreen
+import com.gamenuri.btscanner24.feature.settings.PlaceRecording
 import com.gamenuri.btscanner24.feature.settings.PrivacyOptions
 import com.gamenuri.btscanner24.feature.settings.RewardedOffer
 import com.gamenuri.btscanner24.feature.settings.SettingsScreen
 import java.util.Locale
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -195,12 +199,25 @@ private fun AppNavHost(
                 )
             }
             composable(Routes.SETTINGS) {
+                val lastSeen = (LocalContext.current.applicationContext as DataDependenciesProvider).lastSeen
+                val recordsPlace by lastSeen.recordsPlace.collectAsStateWithLifecycle(initialValue = false)
+                val scope = rememberCoroutineScope()
                 SettingsScreen(
                     appInfo = buildAppInfo,
                     onBack = { if (!navController.popBackStack()) navController.navigate(Routes.HOME) },
                     onLicenses = { navController.navigate(Routes.LICENSES) },
                     onDistanceUnit = onDistanceUnit,
                     openPaywall = openPaywall,
+                    placeRecording = PlaceRecording(
+                        isOn = recordsPlace,
+                        onTurnOn = { scope.launch { lastSeen.setRecordsPlace(true) } },
+                        onTurnOff = { deletePlaces ->
+                            scope.launch {
+                                lastSeen.setRecordsPlace(false)
+                                if (deletePlaces) lastSeen.forgetPlaces()
+                            }
+                        },
+                    ),
                     privacyOptions = ads?.let { nearoAds ->
                         PrivacyOptions(nearoAds.isPrivacyOptionsRequired) {
                             activity?.let(nearoAds::showPrivacyOptions)
