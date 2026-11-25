@@ -101,7 +101,9 @@ import com.gamenuri.btscanner24.core.ui.distanceText
 import com.gamenuri.btscanner24.core.ui.text
 import java.util.Locale
 import kotlin.math.roundToInt
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /** Entry point: owns the ViewModel, lifecycle, haptics and keep-screen-on. Visuals are in [FinderContent]. */
 @Composable
@@ -133,11 +135,21 @@ fun FinderScreen(
     val context = LocalContext.current
     val reduceMotion = remember(context) { context.animationsOff() }
     val slope = rememberWaterSlope()
+    // The live screen is slow to compose for the first time (230 to 480 ms on a Galaxy A50, #107), so
+    // the water starts on this screen's first, empty frame and the content joins it one frame later,
+    // while the waterline is still low.
+    var live by remember { mutableStateOf(entered) }
     LaunchedEffect(Unit) {
         if (entered) return@LaunchedEffect
-        // Not before this screen has drawn once: its first frame is slow on older phones (#106).
-        withFrameNanos { }
-        entry.rise(kickAt = entryTapX, reduceMotion = reduceMotion, slope = slope)
+        coroutineScope {
+            // One empty frame so the water knows its size, then two of water before the content comes.
+            withFrameNanos { }
+            val rising = launch { entry.rise(kickAt = entryTapX, reduceMotion = reduceMotion, slope = slope) }
+            withFrameNanos { }
+            withFrameNanos { }
+            live = true
+            rising.join()
+        }
         entered = true
     }
     LaunchedEffect(leaving) {
@@ -168,7 +180,7 @@ fun FinderScreen(
                     close()
                 },
             )
-        } else {
+        } else if (live) {
             FinderLive(
                 viewModel = viewModel,
                 state = state,
