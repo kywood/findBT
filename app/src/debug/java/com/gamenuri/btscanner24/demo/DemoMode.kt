@@ -43,6 +43,7 @@ internal object DemoMode {
             onboardingPage = intent.getStringExtra(EXTRA_ONBOARDING),
             arScene = intent.getBooleanExtra(EXTRA_AR, true),
             showAds = intent.getBooleanExtra(EXTRA_ADS, false),
+            followPose = intent.getBooleanExtra(EXTRA_POSE, false),
         )
     }
 
@@ -79,6 +80,7 @@ internal object DemoMode {
     private const val EXTRA_ONBOARDING = "demo_onboarding"
     private const val EXTRA_AR = "demo_ar"
     private const val EXTRA_ADS = "demo_ads"
+    private const val EXTRA_POSE = "demo_pose"
 }
 
 /** Looks like a running scan but never reports a real device. */
