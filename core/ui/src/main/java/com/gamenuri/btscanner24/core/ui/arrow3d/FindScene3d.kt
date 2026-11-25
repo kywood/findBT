@@ -43,7 +43,7 @@ data class FindSceneSpec(
     val reduceMotion: Boolean = false,
     /**
      * The scene is a layer across the screen (design find-flow-3d v1.1), not a box: the ring is
-     * 0.30 of the width, the far rings and the device marker are drawn, and the floor's middle
+     * 0.45 of the width where there is room, the far rings and the device marker are drawn, and the floor's middle
      * sits at [centerY] of the layer's height (0 = top).
      */
     val fullBleed: Boolean = false,
@@ -56,8 +56,14 @@ data class FindSceneSpec(
     val showTarget: Boolean = false,
 )
 
-/** The floor ring's radius as a share of the screen width in the full-bleed layout. */
-private const val FULL_BLEED_RING_FRACTION = 0.30f
+/**
+ * The floor ring's radius as a share of the screen width in the full-bleed layout, as drawn in the
+ * approved find-flow-3d v1.1 picture (#121); the renderer shrinks it where the layout has less room.
+ */
+private const val FULL_BLEED_RING_FRACTION = 0.45f
+
+/** "Found it": smaller, so the mint ring around the medal (1.25 R) stays inside the screen. */
+private const val FOUND_RING_FRACTION = 0.37f
 
 /**
  * Source of the phone's pose for the scene camera. The feature module backs it with core:sensors;
@@ -108,7 +114,11 @@ fun FindScene3d(
                 centerY = spec.centerY
                 topFade = spec.topFade
                 bottomFade = spec.bottomFade
-                ringFraction = if (spec.fullBleed) FULL_BLEED_RING_FRACTION else SceneState.BOXED_RING_FRACTION
+                ringFraction = when {
+                    !spec.fullBleed -> SceneState.BOXED_RING_FRACTION
+                    spec.found -> FOUND_RING_FRACTION
+                    else -> FULL_BLEED_RING_FRACTION
+                }
                 showTarget = spec.showTarget
             }
         },
