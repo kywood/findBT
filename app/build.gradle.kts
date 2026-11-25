@@ -12,6 +12,19 @@ val localProperties = Properties().apply {
     rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
 }
 
+// Release signing (#35): the keystore path and passwords come from local.properties or environment
+// variables only, never from git. Without them the release build is simply left unsigned.
+fun secret(property: String, environment: String): String? =
+    localProperties.getProperty(property)?.takeIf { it.isNotBlank() }
+        ?: System.getenv(environment)?.takeIf { it.isNotBlank() }
+
+val signingStoreFile = secret("nearo.signing.storeFile", "NEARO_SIGNING_STORE_FILE")
+val signingStorePassword = secret("nearo.signing.storePassword", "NEARO_SIGNING_STORE_PASSWORD")
+val signingKeyAlias = secret("nearo.signing.keyAlias", "NEARO_SIGNING_KEY_ALIAS")
+val signingKeyPassword = secret("nearo.signing.keyPassword", "NEARO_SIGNING_KEY_PASSWORD")
+val hasReleaseSigning =
+    listOf(signingStoreFile, signingStorePassword, signingKeyAlias, signingKeyPassword).all { it != null }
+
 android {
     namespace = "com.gamenuri.btscanner24"
     compileSdk {
@@ -42,6 +55,17 @@ android {
         buildConfigField("String", "PRIVACY_POLICY_URL", "\"https://kywood.github.io/findBT/privacy/\"")
     }
 
+    signingConfigs {
+        if (hasReleaseSigning) {
+            create("release") {
+                storeFile = file(signingStoreFile!!)
+                storePassword = signingStorePassword
+                keyAlias = signingKeyAlias
+                keyPassword = signingKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         debug {
             // Installs next to the Play Store build on test phones; release applicationId is unchanged.
@@ -57,6 +81,8 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+            // The existing upload key (the package stays com.gamenuri.btscanner24); null = unsigned.
+            signingConfig = signingConfigs.findByName("release")
         }
         // Release code, debug signing, profileable: for measuring start-up on test phones (#34).
         create("benchmark") {
