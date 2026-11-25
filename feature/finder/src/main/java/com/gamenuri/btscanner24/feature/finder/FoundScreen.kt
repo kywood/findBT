@@ -9,6 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -33,6 +34,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -87,31 +89,27 @@ fun FoundContent(
             checkScale.animateTo(1f, tween(CHECK_POP_MS / 2, easing = FastOutSlowInEasing))
         }
     }
+    val pop = Modifier.graphicsLayer {
+        scaleX = checkScale.value
+        scaleY = checkScale.value
+    }
+    var sceneFailed by remember { mutableStateOf(false) }
+    val scene3d = LocalArFindScene.current && !sceneFailed && !LocalInspectionMode.current
+    var heroCenterY by remember { mutableFloatStateOf(Float.NaN) }
+    val context = LocalContext.current
+    val reduceMotion = remember(context) {
+        val scale = Settings.Global.ANIMATOR_DURATION_SCALE
+        Settings.Global.getFloat(context.contentResolver, scale, 1f) == 0f
+    }
     CompositionLocalProvider(LocalContentColor provides colors.content) {
-        Column(
-            modifier = modifier
+        Box(
+            modifier
                 .fillMaxSize()
-                .background(Brush.verticalGradient(listOf(colors.backgroundTop, colors.backgroundBottom)))
-                .safeDrawingPadding()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
+                .background(Brush.verticalGradient(listOf(colors.backgroundTop, colors.backgroundBottom))),
         ) {
-            Column(
-                modifier = Modifier.weight(1f).fillMaxWidth().padding(horizontal = 8.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-            ) {
-                val pop = Modifier.graphicsLayer {
-                    scaleX = checkScale.value
-                    scaleY = checkScale.value
-                }
-                var sceneFailed by remember { mutableStateOf(false) }
-                val context = LocalContext.current
-                val reduceMotion = remember(context) {
-                    val scale = Settings.Global.ANIMATOR_DURATION_SCALE
-                    Settings.Global.getFloat(context.contentResolver, scale, 1f) == 0f
-                }
-                if (LocalArFindScene.current && !sceneFailed && !LocalInspectionMode.current) {
+            // The same full-width 3D layer as the find screen; the layout below keeps its place free.
+            if (scene3d) {
+                FindSceneLayer(heroCenterY, pop) { centerY ->
                     FindScene3d(
                         spec = FindSceneSpec(
                             found = true,
@@ -119,40 +117,73 @@ fun FoundContent(
                             floorColor = colors.content,
                             accentColor = colors.rings,
                             reduceMotion = reduceMotion,
+                            fullBleed = true,
+                            centerY = centerY,
                         ),
-                        modifier = pop
-                            .weight(1f, fill = false)
-                            .sizeIn(maxWidth = 280.dp, maxHeight = 280.dp)
-                            .aspectRatio(1f),
+                        modifier = Modifier.fillMaxSize(),
                         onUnavailable = { sceneFailed = true },
+                    )
+                }
+            }
+            FoundLayout(label, elapsedSeconds, onDone, colors) {
+                if (scene3d) {
+                    Box(
+                        Modifier
+                            .weight(1f, fill = false)
+                            .sizeIn(maxWidth = HERO_SLOT, maxHeight = HERO_SLOT)
+                            .aspectRatio(1f)
+                            .sceneSlot { heroCenterY = it },
                     )
                 } else {
                     CheckHero(colors, pop)
                 }
-                Spacer(Modifier.height(28.dp))
-                Text(
-                    text = stringResource(R.string.found_title),
-                    style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                )
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    text = stringResource(R.string.found_summary, label.text(), elapsedText(elapsedSeconds)),
-                    style = MaterialTheme.typography.bodyLarge,
-                    textAlign = TextAlign.Center,
-                )
             }
-            Button(
-                onClick = onDone,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = colors.buttonContainer,
-                    contentColor = colors.buttonContent,
-                ),
-            ) {
-                Text(stringResource(R.string.found_done), fontWeight = FontWeight.SemiBold)
-            }
+        }
+    }
+}
+
+/** The hero's place, then what was found and how long it took; Done stays at the bottom. */
+@Composable
+private fun FoundLayout(
+    label: DeviceLabel,
+    elapsedSeconds: Int,
+    onDone: () -> Unit,
+    colors: FoundColors,
+    hero: @Composable ColumnScope.() -> Unit,
+) {
+    Column(
+        modifier = Modifier.fillMaxSize().safeDrawingPadding().padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Column(
+            modifier = Modifier.weight(1f).fillMaxWidth().padding(horizontal = 8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            hero()
+            Spacer(Modifier.height(28.dp))
+            Text(
+                text = stringResource(R.string.found_title),
+                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = stringResource(R.string.found_summary, label.text(), elapsedText(elapsedSeconds)),
+                style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.Center,
+            )
+        }
+        Button(
+            onClick = onDone,
+            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = colors.buttonContainer,
+                contentColor = colors.buttonContent,
+            ),
+        ) {
+            Text(stringResource(R.string.found_done), fontWeight = FontWeight.SemiBold)
         }
     }
 }
@@ -213,5 +244,6 @@ private fun FoundPreview() {
     }
 }
 
+private val HERO_SLOT = 280.dp
 private const val CHECK_POP_SCALE = 1.12f
 private const val CHECK_POP_MS = 260

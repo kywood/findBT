@@ -18,9 +18,7 @@ import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,9 +36,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.gamenuri.btscanner24.core.designsystem.component.FLOOR_TILT_DEGREES
 import com.gamenuri.btscanner24.core.designsystem.component.drawFloorArrow
-import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
 import com.gamenuri.btscanner24.core.designsystem.component.drawRoundedArrow
 import com.gamenuri.btscanner24.core.designsystem.component.nearoArrowPath
+import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
 import com.gamenuri.btscanner24.core.sensors.PoseSensor
 import com.gamenuri.btscanner24.core.ui.arrow3d.FindScene3d
 import com.gamenuri.btscanner24.core.ui.arrow3d.FindSceneSpec
@@ -55,7 +53,7 @@ import kotlin.math.abs
  * the arrow in the floor plane (rotationZ), the outer one tilts that floor (rotationX 58°).
  */
 @Composable
-internal fun DirectionDial(state: FinderUiState, modifier: Modifier = Modifier) {
+internal fun DirectionDial(state: FinderUiState, modifier: Modifier = Modifier, sceneBehind: Boolean = false) {
     // Up to 280 dp, square, shrinking with the space the screen gives it.
     Box(
         modifier = modifier
@@ -64,24 +62,24 @@ internal fun DirectionDial(state: FinderUiState, modifier: Modifier = Modifier) 
         contentAlignment = Alignment.Center,
     ) {
         val arrow = state.arrowDegrees
-        val spinning = state.stage == FinderStage.SPIN ||
-            state.stage == FinderStage.SPIN_AGAIN ||
-            state.stage == FinderStage.WAITING
-        // The 3D scene (#76) needs working GL; without it the Canvas arrow below is drawn.
-        var sceneFailed by remember { mutableStateOf(false) }
-        val scene3d = LocalArFindScene.current && !sceneFailed
-        val rightHere = state.stage == FinderStage.RIGHT_HERE
         when {
-            // "Right here" stays in the same 3D scene, so the last step does not turn flat.
-            scene3d && (rightHere || arrow != null || spinning) ->
-                ArrowScene(state, spinning, onUnavailable = { sceneFailed = true })
-            rightHere -> RightHereRings()
+            // The 3D scene (#76) is a layer behind the whole screen; this place only keeps it free.
+            sceneBehind && state.showsScene() -> Unit
+            // Below: only where the 3D scene cannot run.
+            state.stage == FinderStage.RIGHT_HERE -> RightHereRings()
             arrow != null -> FloorArrow(arrow, state.confidence, locked = state.stage == FinderStage.LOCKED)
-            spinning -> SpinningNeedle(state.sweepProgress)
+            state.isSpinning() -> SpinningNeedle(state.sweepProgress)
             else -> HeatRing(state.heat)
         }
     }
 }
+
+private fun FinderUiState.isSpinning(): Boolean =
+    stage == FinderStage.SPIN || stage == FinderStage.SPIN_AGAIN || stage == FinderStage.WAITING
+
+/** Stages the 3D scene draws: looking for a direction, pointing, and "right here". */
+internal fun FinderUiState.showsScene(): Boolean =
+    stage == FinderStage.RIGHT_HERE || arrowDegrees != null || isSpinning()
 
 /**
  * The 3D, AR-style arrow scene (#76) for everything below. On by default; debug builds can show
@@ -89,9 +87,12 @@ internal fun DirectionDial(state: FinderUiState, modifier: Modifier = Modifier) 
  */
 val LocalArFindScene = staticCompositionLocalOf { true }
 
-/** The real 3D arrow on its floor; the camera follows how the phone is held. */
+/**
+ * The real 3D arrow on its floor, across the screen; the camera follows how the phone is held.
+ * [centerY] is where the middle of the floor sits in this layer (0 = top).
+ */
 @Composable
-private fun ArrowScene(state: FinderUiState, spinning: Boolean, onUnavailable: () -> Unit) {
+internal fun ArrowScene(state: FinderUiState, centerY: Float, onUnavailable: () -> Unit) {
     val context = LocalContext.current
     val poseFeed = remember(context) {
         val sensor = PoseSensor(context.applicationContext)
@@ -113,8 +114,12 @@ private fun ArrowScene(state: FinderUiState, spinning: Boolean, onUnavailable: (
         spec = FindSceneSpec(
             relativeDegrees = state.arrowDegrees ?: 0f,
             worldBearingDegrees = state.bearingDegrees,
-            spinning = spinning && state.arrowDegrees == null,
+            spinning = state.isSpinning() && state.arrowDegrees == null,
             rightHere = state.stage == FinderStage.RIGHT_HERE,
+            fullBleed = true,
+            centerY = centerY,
+            // The device marker needs a direction worth pointing at, like the sector.
+            showTarget = state.arrowDegrees != null && state.confidence != ArrowConfidence.NONE,
             accentColor = NearoTheme.colors.found.rings,
             progress = state.sweepProgress,
             wide = state.confidence != ArrowConfidence.HIGH,

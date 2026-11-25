@@ -39,7 +39,19 @@ data class FindSceneSpec(
     val floorColor: Color = Color.White,
     /** Animations are off in the system settings: no bobbing. */
     val reduceMotion: Boolean = false,
+    /**
+     * The scene is a layer across the screen (design find-flow-3d v1.1), not a box: the ring is
+     * 0.30 of the width, the far rings and the device marker are drawn, and the floor's middle
+     * sits at [centerY] of the layer's height (0 = top).
+     */
+    val fullBleed: Boolean = false,
+    val centerY: Float = 0.5f,
+    /** The mint marker on the far ring, where the arrow points (only with [fullBleed]). */
+    val showTarget: Boolean = false,
 )
+
+/** The floor ring's radius as a share of the screen width in the full-bleed layout. */
+private const val FULL_BLEED_RING_FRACTION = 0.30f
 
 /**
  * Source of the phone's pose for the scene camera. The feature module backs it with core:sensors;
@@ -85,6 +97,10 @@ fun FindScene3d(
                 arrowColor = spec.arrowColor.toArgb()
                 floorColor = spec.floorColor.toArgb()
                 reduceMotion = spec.reduceMotion
+                fullBleed = spec.fullBleed
+                centerY = spec.centerY
+                ringFraction = if (spec.fullBleed) FULL_BLEED_RING_FRACTION else SceneState.BOXED_RING_FRACTION
+                showTarget = spec.showTarget
             }
         },
     )

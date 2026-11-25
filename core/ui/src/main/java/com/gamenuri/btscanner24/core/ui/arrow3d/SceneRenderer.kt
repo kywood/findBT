@@ -16,8 +16,9 @@ import kotlin.math.sqrt
  * and a faint blue rim, a planar shadow, a floor ring and the confidence sector, seen through a
  * perspective camera that follows how the phone is held. Within reach ("right here") the arrow
  * shrinks away, a mint puck takes its place and rings pulse out over the same floor; "Found it"
- * is a check medal rising from that floor (design find-flow-3d v1.1). OpenGL ES 2.0 only, so every test phone
- * (the Android 11 A50 too) runs the same shaders.
+ * is a check medal rising from that floor (design find-flow-3d v1.1). As a layer across the screen
+ * the floor carries on past the ring: two more rings and the device marker far out. OpenGL ES 2.0
+ * only, so every test phone (the Android 11 A50 too) runs the same shaders.
  *
  * The scene is heading-relative: −Z is where the phone points, +X its right, +Y up. All easing
  * happens here on the GL thread, so the UI thread only sets targets in [SceneState].
@@ -38,6 +39,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
     private var checkBuffer = 0
     private var pulseBuffer = 0
     private var discBuffer = 0
+    private var thinBuffer = 0
     private val meshVertices = mesh.size / ObjMesh.FLOATS_PER_VERTEX
     private val puckVertices = puck.size / ObjMesh.FLOATS_PER_VERTEX
     private val medalVertices = medal.size / ObjMesh.FLOATS_PER_VERTEX
@@ -53,7 +55,6 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
     private val shadowModel = FloatArray(16)
     private val mvp = FloatArray(16)
     private val shadow = FloatArray(16)
-    private var aspect = 1f
     private var viewportWidth = 1f
     private var viewportHeight = 1f
 
@@ -76,6 +77,9 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
     /** Seconds since the medal started to rise. */
     private var foundTime = 0f
 
+    /** 0..1: how much of the device marker on the far ring shows. */
+    private var marker = 0f
+
     fun onSurfaceCreated() {
         arrowProgram = program(ARROW_VERTEX, ARROW_FRAGMENT)
         flatProgram = program(FLAT_VERTEX, FLAT_FRAGMENT)
@@ -89,6 +93,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         checkBuffer = buffers[5]
         pulseBuffer = buffers[6]
         discBuffer = buffers[7]
+        thinBuffer = buffers[8]
         upload(meshBuffer, mesh)
         upload(puckBuffer, puck)
         upload(medalBuffer, medal)
@@ -96,6 +101,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         upload(ringBuffer, ringStrip(RING_INNER, RING_OUTER))
         upload(pulseBuffer, ringStrip(1f - ACCENT_RING_WIDTH, 1f))
         upload(discBuffer, ringStrip(0f, 1f))
+        upload(thinBuffer, ringStrip(1f - THIN_RING_WIDTH, 1f))
         upload(sectorBuffer, sectorTriangles())
         GLES20.glClearColor(0f, 0f, 0f, 0f)
         // Premultiplied alpha: the layer under this view (the find screen's blue) shows through.
@@ -104,7 +110,6 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
 
     fun onSurfaceChanged(width: Int, height: Int) {
         GLES20.glViewport(0, 0, width, height)
-        aspect = if (height > 0) width.toFloat() / height else 1f
         viewportWidth = width.coerceAtLeast(1).toFloat()
         viewportHeight = height.coerceAtLeast(1).toFloat()
     }
@@ -218,6 +223,8 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
             else -> SECTOR_NARROW
         }
         sectorHalf += (targetSector - sectorHalf) * slow
+        val targetMarker = if (state.showTarget && !state.spinning) 1f else 0f
+        marker += (targetMarker - marker) * slow
         val targetHere = if (state.rightHere) 1f else 0f
         here = if (state.reduceMotion) targetHere else here + (targetHere - here) * slow
 
@@ -246,7 +253,18 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
     }
 
     private fun camera() {
-        Matrix.perspectiveM(projection, 0, FIELD_OF_VIEW, aspect, NEAR, FAR)
+        // One floor unit is the same number of pixels whatever the view's shape: the ring is
+        // [SceneState.ringFraction] of the width, and a wider or taller view only sees more floor.
+        // The floor's middle sits at [SceneState.centerY] of the height, not always in the centre.
+        val unitsPerPixel = RING_OUTER / (state.ringFraction.coerceAtLeast(MIN_RING_FRACTION) * viewportWidth)
+        val nearPerPixel = unitsPerPixel * NEAR / CAMERA_DISTANCE
+        val above = state.centerY.coerceIn(0f, 1f) * viewportHeight
+        Matrix.frustumM(
+            projection, 0,
+            -nearPerPixel * viewportWidth / 2, nearPerPixel * viewportWidth / 2,
+            -nearPerPixel * (viewportHeight - above), nearPerPixel * above,
+            NEAR, FAR,
+        )
         val e = radians(elevation)
         Matrix.setLookAtM(
             lookAt, 0,
@@ -286,8 +304,30 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
             val half = sectorHalf.roundToInt().coerceIn(1, SECTOR_MAX_HALF)
             GLES20.glDrawArrays(GLES20.GL_TRIANGLES, (SECTOR_MAX_HALF - half) * 3, half * 2 * 3)
         }
+        if (state.fullBleed && marker * (1f - here) > HERE_EPSILON) drawTarget(position, yaw, ringVertices)
         if (here > HERE_EPSILON) drawPulses(position, ringVertices)
         GLES20.glDisableVertexAttribArray(position)
+    }
+
+    /**
+     * The device as a mint dot with a ring on the far floor ring, where the arrow points: it is
+     * what the arrow is pointing at. Behind the viewer it slides under the fade and is not seen.
+     */
+    private fun drawTarget(position: Int, yaw: Float, ringVertices: Int) {
+        val (x, z) = floorDirection(yaw)
+        val color = state.accentColor
+        val alpha = marker * (1f - here)
+        Matrix.translateM(shadowModel, 0, viewProjection, 0, x * FAR_RING, 0f, z * FAR_RING)
+        Matrix.scaleM(mvp, 0, shadowModel, 0, TARGET_DOT, 1f, TARGET_DOT)
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, discBuffer)
+        GLES20.glVertexAttribPointer(position, 3, GLES20.GL_FLOAT, false, 0, 0)
+        flat(mvp, color, alpha, soft = true)
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, ringVertices)
+        Matrix.scaleM(mvp, 0, shadowModel, 0, TARGET_HALO, 1f, TARGET_HALO)
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, pulseBuffer)
+        GLES20.glVertexAttribPointer(position, 3, GLES20.GL_FLOAT, false, 0, 0)
+        flat(mvp, color, alpha * TARGET_HALO_ALPHA, soft = true)
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, ringVertices)
     }
 
     /** The floor ring and a second, fainter ring closer in that gives the floor some depth. */
@@ -300,6 +340,19 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         Matrix.scaleM(mvp, 0, viewProjection, 0, INNER_RING, 1f, INNER_RING)
         flat(mvp, color, INNER_RING_ALPHA)
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, ringVertices)
+        if (!state.fullBleed) return
+        // Across the whole screen the floor goes on: a faint ring further out and a dashed one
+        // far away, both fading out before the distance number.
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, thinBuffer)
+        GLES20.glVertexAttribPointer(position, 3, GLES20.GL_FLOAT, false, 0, 0)
+        Matrix.scaleM(mvp, 0, viewProjection, 0, MID_RING, 1f, MID_RING)
+        flat(mvp, color, MID_RING_ALPHA, soft = true)
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, ringVertices)
+        Matrix.scaleM(mvp, 0, viewProjection, 0, FAR_RING, 1f, FAR_RING)
+        flat(mvp, color, FAR_RING_ALPHA, soft = true)
+        for (dash in 0 until RING_SEGMENTS step DASH_STEP) {
+            GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, dash * 2, (DASH_SEGMENTS + 1) * 2)
+        }
     }
 
     /**
@@ -415,7 +468,9 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         soft: Boolean = false,
     ) {
         GLES20.glUniformMatrix4fv(GLES20.glGetUniformLocation(flatProgram, "uMvp"), 1, false, matrix, 0)
-        GLES20.glUniform1f(GLES20.glGetUniformLocation(flatProgram, "uEdge"), if (soft) EDGE_FADE else 0f)
+        // Across the whole screen the floor runs on to the edges; in a box it softens towards them.
+        val edge = if (state.fullBleed) NO_EDGE_FADE else EDGE_FADE
+        GLES20.glUniform1f(GLES20.glGetUniformLocation(flatProgram, "uEdge"), if (soft) edge else 0f)
         if (soft) {
             GLES20.glUniform2f(GLES20.glGetUniformLocation(flatProgram, "uViewport"), viewportWidth, viewportHeight)
             // Without a real range (not laid out yet) the fade is switched off.
@@ -473,7 +528,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         const val MAX_STEP_SECONDS = 0.05f
 
         // Camera.
-        const val FIELD_OF_VIEW = 30f
+        const val MIN_RING_FRACTION = 0.05f
         const val NEAR = 0.5f
         const val FAR = 30f
         const val CAMERA_DISTANCE = 6.6f
@@ -525,6 +580,20 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         val STILL_RINGS = floatArrayOf(0.8f * RING_OUTER, 1.2f * RING_OUTER)
         val STILL_ALPHAS = floatArrayOf(0.85f, 0.45f)
         const val EDGE_FADE = 0.12f
+        const val NO_EDGE_FADE = 0.0001f
+
+        // Full-bleed floor (design find-flow-3d v1.1): a faint ring at 1.6 R, a dashed one at
+        // 2.3 R (16 dashes) that carries the mint device marker.
+        const val THIN_RING_WIDTH = 0.008f
+        const val MID_RING = 1.6f * RING_OUTER
+        const val MID_RING_ALPHA = 0.18f
+        const val FAR_RING = 2.3f * RING_OUTER
+        const val FAR_RING_ALPHA = 0.30f
+        const val DASH_STEP = 6
+        const val DASH_SEGMENTS = 3
+        const val TARGET_DOT = 0.13f * RING_OUTER
+        const val TARGET_HALO = 0.24f * RING_OUTER
+        const val TARGET_HALO_ALPHA = 0.8f
         const val HERE_EPSILON = 0.01f
 
         // "Found it" (same design): a white medal of radius 0.6 and thickness 0.13 with rounded
@@ -541,7 +610,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         const val FOUND_RING = 1.25f * RING_OUTER
         const val FOUND_DISC_ALPHA = 0.16f
         const val ACCENT_RING_WIDTH = 0.07f / 1.25f
-        const val BUFFERS = 8
+        const val BUFFERS = 9
 
         // Shadow: #0B2A8A, never black, about 28 % where all three copies overlap.
         const val SHADOW_RED = 0.043f

@@ -42,6 +42,26 @@ internal class SceneState {
 
     @Volatile var fadeClearY: Float = 0f
 
+    /**
+     * The scene is a layer across the whole screen instead of a box: the far floor rings and the
+     * device marker are drawn too, and the floor runs on to the edges of the view.
+     */
+    @Volatile var fullBleed: Boolean = false
+
+    /** Where the middle of the floor sits in the view, 0 = top edge, 1 = bottom edge. */
+    @Volatile var centerY: Float = 0.5f
+
+    /** The floor ring's radius as a share of the view's width. */
+    @Volatile var ringFraction: Float = BOXED_RING_FRACTION
+
+    /** The mint marker on the far ring, where the arrow points: shown once there is a direction. */
+    @Volatile var showTarget: Boolean = false
+
+    companion object {
+        /** In its 280 dp box the ring is 108 dp: the same picture as a 30° field of view. */
+        const val BOXED_RING_FRACTION = 0.3843f
+    }
+
     @Volatile var arrowColor: Int = 0xFFFFFFFF.toInt()
 
     @Volatile var floorColor: Int = 0xFFFFFFFF.toInt()
