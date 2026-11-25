@@ -101,6 +101,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
 
     /** Seconds since the medal started to rise. */
     private var foundTime = 0f
+    private var markerFit = 1f
 
     /** 0..1: how much of the device marker on the far ring shows. */
     private var marker = 0f
@@ -386,6 +387,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
     private fun targetRadius(x: Float, z: Float): Float {
         val top = state.topFade
         if (top < 0f) return FAR_RING
+        markerFit = 1f
         // A device model stands taller than the ball: its top is what has to stay under the text.
         val tall = (PEDESTAL_THICKNESS + MARKER_FLOAT + MARKER_MODEL) * MESH_SCALE + MARKER_BOB
         val reach = if (modelVertices > 0) tall else 0f
@@ -400,6 +402,14 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
             Matrix.multiplyMV(projected, 0, viewProjection, 0, probe, 0)
             if (projected[3] > 0f && projected[1] / projected[3] <= limit) return radius
             radius -= TARGET_STEP
+        }
+        // Even at its nearest it would reach the text: it shrinks to the room there is instead.
+        if (reach > 0f && projected[3] > 0f) {
+            val topY = projected[1] / projected[3]
+            probe[1] = stepHeight(TARGET_MIN_RADIUS)
+            Matrix.multiplyMV(projected, 0, viewProjection, 0, probe, 0)
+            val baseY = projected[1] / projected[3]
+            if (topY > baseY) markerFit = ((limit - baseY) / (topY - baseY)).coerceIn(0f, 1f)
         }
         return TARGET_MIN_RADIUS
     }
@@ -480,7 +490,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         val bottom = state.bottomFade
         val lowest = if (bottom >= 0f) 1f - 2f * bottom else -1f
         val inSight = projected[3] > 0f && projected[1] / projected[3] >= lowest
-        val wanted = if (inSight && !state.noArrow) marker * (1f - here) else 0f
+        val wanted = if (inSight && !state.noArrow) marker * (1f - here) * markerFit else 0f
         markerSeen = if (state.reduceMotion) wanted else markerSeen + (wanted - markerSeen) * MARKER_EASE
         if (markerSeen < HERE_EPSILON) return
         val scale = markerSeen * MESH_SCALE
@@ -490,7 +500,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         Matrix.setIdentityM(ballModel, 0)
         Matrix.translateM(ballModel, 0, x * radius, floor + (PEDESTAL_THICKNESS + BALL_LIFT) * scale, z * radius)
         Matrix.scaleM(ballModel, 0, scale, scale, scale)
-        drawSolid(pedestalBuffer, pedestalVertices, pedestalModel, state.arrowColor)
+        drawSolid(pedestalBuffer, pedestalVertices, pedestalModel, STAND_COLOR)
         if (modelVertices == 0) {
             drawSolid(ballBuffer, ballVertices, ballModel, state.accentColor)
             return
@@ -526,7 +536,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         Matrix.setIdentityM(pedestalModel, 0)
         Matrix.translateM(pedestalModel, 0, 0f, STAND_THICKNESS / 2 * grown, 0f)
         Matrix.scaleM(pedestalModel, 0, grown, grown, grown)
-        drawSolid(standBuffer, stand.size / ObjMesh.FLOATS_PER_VERTEX, pedestalModel, state.arrowColor)
+        drawSolid(standBuffer, stand.size / ObjMesh.FLOATS_PER_VERTEX, pedestalModel, STAND_COLOR)
         Matrix.setIdentityM(ballModel, 0)
         Matrix.translateM(ballModel, 0, 0f, STAND_THICKNESS * grown, 0f)
         Matrix.scaleM(ballModel, 0, grown, grown, grown)
@@ -796,7 +806,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
             Matrix.scaleM(rimModel, 0, MESH_SCALE, MESH_SCALE, MESH_SCALE)
             val vertices = rims[step].size / ObjMesh.FLOATS_PER_VERTEX
             // The middle rim is always whole (the layout keeps it clear of the texts); the far ones fade.
-            drawSolid(rimBuffers[step], vertices, rimModel, state.floorColor, soft = step > 0)
+            drawSolid(rimBuffers[step], vertices, rimModel, shade(state.floorColor, RIM_SHADE), soft = step > 0)
         }
         // Back to the floor pass's state for the shadows that follow.
         GLES20.glDisable(GLES20.GL_DEPTH_TEST)
@@ -1007,8 +1017,9 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         const val STEP_SECTOR_ALPHA = 0.09f
 
         // Rims, in R like the meshes: 0.04 wide and 0.05 high, white like the arrow.
-        const val RIM_WIDTH = 0.04f
-        const val RIM_HEIGHT = 0.05f
+        const val RIM_WIDTH = 0.026f
+        const val RIM_HEIGHT = 0.036f
+        const val RIM_SHADE = 0.84f
         const val SWEEP_INSIDE = 0.95f
         const val RISER_COLOR = 0x0B2A8A
         const val RISER_ALPHA = 0.30f
@@ -1042,6 +1053,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         const val STAND_RING = 0.33f
         const val STAND_RING_WIDTH = 0.02f
         const val STAND_RING_HEIGHT = 0.012f
+        const val STAND_COLOR = 0xFFFFFFFF.toInt()
         const val STAND_SHADOW_SPREAD = 0.85f
         const val STAND_SHADOW_ALPHA = 0.05f
         const val SHADOW_LIFT = 0.004f
@@ -1087,6 +1099,14 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
 
         /** Into −180..180. */
         fun wrap(degrees: Float): Float = ((degrees % 360f) + 540f) % 360f - 180f
+
+        /** [color] darkened to [share] of its light, so the rims stay under the arrow's white. */
+        fun shade(color: Int, share: Float): Int {
+            val r = ((color shr 16 and 0xFF) * share).toInt()
+            val g = ((color shr 8 and 0xFF) * share).toInt()
+            val b = ((color and 0xFF) * share).toInt()
+            return (color and 0xFF000000.toInt()) or (r shl 16) or (g shl 8) or b
+        }
 
         fun red(color: Int): Float = (color shr 16 and 0xFF) / 255f
 
