@@ -824,6 +824,7 @@ private const val COLOR_FADE_MS = 400
 private const val STAGE_RISE_GAP_MS = 1_500L
 private const val STAGE_GLINT = 0.8f
 private const val MENU_WHITE = 0.14f
+
 /** The "found it" button sits right of the centre; the Found water starts there. */
 private const val FOUND_TAP_X = 0.74f
 

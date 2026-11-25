@@ -55,7 +55,6 @@ import com.gamenuri.btscanner24.feature.settings.RewardedOffer
 import com.gamenuri.btscanner24.feature.settings.SettingsScreen
 import java.util.Locale
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
