@@ -25,6 +25,8 @@
     <string name="finder_signal_lost_body">%1$d초 전에 마지막으로 잡힘 · 신호가 강했던 곳으로 돌아가세요</string>
     <string name="finder_not_found_title">신호를 못 찾았어요</string>
     <string name="finder_not_found_body">더 가까이 가거나 기기가 켜져 있는지 확인해 주세요</string>
+    <string name="finder_connected_title">이 휴대폰에 연결돼 있어요</string>
+    <string name="finder_connected_body">블루투스가 닿는 약 10m 안에 있어요. 연결 중인 기기는 거리를 잴 신호를 잘 내보내지 않아요.</string>
     <string name="finder_bluetooth_off_title">블루투스가 꺼져 있어요</string>
     <string name="finder_bluetooth_off_body">블루투스를 켠 뒤 다시 시도해 주세요</string>
     <string name="finder_location_off_title">위치가 꺼져 있어요</string>
@@ -66,4 +68,8 @@
     <string name="finder_sound_retry">다시 시도</string>
     <string name="finder_sound_failed">소리를 울리지 못했어요. 더 가까이 가서 다시 시도해 보세요.</string>
     <string name="finder_sound_not_supported">이 기기는 소리를 울릴 수 없어요.</string>
+    <string name="finder_sound_ear_title">지금 귀에 끼고 있나요?</string>
+    <string name="finder_sound_ear_body">이 기기에서 큰 소리가 점점 커지며 납니다. 끼고 있다면 먼저 빼 주세요.</string>
+    <string name="finder_sound_ear_confirm">소리 울리기</string>
+    <string name="finder_sound_ear_cancel">취소</string>
 </resources>

@@ -8,13 +8,17 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.gamenuri.btscanner24.core.ble.AlertSupport
 import com.gamenuri.btscanner24.core.ble.BleDependencies
 import com.gamenuri.btscanner24.core.ble.BleScanner
+import com.gamenuri.btscanner24.core.ble.ConnectedDevices
 import com.gamenuri.btscanner24.core.ble.DeviceRepository
 import com.gamenuri.btscanner24.core.ble.ImmediateAlert
+import com.gamenuri.btscanner24.core.ble.MediaFindTone
 import com.gamenuri.btscanner24.core.ble.RingResult
 import com.gamenuri.btscanner24.core.ble.ScanEvent
 import com.gamenuri.btscanner24.core.ble.ScanFailure
 import com.gamenuri.btscanner24.core.ble.scanContinuously
+import com.gamenuri.btscanner24.core.ble.watch
 import com.gamenuri.btscanner24.core.model.BleDevice
+import com.gamenuri.btscanner24.core.model.PairedDevice
 import com.gamenuri.btscanner24.core.sensors.MotionSensor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -39,6 +43,11 @@ class FinderViewModel(
     private val motion: MotionSensor,
     private val alert: ImmediateAlert? = null,
     private val pairedAlias: String? = null,
+    /** Set together with [paired] when the target is the user's own paired device (#119). */
+    private val connectedDevices: ConnectedDevices? = null,
+    private val paired: PairedDevice? = null,
+    /** Plays the find tone through the target when it is the phone's media output (#153). */
+    private val tone: MediaFindTone? = null,
     private val clock: () -> Long = System::currentTimeMillis,
 ) : ViewModel() {
 
@@ -70,12 +79,21 @@ class FinderViewModel(
     @Volatile
     private var scanFailure: ScanFailure? = null
 
+    /** The target is connected to this phone right now; written by the connection watcher, read on Main. */
+    @Volatile
+    private var isConnected = false
+
+    /** Media played now comes out of the target (connected earbuds): the sound goes that way (#153). */
+    @Volatile
+    private var viaPhone = false
+
     // "Play sound" (#28): support is learned once (advertised 0x1802 or a short GATT probe) and sticks.
     private var support: AlertSupport? = null
     private var probeJob: Job? = null
     private var probeAttempts = 0
     private var lastProbeMs = 0L
     private var soundJob: Job? = null
+    private var offeredViaPhone = false
     private val sound = MutableStateFlow(SoundState.UNAVAILABLE)
 
     fun start() {
@@ -96,6 +114,15 @@ class FinderViewModel(
                             repository.onScanResult(event.result)
                         }
                         is ScanEvent.Failed -> scanFailure = event.reason
+                    }
+                }
+            }
+            // The user's own device may be connected to the phone and silent: read the link instead (#119).
+            if (connectedDevices != null && paired != null) {
+                launch(Dispatchers.Default) {
+                    connectedDevices.watch(repository, { listOf(paired) }) {
+                        isConnected = it.isNotEmpty()
+                        viaPhone = isConnected && tone?.isOutput(paired.address, connectedDevices) == true
                     }
                 }
             }
@@ -122,11 +149,16 @@ class FinderViewModel(
 
     /** Starts ringing, or stops it while it rings. */
     fun toggleSound() {
-        val alert = alert ?: return
         if (soundJob?.isActive == true) {
             soundJob?.cancel()
             return
         }
+        val tone = tone
+        if (viaPhone && tone != null) {
+            playTone(tone)
+            return
+        }
+        val alert = alert ?: return
         val address = engine.state(clock(), vibrationOn.value).advanced.address
         probeJob?.cancel()
         sound.value = SoundState.CONNECTING
@@ -163,8 +195,35 @@ class FinderViewModel(
         }
     }
 
+    /** The find tone as media audio through the connected target; the screen asked about ears first (#153). */
+    private fun playTone(tone: MediaFindTone) {
+        probeJob?.cancel()
+        sound.value = SoundState.PLAYING
+        publish()
+        soundJob = viewModelScope.launch {
+            try {
+                tone.play(SOUND_DURATION_MS)
+            } finally {
+                sound.value = SoundState.READY
+                publish()
+            }
+        }
+    }
+
     /** Decides whether to offer "Play sound" once the target is in range. */
     private fun checkSoundSupport(state: FinderUiState) {
+        if (soundJob?.isActive == true) return
+        if (viaPhone) {
+            // Connected earbuds can always be made to sound, with or without a signal to measure.
+            offeredViaPhone = true
+            if (sound.value == SoundState.UNAVAILABLE) sound.value = SoundState.READY
+            return
+        }
+        if (offeredViaPhone) {
+            // No longer the media output (disconnected, or the user switched): back to what the device itself can do.
+            offeredViaPhone = false
+            sound.value = if (support == AlertSupport.SUPPORTED) SoundState.READY else SoundState.UNAVAILABLE
+        }
         val alert = alert ?: return
         // Only while the screen is started (job), and never two GATT connections at once.
         if (job?.isActive != true || support != null) return
@@ -229,7 +288,7 @@ class FinderViewModel(
             }
         }
         checkSoundSupport(state)
-        _uiState.value = state.copy(sound = sound.value)
+        _uiState.value = state.copy(sound = sound.value, isConnected = isConnected, soundViaPhone = offeredViaPhone)
     }
 
     override fun onCleared() {
@@ -247,14 +306,17 @@ class FinderViewModel(
             initializer {
                 val app = checkNotNull(this[APPLICATION_KEY])
                 val ble = (app as BleDependencies.Provider).bleDependencies
-                val alias = ble.bondedDevices.list().firstOrNull { it.address == address }?.name
+                val paired = ble.bondedDevices.list().firstOrNull { it.address == address }
                 FinderViewModel(
                     address,
                     ble.scanner,
                     ble.repository,
                     MotionSensor(app),
                     alert = ImmediateAlert(app),
-                    pairedAlias = alias,
+                    pairedAlias = paired?.name,
+                    connectedDevices = ble.connectedDevices,
+                    paired = paired,
+                    tone = MediaFindTone(app),
                 )
             }
         }

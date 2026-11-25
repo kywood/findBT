@@ -7,6 +7,8 @@
     <string name="devices_last_seen_now">Visto agora mesmo</string>
     <string name="devices_last_seen_minutes">Visto pela última vez: há %1$d min</string>
     <string name="devices_not_seen">Pareado · ainda não visto</string>
+    <string name="devices_connected">Conectado a este celular</string>
+    <string name="devices_connected_no_distance">Conectado a este celular · sem distância enquanto conectado</string>
     <string name="devices_more_for">Mais opções de %1$s</string>
     <string name="devices_hide">Ocultar da lista</string>
     <string name="devices_empty_title">Nenhum dispositivo pareado</string>

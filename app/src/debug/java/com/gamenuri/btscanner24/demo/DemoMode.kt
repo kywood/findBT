@@ -13,6 +13,7 @@ import com.gamenuri.btscanner24.core.ble.BleDependencies
 import com.gamenuri.btscanner24.core.ble.BleScanner
 import com.gamenuri.btscanner24.core.ble.BondedDevices
 import com.gamenuri.btscanner24.core.ble.CompanyDirectory
+import com.gamenuri.btscanner24.core.ble.ConnectedDevices
 import com.gamenuri.btscanner24.core.ble.DeviceRepository
 import com.gamenuri.btscanner24.core.ble.ScanEvent
 import com.gamenuri.btscanner24.core.model.PairedDevice
@@ -23,6 +24,7 @@ import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 
 /**
@@ -54,6 +56,7 @@ internal object DemoMode {
             scanner = DemoScanner(app),
             repository = repository,
             bondedDevices = DemoBondedDevices(app),
+            connectedDevices = DemoConnectedDevices(app),
         )
     }
 
@@ -116,4 +119,13 @@ private class DemoBondedDevices(context: Context) : BondedDevices(context) {
     override fun hasPermission(): Boolean = true
 
     override fun list(): List<PairedDevice> = DemoData.paired
+}
+
+/** The band is "connected" in the demo: it shows the connected state without a signal (#119). */
+private class DemoConnectedDevices(context: Context) : ConnectedDevices(context) {
+    override fun hasPermission(): Boolean = true
+
+    override fun addresses(): Set<String> = setOf(DemoData.paired.last().address)
+
+    override fun readings(address: String): Flow<Int> = emptyFlow()
 }

@@ -71,6 +71,13 @@ data class FinderUiState(
      * instead of "no signal", in the [FinderStage.NOT_FOUND] layout with its retry.
      */
     val scanFailure: ScanFailure? = null,
+    /** The user's own device is connected to this phone (#119), so "no signal" does not mean it is far. */
+    val isConnected: Boolean = false,
+    /**
+     * "Play sound" plays a loud tone through the connected target itself (#153): offered even without
+     * a signal, and the screen asks whether the earbuds are in someone's ears first.
+     */
+    val soundViaPhone: Boolean = false,
 )
 
 /** Immediate Alert (0x1802) "Play sound" state (#28). */

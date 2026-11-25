@@ -7,6 +7,8 @@
     <string name="devices_last_seen_now">Gerade eben gesehen</string>
     <string name="devices_last_seen_minutes">Zuletzt gesehen: vor %1$d Min.</string>
     <string name="devices_not_seen">Gekoppelt · noch nicht gesehen</string>
+    <string name="devices_connected">Mit diesem Handy verbunden</string>
+    <string name="devices_connected_no_distance">Mit diesem Handy verbunden · keine Entfernung, solange verbunden</string>
     <string name="devices_more_for">Mehr zu %1$s</string>
     <string name="devices_hide">Aus Liste ausblenden</string>
     <string name="devices_empty_title">Keine gekoppelten Geräte</string>

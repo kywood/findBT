@@ -335,7 +335,7 @@ private fun PairedRow(
         }
         val sighting = item.sighting
         val meters = item.distanceMeters
-        if (item.isNearby && sighting != null) {
+        if (item.isNearby && sighting != null && (meters != null || !item.isConnected)) {
             Column(horizontalAlignment = Alignment.End) {
                 SignalBars(level = sighting.signalLevel, label = signalLabel(sighting.signalLevel))
                 if (meters != null) {
@@ -384,7 +384,11 @@ private fun PairedRow(
 @Composable
 private fun subtitle(item: MyDeviceItem, now: Long): String {
     val sighting = item.sighting
+    val heard = sighting != null && now - sighting.lastSeen <= MyDevices.ACTIVE_WINDOW_MS
     return when {
+        // Connected but silent: say so instead of "not seen", which reads as lost (#119).
+        item.isConnected && !heard -> stringResource(R.string.devices_connected_no_distance)
+        item.isConnected -> stringResource(R.string.devices_connected)
         item.isNearby -> {
             sighting?.manufacturer?.let {
                 stringResource(UiR.string.device_maker_type, it, item.paired.category.label())

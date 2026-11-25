@@ -11,6 +11,7 @@ import com.gamenuri.btscanner24.core.ble.BleDependencies
 import com.gamenuri.btscanner24.core.ble.BleScanner
 import com.gamenuri.btscanner24.core.ble.BondedDevices
 import com.gamenuri.btscanner24.core.ble.CompanyDirectory
+import com.gamenuri.btscanner24.core.ble.ConnectedDevices
 import com.gamenuri.btscanner24.core.ble.DeviceRepository
 import com.gamenuri.btscanner24.core.data.AppStateRepository
 import com.gamenuri.btscanner24.core.data.DataDependenciesProvider
@@ -40,6 +41,7 @@ class BtScannerApp :
             scanner = BleScanner(this),
             repository = DeviceRepository(companies),
             bondedDevices = BondedDevices(this),
+            connectedDevices = ConnectedDevices(this),
         ).also { ScanCensus.start(it.repository) }
     }
 
