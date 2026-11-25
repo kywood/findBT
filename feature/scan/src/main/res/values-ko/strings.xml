@@ -40,6 +40,7 @@
     <!-- Other devices: close and explanation (#142) -->
     <string name="nearby_other_close">닫기</string>
     <string name="nearby_other_close_section">기타 장치 닫기</string>
+    <string name="nearby_other_order">%1$s · 새 기기는 아래</string>
     <string name="nearby_other_info">기타 장치 설명</string>
     <string name="other_info_title">기타 장치</string>
     <string name="other_info_what">이름이 없거나 종류를 구분하기 어려운 주변 블루투스 신호예요. 이웃의 기기, 가전, TV, 비콘 등이 포함될 수 있어요.</string>

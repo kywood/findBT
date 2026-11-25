@@ -683,7 +683,8 @@ private fun OtherHeader(count: Int, sort: DeviceSort, onClose: () -> Unit, onInf
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    text = stringResource(sort.labelRes()),
+                    // Sorted like this when last sorted; devices heard since then wait at the bottom (#143).
+                    text = stringResource(R.string.nearby_other_order, stringResource(sort.labelRes())),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
