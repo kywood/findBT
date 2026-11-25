@@ -75,4 +75,18 @@
     <string name="filter_active_description">フィルタ、%1$d 件適用中</string>
     <string name="home_reorder_chip">↑ 新しい順 · 並べ替え</string>
     <string name="home_reorder_chip_description">リストの順番が変わりました。タップで並べ替え</string>
+    <!-- Device map (#86) -->
+    <string name="map_arranged_by_distance">距離順に配置</string>
+    <string name="map_scanning">スキャン中</string>
+    <string name="map_empty_title">近くにデバイスがありません</string>
+    <string name="map_empty_body">Bluetoothデバイスの電源を入れて近づけてください</string>
+    <string name="map_find">探す</string>
+    <string name="map_pin_label">%1$s · %2$s</string>
+    <string name="map_step_near">1m</string>
+    <string name="map_step_mid">5m</string>
+    <string name="map_step_far">10m+</string>
+    <string name="map_step_near_ft">3ft</string>
+    <string name="map_step_mid_ft">15ft</string>
+    <string name="map_step_far_ft">30ft+</string>
+    <string name="map_unavailable">このスマートフォンでは3Dマップを表示できません。下のリストで同じデバイスを確認できます。</string>
 </resources>

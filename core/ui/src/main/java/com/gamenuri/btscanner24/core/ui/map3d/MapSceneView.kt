@@ -153,7 +153,7 @@ internal class MapSceneView(context: Context) : GlLayerView(context) {
         const val MAX_FONT_SCALE = 1.3f
         const val LABEL_PAD_X_DP = 10f
         const val LABEL_PAD_Y_DP = 4f
-        const val MAX_LABEL_CHARS = 26
+        const val MAX_LABEL_CHARS = 44
         const val LABEL_PILL = 0xFFFFFFFF.toInt()
         const val LABEL_TEXT = 0xFF1B3FA8.toInt()
         const val FLOOR_TEXT_PX = 64f

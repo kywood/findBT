@@ -77,4 +77,18 @@
     <string name="filter_active_description">Filtro, %1$d aplicados</string>
     <string name="home_reorder_chip">↑ Nova ordem</string>
     <string name="home_reorder_chip_description">A ordem da lista mudou. Toque para ordenar.</string>
+    <!-- Device map (#86) -->
+    <string name="map_arranged_by_distance">Organizados por distância</string>
+    <string name="map_scanning">Procurando</string>
+    <string name="map_empty_title">Nenhum dispositivo por perto</string>
+    <string name="map_empty_body">Ligue um dispositivo Bluetooth e traga-o para perto</string>
+    <string name="map_find">Encontrar</string>
+    <string name="map_pin_label">%1$s · %2$s</string>
+    <string name="map_step_near">1 m</string>
+    <string name="map_step_mid">5 m</string>
+    <string name="map_step_far">10 m+</string>
+    <string name="map_step_near_ft">3 ft</string>
+    <string name="map_step_mid_ft">15 ft</string>
+    <string name="map_step_far_ft">30 ft+</string>
+    <string name="map_unavailable">Este telefone não consegue mostrar o mapa 3D. A lista abaixo mostra os mesmos dispositivos.</string>
 </resources>
