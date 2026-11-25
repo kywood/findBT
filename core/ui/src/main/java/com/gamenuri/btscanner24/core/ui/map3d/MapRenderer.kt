@@ -110,6 +110,11 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
     private var ranks = FloatArray(0)
     private var rects = FloatArray(0)
     private var modelRects = FloatArray(0)
+
+    /** How many tags were placed last frame, in [rects]; the step labels fade under them. */
+    private var keptTags = 0
+    private val stepAlpha = FloatArray(MapFloor.STEPS) { 1f }
+    private var labelEase = 1f
     private var hitSpots = FloatArray(0)
 
     private val projection = FloatArray(16)
@@ -255,6 +260,7 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
         val fast = 1f - exp(-dt / POSE_SMOOTH_SECONDS)
         zoomEase = 1f - exp(-dt / ZOOM_SMOOTH_SECONDS)
         frameSeconds = dt
+        labelEase = if (state.reduceMotion) 1f else 1f - exp(-dt / LABEL_FADE_SECONDS)
         val slow = 1f - exp(-dt / MOVE_SMOOTH_SECONDS)
         heading += wrap(state.headingDegrees - heading) * fast
         elevation += (targetElevation - elevation) * fast
@@ -602,7 +608,7 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
         GLES20.glVertexAttribPointer(corner, 2, GLES20.GL_FLOAT, false, 0, 0)
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
         GLES20.glUniform1i(GLES20.glGetUniformLocation(decalProgram, "uTex"), 0)
-        GLES20.glUniform1f(GLES20.glGetUniformLocation(decalProgram, "uAlpha"), 1f)
+        val alpha = GLES20.glGetUniformLocation(decalProgram, "uAlpha")
         val (x, z) = floorDirection(STEP_LABEL_DEGREES)
         for (step in 0 until MapFloor.STEPS) {
             val tag = labels[step]
@@ -612,6 +618,10 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
             Matrix.rotateM(model, 0, STEP_LABEL_TURN_DEGREES, 0f, 1f, 0f)
             Matrix.scaleM(model, 0, STEP_LABEL_HEIGHT * tag.width / tag.height, 1f, STEP_LABEL_HEIGHT)
             Matrix.multiplyMM(mvp, 0, viewProjection, 0, model, 0)
+            // Faded out under a name tag (last frame's), so the two never read on top of each other.
+            val target = if (underTag()) STEP_LABEL_UNDER_TAG_ALPHA else 1f
+            stepAlpha[step] += (target - stepAlpha[step]) * labelEase
+            GLES20.glUniform1f(alpha, stepAlpha[step])
             GLES20.glUniformMatrix4fv(GLES20.glGetUniformLocation(decalProgram, "uMvp"), 1, false, mvp, 0)
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, tag.texture)
             GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4)
@@ -619,6 +629,33 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0)
         GLES20.glDisableVertexAttribArray(corner)
         endFlat()
+    }
+
+    /** Whether the floor decal drawn with [mvp] lies under one of the name tags drawn last frame. */
+    private fun underTag(): Boolean {
+        var left = Float.MAX_VALUE
+        var right = -Float.MAX_VALUE
+        var bottom = Float.MAX_VALUE
+        var top = -Float.MAX_VALUE
+        for (corner in 0 until 4) {
+            probe[0] = if (corner % 2 == 0) -0.5f else 0.5f
+            probe[1] = 0f
+            probe[2] = if (corner < 2) -0.5f else 0.5f
+            probe[3] = 1f
+            Matrix.multiplyMV(projected, 0, mvp, 0, probe, 0)
+            val w = projected[3]
+            if (w <= 0f) return false
+            val px = (projected[0] / w + 1f) / 2f * viewportWidth
+            val py = (projected[1] / w + 1f) / 2f * viewportHeight
+            left = minOf(left, px)
+            right = maxOf(right, px)
+            bottom = minOf(bottom, py)
+            top = maxOf(top, py)
+        }
+        for (other in 0 until keptTags) {
+            if (overlaps(left, bottom, right, top, rects, other * RECT_FLOATS)) return true
+        }
+        return false
     }
 
     /** A soft round shadow beside every stand, away from the light, and one under the chevron. */
@@ -800,6 +837,7 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
      * nor one that would reach under the chips or the sheet (#193). A tag never covers "me" (#194).
      */
     private fun drawTags(pins: List<MapPin>) {
+        keptTags = 0
         if (pins.isEmpty() || tags.isEmpty()) return
         if (order.size != pins.size) {
             order = IntArray(pins.size)
@@ -838,6 +876,7 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
                 kept++
             }
         }
+        keptTags = kept
         if (kept == 0) return
 
         GLES20.glDisable(GLES20.GL_DEPTH_TEST)
@@ -1342,6 +1381,10 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
 
         /** Half a stand's width with the picked ring round it, as a share of its size. */
         const val PIN_HALF_WIDTH = 0.75f
+
+        /** A floor step label under a name tag fades to this, over this long. */
+        const val STEP_LABEL_UNDER_TAG_ALPHA = 0.15f
+        const val LABEL_FADE_SECONDS = 0.2f
 
         /** No device's model is left out of a tag's check. */
         const val NO_PIN = -1
