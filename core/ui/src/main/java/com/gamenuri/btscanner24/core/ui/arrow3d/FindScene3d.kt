@@ -54,6 +54,8 @@ data class FindSceneSpec(
     val bottomFade: Float = -1f,
     /** The mint marker on the far ring, where the arrow points (only with [fullBleed]). */
     val showTarget: Boolean = false,
+    /** The kind of device being found: its model is the far marker and stands in the middle when it is within reach. */
+    val model: DeviceModel? = null,
 )
 
 /**
@@ -121,6 +123,7 @@ fun FindScene3d(
                 }
                 showTarget = spec.showTarget
             }
+            view.setModel(spec.model)
         },
     )
     // Sensors only while the screen is visible.

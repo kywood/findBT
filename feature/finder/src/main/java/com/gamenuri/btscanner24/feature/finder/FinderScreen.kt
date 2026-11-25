@@ -33,11 +33,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AcUnit
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -53,7 +52,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -201,6 +199,7 @@ private fun FoundRise(state: FinderUiState, seconds: Int, onDone: () -> Unit) {
         if (rise.value < 1f) FinderContent(state, FinderActions())
         FoundContent(
             label = state.deviceLabel,
+            category = state.category,
             elapsedSeconds = seconds,
             onDone = onDone,
             popCheckAfterMs = WATER_RISE_MS,
@@ -246,7 +245,13 @@ fun FinderContent(
                 .background(palette.brush()),
         )
         if (scene3d && state.showsScene()) {
-            FindSceneLayer(dialSlot, fadeOutsideSlot = true) { centerY, topFade, bottomFade ->
+            // Lower than the slot's middle (design find-flow v1.4): the ring sits just over the distance
+            // block, which leaves the far step and the device marker the room above it.
+            FindSceneLayer(
+                dialSlot,
+                fadeOutsideSlot = true,
+                centerBias = SCENE_CENTER_BIAS,
+            ) { centerY, topFade, bottomFade ->
                 CompositionLocalProvider(LocalContentColor provides accent) {
                     val fades = SceneFades(topFade, bottomFade)
                     ArrowScene(state, centerY, fades, onUnavailable = { sceneFailed = true })
@@ -350,8 +355,8 @@ private fun FinderScaffold(
                     }
                 }
                 DistanceBlock(state)
-                // One fixed-height slot under the trend chip: the confirm hint when very close (#94), else
-                // "spin again". It always takes its space, so the rows above keep their place (#60).
+                // One fixed-height slot under the gauge for the confirm hint when very close (#94). It
+                // always takes its space, so the rows above keep their place (#60).
                 Box(Modifier.fillMaxWidth().heightIn(min = BOTTOM_SLOT), contentAlignment = Alignment.Center) {
                     val noSignal = state.stage == FinderStage.NOT_FOUND || state.stage == FinderStage.SIGNAL_LOST
                     if (noSignal) {
@@ -375,15 +380,6 @@ private fun FinderScaffold(
                             maxLines = 2,
                             overflow = TextOverflow.Ellipsis,
                         )
-                    } else {
-                        val canRespin = state.stage == FinderStage.WALK || state.stage == FinderStage.TURN_AROUND
-                        TextButton(
-                            onClick = actions.onSpinAgain,
-                            enabled = canRespin,
-                            modifier = Modifier.slot(visible = canRespin),
-                        ) {
-                            Text(stringResource(R.string.finder_spin_again), color = content)
-                        }
                     }
                 }
             }
@@ -400,8 +396,36 @@ private fun ActionRow(state: FinderUiState, actions: FinderActions, content: Col
             .padding(horizontal = 24.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        if (state.showSoundButton) SoundButton(state.sound, actions.onToggleSound, content)
+        // "Spin again" shares the sound button's row, half each (design find-flow v1.4, #138).
+        // Also while locked: a lock can be wrong, and the design keeps the way back to a new sweep.
+        val canRespin = state.stage == FinderStage.WALK ||
+            state.stage == FinderStage.TURN_AROUND ||
+            state.stage == FinderStage.LOCKED
+        val respin: (@Composable (Modifier) -> Unit)? = if (canRespin) {
+            { modifier -> SpinAgainButton(actions.onSpinAgain, content, modifier) }
+        } else {
+            null
+        }
+        if (state.showSoundButton) {
+            SoundButton(state.sound, actions.onToggleSound, content, respin)
+        } else {
+            respin?.invoke(Modifier.fillMaxWidth())
+        }
         MainActions(state, actions, content, background)
+    }
+}
+
+@Composable
+private fun SpinAgainButton(onClick: () -> Unit, content: Color, modifier: Modifier = Modifier) {
+    OutlinedButton(
+        onClick = onClick,
+        modifier = modifier,
+        colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.Transparent, contentColor = content),
+        border = BorderStroke(1.dp, content.copy(alpha = 0.5f)),
+    ) {
+        Icon(Icons.Filled.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
+        Spacer(Modifier.size(8.dp))
+        Text(stringResource(R.string.finder_spin_again), maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 
@@ -415,7 +439,13 @@ private val FinderUiState.showSoundButton: Boolean
     }
 
 @Composable
-private fun SoundButton(sound: SoundState, onClick: () -> Unit, content: Color) {
+private fun SoundButton(
+    sound: SoundState,
+    onClick: () -> Unit,
+    content: Color,
+    /** A second button for the same row, given the modifier that makes it share the width. */
+    beside: (@Composable (Modifier) -> Unit)? = null,
+) {
     if (sound == SoundState.NOT_SUPPORTED) {
         Text(
             text = stringResource(R.string.finder_sound_not_supported),
@@ -424,6 +454,7 @@ private fun SoundButton(sound: SoundState, onClick: () -> Unit, content: Color) 
             color = content.copy(alpha = MUTED_ALPHA),
             textAlign = TextAlign.Center,
         )
+        beside?.invoke(Modifier.fillMaxWidth())
         return
     }
     if (sound == SoundState.FAILED) {
@@ -441,25 +472,28 @@ private fun SoundButton(sound: SoundState, onClick: () -> Unit, content: Color) 
         SoundState.FAILED -> R.string.finder_sound_retry
         else -> R.string.finder_sound_play
     }
-    OutlinedButton(
-        onClick = onClick,
-        // Tapping while connecting cancels, same as stop.
-        modifier = Modifier.fillMaxWidth(),
-        colors = ButtonDefaults.outlinedButtonColors(
-            containerColor = if (sound == SoundState.PLAYING) content.copy(alpha = 0.18f) else Color.Transparent,
-            contentColor = content,
-        ),
-        border = BorderStroke(1.dp, content.copy(alpha = 0.5f)),
-    ) {
-        Icon(
-            painter = painterResource(
-                if (sound == SoundState.PLAYING) UiR.drawable.ic_sound_off else UiR.drawable.ic_sound,
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        OutlinedButton(
+            onClick = onClick,
+            // Tapping while connecting cancels, same as stop.
+            modifier = Modifier.weight(1f),
+            colors = ButtonDefaults.outlinedButtonColors(
+                containerColor = if (sound == SoundState.PLAYING) content.copy(alpha = 0.18f) else Color.Transparent,
+                contentColor = content,
             ),
-            contentDescription = null,
-            modifier = Modifier.size(18.dp),
-        )
-        Spacer(Modifier.size(8.dp))
-        Text(stringResource(label))
+            border = BorderStroke(1.dp, content.copy(alpha = 0.5f)),
+        ) {
+            Icon(
+                painter = painterResource(
+                    if (sound == SoundState.PLAYING) UiR.drawable.ic_sound_off else UiR.drawable.ic_sound,
+                ),
+                contentDescription = null,
+                modifier = Modifier.size(18.dp),
+            )
+            Spacer(Modifier.size(8.dp))
+            Text(stringResource(label), maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        beside?.invoke(Modifier.weight(1f))
     }
 }
 
@@ -561,11 +595,17 @@ private fun DistanceBlock(state: FinderUiState) {
 
     // Fixed slots (band line, trend chip): only alpha changes, so the number keeps its y (#60).
     val showBand = state.stage != FinderStage.RIGHT_HERE && state.band != null
-    Text(
-        text = state.band?.let { stringResource(it.labelRes()) }.orEmpty(),
-        modifier = Modifier.slot(visible = showBand),
-        style = MaterialTheme.typography.titleMedium,
-    )
+    // No "Keep going" while the user is asked to spin in place.
+    val spinning = state.stage == FinderStage.SPIN || state.stage == FinderStage.SPIN_AGAIN
+    // The band and the trend chip share one line (design find-flow v1.4), which leaves the scene more height.
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            text = state.band?.let { stringResource(it.labelRes()) }.orEmpty(),
+            modifier = Modifier.slot(visible = showBand),
+            style = MaterialTheme.typography.titleMedium,
+        )
+        if (state.stage != FinderStage.RIGHT_HERE && !spinning) TrendChip(state.trend)
+    }
     // One line in every language: "a menos de 1 m" shrinks from 54 sp down to 34 sp instead of losing "m" (#74).
     BasicText(
         text = distanceText(meters),
@@ -578,46 +618,33 @@ private fun DistanceBlock(state: FinderUiState) {
         style = MaterialTheme.typography.labelMedium,
         color = LocalContentColor.current.copy(alpha = MUTED_ALPHA),
     )
-    Spacer(Modifier.height(16.dp))
-    HeatGauge(state.heat, Modifier.fillMaxWidth(0.8f))
-    // No "Keep going" while the user is asked to spin in place.
-    val spinning = state.stage == FinderStage.SPIN || state.stage == FinderStage.SPIN_AGAIN
     Spacer(Modifier.height(12.dp))
-    TrendChip(state.trend, Modifier.slot(visible = state.stage != FinderStage.RIGHT_HERE && !spinning))
+    HeatGauge(state.heat, Modifier.fillMaxWidth(GAUGE_WIDTH))
 }
 
 /**
- * Hot-cold gauge: cold (far) on the left, hot (right here) on the right. The snowflake and flame
- * icons and the dot's position carry the meaning, so it does not depend on colour.
+ * Hot-cold gauge as a thin bar (design find-flow v1.4): filled from the left as far as the dot, which
+ * moves right as the device gets closer. Position carries the meaning, so it does not depend on colour.
  */
 @Composable
 private fun HeatGauge(heat: Float, modifier: Modifier = Modifier) {
     val content = LocalFindAccent.current.takeOrElse { LocalContentColor.current }
-    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
-        Icon(Icons.Filled.AcUnit, contentDescription = null, tint = GaugeCold, modifier = Modifier.size(GAUGE_ICON))
-        BoxWithConstraints(
-            modifier = Modifier.weight(1f).padding(horizontal = 8.dp).height(GAUGE_DOT),
-            contentAlignment = Alignment.CenterStart,
-        ) {
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .height(GAUGE_TRACK)
-                    .background(content.copy(alpha = 0.3f), RoundedCornerShape(GAUGE_TRACK)),
-            )
-            Box(
-                Modifier
-                    .offset(x = (maxWidth - GAUGE_DOT) * heat.coerceIn(0f, 1f))
-                    .size(GAUGE_DOT)
-                    .background(content, CircleShape),
-            )
-        }
-        Icon(
-            Icons.Filled.LocalFireDepartment,
-            contentDescription = null,
-            tint = GaugeHot,
-            modifier = Modifier.size(GAUGE_ICON),
+    val share = heat.coerceIn(0f, 1f)
+    BoxWithConstraints(modifier = modifier.height(GAUGE_DOT), contentAlignment = Alignment.CenterStart) {
+        val dotStart = (maxWidth - GAUGE_DOT) * share
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(GAUGE_TRACK)
+                .background(content.copy(alpha = 0.3f), RoundedCornerShape(GAUGE_TRACK)),
         )
+        Box(
+            Modifier
+                .width(dotStart + GAUGE_DOT / 2)
+                .height(GAUGE_TRACK)
+                .background(content, RoundedCornerShape(GAUGE_TRACK)),
+        )
+        Box(Modifier.offset(x = dotStart).size(GAUGE_DOT).background(content, CircleShape))
     }
 }
 
@@ -637,8 +664,9 @@ private fun TrendChip(trend: ProximityTrend, modifier: Modifier = Modifier) {
     ) {
         Text(
             text = stringResource(text),
-            style = MaterialTheme.typography.labelLarge,
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+            style = MaterialTheme.typography.labelMedium,
+            maxLines = 1,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp),
         )
     }
 }
@@ -770,6 +798,7 @@ private fun vibrator(context: Context): Vibrator? {
     return vibrator?.takeIf { it.hasVibrator() }
 }
 
+private const val SCENE_CENTER_BIAS = 0.64f
 private const val HAPTIC_MS = 40L
 private const val LONG_HAPTIC_MS = 400L
 private const val COLOR_FADE_MS = 400
@@ -781,14 +810,12 @@ private const val FOUND_CONTENT_FROM = 0.45f
 private const val MUTED_ALPHA = 0.78f
 private const val HINT_ALPHA = 0.8f
 private val BOTTOM_SLOT = 48.dp
-private val GAUGE_TRACK = 6.dp
+private val GAUGE_TRACK = 4.dp
 private val DIAL_MIN = 180.dp
-private val GAUGE_DOT = 16.dp
-private val GAUGE_ICON = 16.dp
+private val GAUGE_DOT = 12.dp
+private const val GAUGE_WIDTH = 0.76f
 
 // Gauge ends (#71): the same on every find state background.
-private val GaugeCold = Color(0xFFB2C5FF)
-private val GaugeHot = Color(0xFFFF8A5C)
 private const val NO_VALUE = "–"
 
 /** The find state's highlight (arrow, gauge); unset outside [FinderContent], where content colour is used. */

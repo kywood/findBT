@@ -29,6 +29,28 @@ internal class SceneTextureView(context: Context) :
 
     private val mesh: FloatArray by lazy { ArrowMesh.build() }
     private var thread: RenderThread? = null
+    private var model: DeviceModel? = null
+
+    /** Which device model the scene shows; its file is read on a worker thread and then handed to the renderer. */
+    fun setModel(next: DeviceModel?) {
+        if (next == model) return
+        model = next
+        if (next == null) {
+            state.modelMesh = null
+            return
+        }
+        // Read before (the find screen showed it): there at once, e.g. for its exit on "Found it".
+        DeviceModel.cached(next)?.let {
+            state.modelMesh = it
+            return
+        }
+        val assets = context.applicationContext
+        Thread {
+            val mesh = DeviceModel.load(assets, next)
+            // Only if this is still the model that is wanted.
+            post { if (model == next) state.modelMesh = mesh }
+        }.start()
+    }
 
     init {
         isOpaque = false

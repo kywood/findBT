@@ -6,6 +6,7 @@ import com.gamenuri.btscanner24.core.ble.proximity.ProximityEstimator
 import com.gamenuri.btscanner24.core.ble.proximity.ProximityReading
 import com.gamenuri.btscanner24.core.ble.proximity.ProximityTrend
 import com.gamenuri.btscanner24.core.model.BleDevice
+import com.gamenuri.btscanner24.core.model.DeviceCategory
 import com.gamenuri.btscanner24.core.model.DeviceLabel
 import com.gamenuri.btscanner24.core.model.DeviceNaming
 import com.gamenuri.btscanner24.core.sensors.Angles
@@ -32,6 +33,7 @@ internal class FinderEngine(
 ) {
     private val tracker = TargetTracker(target)
     private var label: DeviceLabel = DeviceNaming.label(target, pairedAlias)
+    private var category: DeviceCategory = target.category
     private var reading: ProximityReading? = null
     private var lastSightingMs: Long? = null
     private var heading: Double? = null
@@ -50,6 +52,8 @@ internal class FinderEngine(
         // Keep a real name once seen; a later packet without one must not turn it back into a generic label.
         val next = DeviceNaming.label(device, pairedAlias)
         if (next is DeviceLabel.Named || label is DeviceLabel.Generic) label = next
+        // Likewise a kind once known stays known.
+        if (device.category != DeviceCategory.UNKNOWN) category = device.category
         val newReading = proximity.add(device.rssi, nowMs, device.txPower)
         reading = newReading
         // Show the repository's per-device estimate when it has one, so the number matches the list (#21).
@@ -103,6 +107,7 @@ internal class FinderEngine(
         val showArrow = stage == FinderStage.WALK || stage == FinderStage.LOCKED || stage == FinderStage.TURN_AROUND
         return FinderUiState(
             deviceLabel = label,
+            category = category,
             stage = stage,
             arrowDegrees = relative?.takeIf { showArrow }?.toFloat(),
             bearingDegrees = est?.bearingDegrees?.takeIf { showArrow && relative != null }?.toFloat(),
