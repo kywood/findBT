@@ -73,6 +73,12 @@ internal class SceneState {
     /** The mint marker on the far ring, where the arrow points: shown once there is a direction. */
     @Volatile var showTarget: Boolean = false
 
+    /**
+     * The found device's model ([DeviceModel.FLOATS_PER_VERTEX] floats per vertex), once it is read;
+     * null until then, and the scene shows its plain marker and puck.
+     */
+    @Volatile var modelMesh: FloatArray? = null
+
     companion object {
         /** In its 280 dp box the ring is 108 dp: the same picture as a 30° field of view. */
         const val BOXED_RING_FRACTION = 0.3843f
