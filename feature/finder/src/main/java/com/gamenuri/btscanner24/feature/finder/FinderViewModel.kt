@@ -7,15 +7,12 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.gamenuri.btscanner24.core.ble.AlertSupport
 import com.gamenuri.btscanner24.core.ble.BleDependencies
-import com.gamenuri.btscanner24.core.ble.BleScanner
 import com.gamenuri.btscanner24.core.ble.ConnectedDevices
 import com.gamenuri.btscanner24.core.ble.DeviceRepository
 import com.gamenuri.btscanner24.core.ble.ImmediateAlert
 import com.gamenuri.btscanner24.core.ble.MediaFindTone
 import com.gamenuri.btscanner24.core.ble.RingResult
-import com.gamenuri.btscanner24.core.ble.ScanEvent
-import com.gamenuri.btscanner24.core.ble.ScanFailure
-import com.gamenuri.btscanner24.core.ble.scanContinuously
+import com.gamenuri.btscanner24.core.ble.ScanSession
 import com.gamenuri.btscanner24.core.ble.watch
 import com.gamenuri.btscanner24.core.model.BleDevice
 import com.gamenuri.btscanner24.core.model.PairedDevice
@@ -39,7 +36,7 @@ import kotlinx.coroutines.launch
  */
 class FinderViewModel(
     address: String,
-    private val scanner: BleScanner,
+    private val scan: ScanSession,
     private val repository: DeviceRepository,
     private val motion: MotionSensor,
     private val alert: ImmediateAlert? = null,
@@ -76,9 +73,8 @@ class FinderViewModel(
 
     private var job: Job? = null
 
-    /** Why the scan cannot run, until it runs again; written by the scan collector, read on Main. */
-    @Volatile
-    private var scanFailure: ScanFailure? = null
+    /** This screen's hold on the shared scan (#177); null while it is not on screen. */
+    private var scanHold: AutoCloseable? = null
 
     /** The target is connected to this phone right now; written by the connection watcher, read on Main. */
     @Volatile
@@ -107,24 +103,14 @@ class FinderViewModel(
     fun start() {
         if (job?.isActive == true) return
         engine.restartWaiting(clock())
-        scanFailure = null
         job = viewModelScope.launch {
-            // Subscribe to sightings before the scan starts so no early advertisement is missed.
+            // Subscribe to sightings before asking for the scan so no early advertisement is missed.
             launch { repository.sightings.collect { engine.onSighting(it, clock()) } }
-            // Parsing runs off the main thread; the engine itself stays on Main with the sensor collector.
-            launch(Dispatchers.Default) {
-                // Coming from a list, this is often the sixth scan start within 30 s, which Android
-                // accepts but never answers: the screen would wait for a signal forever (#117).
-                scanner.scanContinuously().collect { event ->
-                    when (event) {
-                        is ScanEvent.Result -> {
-                            scanFailure = null
-                            repository.onScanResult(event.result)
-                        }
-                        is ScanEvent.Failed -> scanFailure = event.reason
-                    }
-                }
-            }
+            // The list this screen was opened from usually still holds the shared scan, so it simply
+            // carries on: no sixth start within 30 s, which Android accepts but never answers (#117).
+            // If it had stopped on a failure it is started again.
+            scanHold?.close()
+            scanHold = scan.acquire()
             // The user's own device may be connected to the phone and silent: read the link instead (#119).
             if (connectedDevices != null && paired != null) {
                 launch(Dispatchers.Default) {
@@ -151,6 +137,8 @@ class FinderViewModel(
     fun stop() {
         job?.cancel()
         job = null
+        scanHold?.close()
+        scanHold = null
         probeJob?.cancel()
         // Never leave a tracker ringing when the screen goes away.
         soundJob?.cancel()
@@ -293,7 +281,7 @@ class FinderViewModel(
     }
 
     private fun publish() {
-        val failure = scanFailure
+        val failure = scan.failure.value
         val state = engine.state(clock(), vibrationOn.value).let {
             // Without a scan there is nothing to point at: no arrow, and the reason instead of "no signal".
             if (failure == null) {
@@ -331,7 +319,7 @@ class FinderViewModel(
                 val paired = ble.bondedDevices.list().firstOrNull { it.address == address }
                 FinderViewModel(
                     address,
-                    ble.scanner,
+                    ble.scanSession,
                     ble.repository,
                     MotionSensor(app),
                     alert = ImmediateAlert(app),

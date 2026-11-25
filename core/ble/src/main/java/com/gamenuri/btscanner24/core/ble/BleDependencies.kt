@@ -11,6 +11,8 @@ class BleDependencies(
     val connectedDevices: ConnectedDevices,
     /** The find tone through connected earbuds (#153); null leaves the feature out of the build. */
     val mediaFindTone: MediaFindTone? = null,
+    /** The scan the screens share (#177): they hold it instead of scanning themselves. */
+    val scanSession: ScanSession = SharedScanSession(scanner, repository),
 ) {
     /** Implemented by the Application; feature ViewModel factories read dependencies through it. */
     interface Provider {

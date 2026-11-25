@@ -6,17 +6,14 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.gamenuri.btscanner24.core.ble.BleDependencies
-import com.gamenuri.btscanner24.core.ble.BleScanner
 import com.gamenuri.btscanner24.core.ble.BondedDevices
 import com.gamenuri.btscanner24.core.ble.ConnectedDevices
 import com.gamenuri.btscanner24.core.ble.DeviceRepository
-import com.gamenuri.btscanner24.core.ble.ScanEvent
-import com.gamenuri.btscanner24.core.ble.ScanFailure
-import com.gamenuri.btscanner24.core.ble.scanContinuously
+import com.gamenuri.btscanner24.core.ble.ScanSession
 import com.gamenuri.btscanner24.core.ble.watch
 import com.gamenuri.btscanner24.core.data.DataDependenciesProvider
 import com.gamenuri.btscanner24.core.data.HiddenDevicesRepository
-import com.gamenuri.btscanner24.core.data.LastSeenRepository
+import com.gamenuri.btscanner24.core.data.LastSeenStore
 import com.gamenuri.btscanner24.core.data.SavedDevicesRepository
 import com.gamenuri.btscanner24.core.model.PairedDevice
 import kotlinx.coroutines.Dispatchers
@@ -36,28 +33,28 @@ import kotlinx.coroutines.launch
  */
 @OptIn(FlowPreview::class)
 class DevicesViewModel(
-    private val scanner: BleScanner,
+    private val scan: ScanSession,
     private val repository: DeviceRepository,
     private val bondedDevices: BondedDevices,
     private val connectedDevices: ConnectedDevices,
     private val hiddenDevices: HiddenDevicesRepository,
     private val savedDevices: SavedDevicesRepository,
-    private val lastSeen: LastSeenRepository,
+    private val lastSeen: LastSeenStore,
     private val clock: () -> Long = System::currentTimeMillis,
 ) : ViewModel() {
 
     private val paired = MutableStateFlow<List<PairedDevice>>(emptyList())
     private val hasPermission = MutableStateFlow(bondedDevices.hasPermission())
-    private val scanFailure = MutableStateFlow<ScanFailure?>(null)
     private val connected = MutableStateFlow<Set<String>>(emptySet())
-    private var scanJob: Job? = null
+    /** This tab's hold on the shared scan (#177); null while it is not on screen. */
+    private var scanHold: AutoCloseable? = null
     private var connectedJob: Job? = null
 
     private val listed = combine(
         paired,
         repository.devices.sample(UI_REFRESH_MS),
         hiddenDevices.hidden,
-        combine(hasPermission, scanFailure, connected, ::Triple),
+        combine(hasPermission, scan.failure, connected, ::Triple),
         savedDevices.saved,
     ) { pairedList, seen, hidden, (permitted, failure, linked), saved ->
         MyDevices.build(pairedList, seen.values, hidden, clock(), saved, linked) { it.distanceMeters }
@@ -78,26 +75,15 @@ class DevicesViewModel(
                 connectedDevices.watch(repository, { paired.value }) { connected.value = it }
             }
         }
-        if (scanJob?.isActive == true || !scanner.hasScanPermission()) return
-        scanFailure.value = null
-        scanJob = viewModelScope.launch(Dispatchers.Default) {
-            // Waits out Android's 5-starts-per-30-s budget shared with the Nearby tab (#62) and starts
-            // again when the scan dies quietly, so a device nearby keeps its signal (#116).
-            scanner.scanContinuously().collect { event ->
-                when (event) {
-                    is ScanEvent.Result -> {
-                        if (scanFailure.value != null) scanFailure.value = null
-                        repository.onScanResult(event.result)
-                    }
-                    is ScanEvent.Failed -> scanFailure.value = event.reason
-                }
-            }
-        }
+        if (!scan.hasPermission) return
+        // The shared scan waits out Android's 5-starts-per-30-s budget (#62) and starts again when it
+        // dies quietly, so a device nearby keeps its signal (#116). Held already: this is "Try again".
+        if (scanHold == null) scanHold = scan.acquire() else scan.retry()
     }
 
     fun onScreenStopped() {
-        scanJob?.cancel()
-        scanJob = null
+        scanHold?.close()
+        scanHold = null
         connectedJob?.cancel()
         connectedJob = null
     }
@@ -128,7 +114,7 @@ class DevicesViewModel(
                 val ble = (app as BleDependencies.Provider).bleDependencies
                 val data = app as DataDependenciesProvider
                 DevicesViewModel(
-                    ble.scanner,
+                    ble.scanSession,
                     ble.repository,
                     ble.bondedDevices,
                     ble.connectedDevices,

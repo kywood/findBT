@@ -17,6 +17,7 @@ import com.gamenuri.btscanner24.core.ble.MediaFindTone
 import com.gamenuri.btscanner24.core.data.AppStateRepository
 import com.gamenuri.btscanner24.core.data.DataDependenciesProvider
 import com.gamenuri.btscanner24.core.data.HiddenDevicesRepository
+import com.gamenuri.btscanner24.core.data.LastSeenRecorder
 import com.gamenuri.btscanner24.core.data.LastSeenRepository
 import com.gamenuri.btscanner24.core.data.ListPreferencesRepository
 import com.gamenuri.btscanner24.core.data.SavedDevicesRepository
@@ -24,12 +25,12 @@ import com.gamenuri.btscanner24.core.model.LastSeen
 import com.gamenuri.btscanner24.core.sensors.PhoneLocation
 import com.gamenuri.btscanner24.demo.DemoMode
 import com.gamenuri.btscanner24.demo.ScanCensus
-import com.gamenuri.btscanner24.feature.devices.LastSeenRecorder
 import kotlin.concurrent.thread
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 class BtScannerApp :
@@ -88,10 +89,11 @@ class BtScannerApp :
     internal fun startLastSeenRecorder() {
         if (lastSeenRecorder != null || demo != null) return
         val location = PhoneLocation(this)
+        val bonded = bleDependencies.bondedDevices
         val recorder = LastSeenRecorder(
-            devices = bleDependencies.repository,
-            bondedDevices = bleDependencies.bondedDevices,
-            savedDevices = savedDevices,
+            seen = bleDependencies.repository.devices.map { it.values },
+            paired = { if (bonded.hasPermission()) bonded.list() else emptyList() },
+            saved = savedDevices.saved,
             store = lastSeen,
             locate = { location.current()?.let { LastSeen.Place(it.latitude, it.longitude, it.accuracyMeters) } },
         )

@@ -29,7 +29,10 @@ open class BleScanner(context: Context) {
     private val adapter: BluetoothAdapter? =
         appContext.getSystemService(BluetoothManager::class.java)?.adapter
 
-    /** Start timestamps (elapsedRealtime) used to stay under the platform's 5-starts-per-30s limit. */
+    /**
+     * Start timestamps (elapsedRealtime) used to stay under the platform's 5-starts-per-30s limit.
+     * Scans start from more than one thread, so every access is synchronized on the list itself.
+     */
     private val recentStarts = ArrayDeque<Long>()
 
     open val isSupported: Boolean
@@ -53,12 +56,15 @@ open class BleScanner(context: Context) {
     }
 
     /** Milliseconds to wait before a new scan start is allowed, or 0 if it can start now. */
-    open fun startCooldownMillis(now: Long = SystemClock.elapsedRealtime()): Long {
+    open fun startCooldownMillis(now: Long = SystemClock.elapsedRealtime()): Long = synchronized(recentStarts) {
         while (recentStarts.isNotEmpty() && now - recentStarts.first() > START_WINDOW_MS) {
             recentStarts.removeFirst()
         }
-        if (recentStarts.size < MAX_STARTS_PER_WINDOW) return 0
-        return START_WINDOW_MS - (now - recentStarts.first()) + 500
+        if (recentStarts.size < MAX_STARTS_PER_WINDOW) {
+            0
+        } else {
+            START_WINDOW_MS - (now - recentStarts.first()) + 500
+        }
     }
 
     @SuppressLint("MissingPermission") // checked by hasScanPermission()
@@ -102,7 +108,7 @@ open class BleScanner(context: Context) {
             .build()
 
         try {
-            recentStarts.addLast(SystemClock.elapsedRealtime())
+            synchronized(recentStarts) { recentStarts.addLast(SystemClock.elapsedRealtime()) }
             scanner.startScan(null, settings, callback)
         } catch (e: SecurityException) {
             trySend(ScanEvent.Failed(ScanFailure.PERMISSION_MISSING))

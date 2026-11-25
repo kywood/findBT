@@ -18,20 +18,29 @@ private val Context.lastSeenStore: DataStore<Preferences> by preferencesDataStor
 private val Context.demoLastSeenStore: DataStore<Preferences> by preferencesDataStore(name = "last_seen_demo")
 
 /**
- * When and where this phone last heard each of the user's own devices (#162): one record per device,
- * on the phone only, gone when the device is taken off My devices.
+ * When and where this phone last heard each of the user's own devices (#162): one record per device.
+ * What the recorder and the screens need of [LastSeenRepository], so they can be tested without a file.
  */
-class LastSeenRepository(private val store: DataStore<Preferences>) {
+interface LastSeenStore {
+    /** By the address the device is listed under. */
+    val lastSeen: Flow<Map<String, LastSeen>>
+
+    /** Writes [records] over whatever was kept for the same devices. */
+    suspend fun record(records: Collection<LastSeen>)
+
+    suspend fun remove(address: String)
+}
+
+/** [LastSeenStore] in a file on the phone only, gone when the device is taken off My devices. */
+class LastSeenRepository(private val store: DataStore<Preferences>) : LastSeenStore {
 
     constructor(context: Context, demo: Boolean = false) : this(
         context.applicationContext.let { if (demo) it.demoLastSeenStore else it.lastSeenStore },
     )
 
-    /** By the address the device is listed under. */
-    val lastSeen: Flow<Map<String, LastSeen>> = store.data.map { LastSeenCodec.decode(it[RECORDS].orEmpty()) }
+    override val lastSeen: Flow<Map<String, LastSeen>> = store.data.map { LastSeenCodec.decode(it[RECORDS].orEmpty()) }
 
-    /** Writes [records] over whatever was kept for the same devices. */
-    suspend fun record(records: Collection<LastSeen>) {
+    override suspend fun record(records: Collection<LastSeen>) {
         if (records.isEmpty()) return
         store.edit { preferences ->
             val all = LastSeenCodec.decode(preferences[RECORDS].orEmpty()) + records.associateBy { it.address }
@@ -39,7 +48,7 @@ class LastSeenRepository(private val store: DataStore<Preferences>) {
         }
     }
 
-    suspend fun remove(address: String) {
+    override suspend fun remove(address: String) {
         store.edit { preferences ->
             val others = LastSeenCodec.decode(preferences[RECORDS].orEmpty()) - address
             preferences[RECORDS] = LastSeenCodec.encode(others.values)
