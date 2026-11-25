@@ -13,6 +13,7 @@ import com.gamenuri.btscanner24.core.ui.arrow3d.RimMesh
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.exp
 import kotlin.math.sin
@@ -105,12 +106,10 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
     private val probe = FloatArray(4)
     private val projected = FloatArray(4)
 
-    /** [fitInView]'s answer: degrees, radius. */
-    private val fitted = FloatArray(2)
-
-    /** The devices already placed this frame, degrees and radius each, for [fits]. */
-    private var placed = FloatArray(0)
-    private var placedCount = 0
+    /** How far the camera has stepped back to keep every device whole on screen (#193); 1 = the design's view. */
+    private var zoom = 1f
+    private var zoomKnown = false
+    private var zoomEase = 1f
 
     /** The "me" marker on screen (left, bottom, right, top in pixels from the lower edge): no tag lies on it. */
     private val meRect = FloatArray(RECT_FLOATS)
@@ -234,6 +233,7 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
             known = if (state.hasPose) 1f else 0f
         }
         val fast = 1f - exp(-dt / POSE_SMOOTH_SECONDS)
+        zoomEase = 1f - exp(-dt / ZOOM_SMOOTH_SECONDS)
         val slow = 1f - exp(-dt / MOVE_SMOOTH_SECONDS)
         heading += wrap(state.headingDegrees - heading) * fast
         elevation += (targetElevation - elevation) * fast
@@ -268,10 +268,6 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
      * and sky), and the floor's middle sits at [MapSceneState.centerY] of the height.
      */
     private fun camera() {
-        val halfWidth = NEAR * HALF_WIDTH_PER_DISTANCE
-        val tall = 2f * halfWidth * viewportHeight / viewportWidth
-        val above = state.centerY.coerceIn(0f, 1f)
-        Matrix.frustumM(projection, 0, -halfWidth, halfWidth, -tall * (1f - above), tall * above, NEAR, FAR)
         val e = radians(elevation)
         Matrix.setLookAtM(
             view, 0,
@@ -279,7 +275,53 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
             0f, TARGET_HEIGHT, TARGET_AHEAD,
             0f, 1f, 0f,
         )
+        // The floor's middle sits at [MapSceneState.centerY] of the band left between the chips and the sheet.
+        val top = state.clipTop.coerceIn(0f, 1f)
+        val bottom = state.clipBottom.coerceIn(top, 1f)
+        val above = top + (bottom - top) * state.centerY.coerceIn(0f, 1f)
+        frame(above, 1f)
+        val wanted = fitZoom(above, top, bottom)
+        zoom = if (!zoomKnown || state.reduceMotion) wanted else zoom + (wanted - zoom) * zoomEase
+        zoomKnown = true
+        frame(above, zoom)
+    }
+
+    private fun frame(above: Float, scale: Float) {
+        val halfWidth = NEAR * HALF_WIDTH_PER_DISTANCE * scale
+        val tall = 2f * halfWidth * viewportHeight / viewportWidth
+        Matrix.frustumM(projection, 0, -halfWidth, halfWidth, -tall * (1f - above), tall * above, NEAR, FAR)
         Matrix.multiplyMM(viewProjection, 0, projection, 0, view, 0)
+    }
+
+    /**
+     * How far to step back so every device, with room for its tag above it, is whole between the chips
+     * and the sheet and inside the sides (#193). Never closer than the design's view. Stepping back
+     * scales everything about the view's axis at [above], so one pass over the devices is enough.
+     */
+    private fun fitZoom(above: Float, top: Float, bottom: Float): Float {
+        val turn = worldTurn()
+        val topRoom = above - top - FIT_TOP_ROOM
+        val bottomRoom = bottom - FIT_EDGE - above
+        val sideRoom = 0.5f - FIT_EDGE
+        var wanted = 1f
+        for (pin in state.pins) {
+            val spot = spots[pin.key] ?: continue
+            val a = radians(spot.angle - if (pin.measured) turn else 0f)
+            val x = sin(a) * spot.radius
+            val z = -cos(a) * spot.radius
+            val floor = MapFloor.height(spot.radius)
+            for (lift in 0..1) {
+                project(x, floor + lift * PIN_TOP * PIN_SIZE, z)
+                val w = projected[3]
+                if (w <= 0f) continue
+                val fromTop = (1f - projected[1] / w) / 2f
+                val across = (projected[0] / w + 1f) / 2f
+                if (fromTop < above && topRoom > 0f) wanted = maxOf(wanted, (above - fromTop) / topRoom)
+                if (fromTop > above && bottomRoom > 0f) wanted = maxOf(wanted, (fromTop - above) / bottomRoom)
+                wanted = maxOf(wanted, abs(across - 0.5f) / sideRoom)
+            }
+        }
+        return wanted.coerceAtMost(MAX_ZOOM)
     }
 
     /** How far measured devices are turned round the middle: with the phone, or not at all in a still view. */
@@ -453,101 +495,16 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
 
     /** A device's size: the design's 78 %, a little smaller on the floor beyond the steps, growing in when new. */
     /**
-     * Works out where every device is drawn this frame (#193): whole, inside the band between the chips
-     * and the sheet and inside the screen's sides, and not on a device placed before it. Measured
-     * devices go first and keep their direction; the others have no real direction, so each may be
-     * moved round its ring and pulled in across its band until it fits. The answer goes to
-     * [Spot.drawAngle] and [Spot.drawRadius].
+     * Where every device is drawn this frame: its own eased place, the measured ones turned with the
+     * room. Nothing is moved to make room; [camera] steps back instead (#193), so places stay put.
      */
     private fun fitPins(pins: List<MapPin>) {
         val turn = worldTurn()
-        placedCount = 0
-        if (placed.size < pins.size * 2) placed = FloatArray(pins.size * 2)
-        for (pass in 0..1) {
-            for (pin in pins) {
-                if (pin.measured != (pass == 0)) continue
-                val spot = spots[pin.key] ?: continue
-                fitInView(spot.angle - if (pin.measured) turn else 0f, spot.radius, pinSize(spot), pin.measured)
-                spot.drawAngle = fitted[0]
-                spot.drawRadius = fitted[1]
-                placed[placedCount * 2] = fitted[0]
-                placed[placedCount * 2 + 1] = fitted[1]
-                placedCount++
-            }
+        for (pin in pins) {
+            val spot = spots[pin.key] ?: continue
+            spot.drawAngle = spot.angle - if (pin.measured) turn else 0f
+            spot.drawRadius = spot.radius
         }
-    }
-
-    /** Leaves the place for one device in [fitted]: degrees, radius. */
-    private fun fitInView(degrees: Float, radius: Float, size: Float, measured: Boolean) {
-        val band = MapFloor.band(radius)
-        val inner = minOf(radius, if (band == 0) ME_CLEARANCE else MapFloor.STEP_RADII[band - 1] + PIN_BAND_INSET)
-        fitted[0] = degrees
-        fitted[1] = radius
-        if (measured) {
-            fitted[1] = largestFit(degrees, inner, radius, size, free = false) ?: inner
-            return
-        }
-        // Its own place first, then ever further round the ring, the nearer side first.
-        val first = if (wrap(degrees) >= 0f) 1f else -1f
-        for (step in 0..FIT_TURNS) {
-            for (side in 0 until if (step == 0) 1 else 2) {
-                val sign = if (side == 0) first else -first
-                val angle = degrees + sign * step * FIT_TURN_STEP
-                val r = largestFit(angle, inner, radius, size, free = true) ?: continue
-                fitted[0] = angle
-                fitted[1] = r
-                return
-            }
-        }
-        fitted[1] = inner
-    }
-
-    /** The largest radius from [inner] to [outer] at which a device fits at [degrees]; null if none. */
-    private fun largestFit(degrees: Float, inner: Float, outer: Float, size: Float, free: Boolean): Float? {
-        if (fits(degrees, outer, size, free)) return outer
-        if (!fits(degrees, inner, size, free)) return null
-        var low = inner
-        var high = outer
-        repeat(FIT_STEPS) {
-            val mid = (low + high) / 2f
-            if (fits(degrees, mid, size, free)) low = mid else high = mid
-        }
-        return low
-    }
-
-    /**
-     * Whether a device at [degrees], [radius] is whole on screen between the chips and the sheet and,
-     * when [free] is asked for, does not stand on one placed before it.
-     */
-    private fun fits(degrees: Float, radius: Float, size: Float, free: Boolean): Boolean {
-        // Worked out by hand, not with floorDirection: this runs many times a frame and must not allocate.
-        val a = radians(degrees)
-        val x = sin(a) * radius
-        val z = -cos(a) * radius
-        val floor = MapFloor.height(radius)
-        project(x, floor + PIN_TOP * size, z)
-        val topW = projected[3]
-        if (topW <= 0f) return false
-        val top = (projected[1] / topW + 1f) / 2f * viewportHeight
-        project(x, floor, z)
-        val w = projected[3]
-        if (w <= 0f) return false
-        val bottom = (projected[1] / w + 1f) / 2f * viewportHeight
-        val middle = (projected[0] / w + 1f) / 2f * viewportWidth
-        val half = PIN_HALF_WIDTH * size * viewportWidth / (2f * HALF_WIDTH_PER_DISTANCE * w)
-        val highest = (1f - state.clipTop.coerceIn(0f, 1f)) * viewportHeight - PIN_EDGE_MARGIN
-        val lowest = (1f - state.clipBottom.coerceIn(0f, 1f)) * viewportHeight + PIN_EDGE_MARGIN
-        if (top > highest || bottom < lowest) return false
-        if (middle - half < PIN_EDGE_MARGIN || middle + half > viewportWidth - PIN_EDGE_MARGIN) return false
-        if (!free) return true
-        for (other in 0 until placedCount) {
-            val o = radians(placed[other * 2])
-            val r = placed[other * 2 + 1]
-            val apartX = sin(o) * r - x
-            val apartZ = -cos(o) * r - z
-            if (apartX * apartX + apartZ * apartZ < PIN_APART * PIN_APART) return false
-        }
-        return true
     }
 
     private fun pinSize(spot: Spot): Float {
@@ -642,7 +599,7 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
         hitSpots[offset] = (projected[0] / w + 1f) / 2f * viewportWidth
         hitSpots[offset + 1] = (1f - projected[1] / w) / 2f * viewportHeight
         // Pixels per scene unit at this depth; never smaller than a fingertip.
-        val pixelsPerUnit = viewportWidth / (2f * HALF_WIDTH_PER_DISTANCE * w)
+        val pixelsPerUnit = viewportWidth / (2f * HALF_WIDTH_PER_DISTANCE * zoom * w)
         hitSpots[offset + 2] = maxOf(HIT_RADIUS * pixelsPerUnit, MIN_HIT_SHARE * viewportWidth) * spot.shown
         spot.tagHeight = top + TAG_GAP
         spot.tagMiddle = middle
@@ -746,7 +703,7 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
         val middleW = projected[3]
         if (middleW <= 0f) return false
         val middle = (projected[1] / middleW + 1f) / 2f * viewportHeight
-        val beside = TAG_SIDE_GAP * viewportWidth / (2f * HALF_WIDTH_PER_DISTANCE * middleW)
+        val beside = TAG_SIDE_GAP * viewportWidth / (2f * HALF_WIDTH_PER_DISTANCE * zoom * middleW)
         val sideBottom = middle - tag.height / 2f
         return tryTag(tag, kept, anchor - tag.width / 2f, aboveBottom) ||
             tryTag(tag, kept, anchor + beside, sideBottom) ||
@@ -795,7 +752,7 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
         val topW = projected[3]
         if (topW <= 0f) return
         val top = (projected[1] / topW + 1f) / 2f * viewportHeight
-        val half = ME_RING * viewportWidth / (2f * HALF_WIDTH_PER_DISTANCE * w)
+        val half = ME_RING * viewportWidth / (2f * HALF_WIDTH_PER_DISTANCE * zoom * w)
         meRect[0] = x - half
         meRect[1] = bottom
         meRect[2] = x + half
@@ -1132,25 +1089,15 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
         /** From a device's middle to the near edge of a tag set beside it, in scene units (#194). */
         const val TAG_SIDE_GAP = 0.75f
 
-        // Keeping whole devices below the chips (#193).
+        // Stepping back so every device is whole on screen (#193).
         /** A device's height over its floor, stand and model, as a share of its size. */
-        const val PIN_TOP = 1.4f
-        const val PIN_EDGE_MARGIN = 6f
-        const val PIN_BAND_INSET = 0.5f
-        const val FIT_STEPS = 8
+        const val PIN_TOP = 1.6f
 
-        /** Half a device's width on screen, stand included, as a share of its size. */
-        const val PIN_HALF_WIDTH = 0.75f
-
-        /** How close two devices may stand, in scene units: about a stand and a half. */
-        const val PIN_APART = 1.3f
-
-        /** Nearest a device on the first ring may come to "me". */
-        const val ME_CLEARANCE = 0.9f
-
-        /** Turning round the ring to find room: steps of this many degrees, up to 165 degrees each way. */
-        const val FIT_TURN_STEP = 7.5f
-        const val FIT_TURNS = 22
+        /** Shares of the view: room for a tag over the highest device, and a margin at the sheet and sides. */
+        const val FIT_TOP_ROOM = 0.06f
+        const val FIT_EDGE = 0.07f
+        const val MAX_ZOOM = 2.2f
+        const val ZOOM_SMOOTH_SECONDS = 0.6f
         const val HIT_RADIUS = 0.7f
         const val MIN_HIT_SHARE = 0.06f
 
