@@ -25,6 +25,29 @@ val signingKeyPassword = secret("nearo.signing.keyPassword", "NEARO_SIGNING_KEY_
 val hasReleaseSigning =
     listOf(signingStoreFile, signingStorePassword, signingKeyAlias, signingKeyPassword).all { it != null }
 
+// A release must never ship Google's test ads or go out unsigned (#35): building or bundling it stops
+// with the list of what is missing. Debug and benchmark builds keep the test IDs.
+val admobTestPublisher = "ca-app-pub-3940256099942544"
+val missingForRelease = listOf("appId", "banner", "interstitial", "rewarded")
+    .map { "nearo.admob.$it" }
+    .filter { key ->
+        val value = localProperties.getProperty(key)
+        value.isNullOrBlank() || value.startsWith(admobTestPublisher) || value.contains("XXXX")
+    } + if (hasReleaseSigning) emptyList() else listOf("nearo.signing.* (storeFile, storePassword, keyAlias, keyPassword)")
+
+gradle.taskGraph.whenReady {
+    val buildsRelease = allTasks.any { task ->
+        task.project == project && task.name.endsWith("Release") &&
+            (task.name.startsWith("assemble") || task.name.startsWith("bundle") || task.name.startsWith("package"))
+    }
+    if (buildsRelease && missingForRelease.isNotEmpty()) {
+        throw GradleException(
+            "Release build stopped. Missing in local.properties: " + missingForRelease.joinToString(", ") +
+                ". See docs/RELEASE.md.",
+        )
+    }
+}
+
 android {
     namespace = "com.gamenuri.btscanner24"
     compileSdk {
