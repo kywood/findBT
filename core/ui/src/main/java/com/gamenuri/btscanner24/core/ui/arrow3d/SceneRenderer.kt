@@ -369,7 +369,11 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         if (top < 0f || center <= top || bottom <= center) return wanted
         val e = radians(elevation)
         // Per pixel of R: how far the arrow's tip and top reach above the middle, the ring's near edge below.
-        val above = ARROW_REACH * sin(e) + ARROW_TOP * cos(e)
+        val arrow = ARROW_REACH * sin(e) + ARROW_TOP * cos(e)
+        // Across the screen the device's model stands beyond the ring, straight ahead at its highest:
+        // the ring leaves room for it at its nearest place, so it reads clearly and stays off the text.
+        val marker = TARGET_MIN_RADIUS / RING_OUTER * sin(e) + MARKER_TALL * cos(e)
+        val above = if (state.fullBleed && modelVertices > 0) maxOf(arrow, marker) else arrow
         // The steeper the view, the more the near edge grows with perspective (#130: lying flat it came
         // within 10 px of the distance label).
         val steeper = (sin(e) - sin(radians(SceneCamera.TYPICAL))).coerceAtLeast(0f)
@@ -411,7 +415,8 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
             probe[1] = stepHeight(TARGET_MIN_RADIUS)
             Matrix.multiplyMV(projected, 0, viewProjection, 0, probe, 0)
             val baseY = projected[1] / projected[3]
-            if (topY > baseY) markerFit = ((limit - baseY) / (topY - baseY)).coerceIn(0f, 1f)
+            // Never smaller than still reads as the device (about the arrow head's width).
+            if (topY > baseY) markerFit = ((limit - baseY) / (topY - baseY)).coerceIn(MARKER_MIN_FIT, 1f)
         }
         return TARGET_MIN_RADIUS
     }
@@ -1004,7 +1009,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         const val TARGET_HALO = 0.36f * RING_OUTER
         const val TARGET_HALO_INNER = 0.32f / 0.36f
         const val TARGET_HALO_ALPHA = 0.6f
-        const val TARGET_MIN_RADIUS = 1.25f * RING_OUTER
+        const val TARGET_MIN_RADIUS = 1.15f * RING_OUTER
         const val TARGET_STEP = 0.05f * RING_OUTER
         const val TARGET_CLEARANCE = 0.045f
         const val TARGET_MODEL_CLEARANCE = 0.012f
@@ -1040,6 +1045,10 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         // 7° forward, over a white stand (radius 0.42, 0.096 high) that carries a mint ring (0.32).
         const val MARKER_MODEL = 0.44f
         const val MARKER_FLOAT = 0.064f
+        const val MARKER_MIN_FIT = 0.8f
+
+        /** The marker's height over its floor in ring radii: stand, gap, model and its bob. */
+        const val MARKER_TALL = PEDESTAL_THICKNESS + MARKER_FLOAT + MARKER_MODEL + 0.03f
         const val MARKER_BOB = 0.024f * RING_OUTER
         const val MARKER_BOB_SPEED = 2.6f
         const val MARKER_TURN_DEGREES = -20f
