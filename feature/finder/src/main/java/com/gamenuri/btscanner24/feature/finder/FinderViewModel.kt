@@ -12,6 +12,8 @@ import com.gamenuri.btscanner24.core.ble.DeviceRepository
 import com.gamenuri.btscanner24.core.ble.ImmediateAlert
 import com.gamenuri.btscanner24.core.ble.RingResult
 import com.gamenuri.btscanner24.core.ble.ScanEvent
+import com.gamenuri.btscanner24.core.ble.ScanFailure
+import com.gamenuri.btscanner24.core.ble.scanContinuously
 import com.gamenuri.btscanner24.core.model.BleDevice
 import com.gamenuri.btscanner24.core.sensors.MotionSensor
 import kotlinx.coroutines.Dispatchers
@@ -64,6 +66,10 @@ class FinderViewModel(
 
     private var job: Job? = null
 
+    /** Why the scan cannot run, until it runs again; written by the scan collector, read on Main. */
+    @Volatile
+    private var scanFailure: ScanFailure? = null
+
     // "Play sound" (#28): support is learned once (advertised 0x1802 or a short GATT probe) and sticks.
     private var support: AlertSupport? = null
     private var probeJob: Job? = null
@@ -74,13 +80,23 @@ class FinderViewModel(
 
     fun start() {
         if (job?.isActive == true) return
+        engine.restartWaiting(clock())
+        scanFailure = null
         job = viewModelScope.launch {
             // Subscribe to sightings before the scan starts so no early advertisement is missed.
             launch { repository.sightings.collect { engine.onSighting(it, clock()) } }
             // Parsing runs off the main thread; the engine itself stays on Main with the sensor collector.
             launch(Dispatchers.Default) {
-                scanner.scan().collect { event ->
-                    if (event is ScanEvent.Result) repository.onScanResult(event.result)
+                // Coming from a list, this is often the sixth scan start within 30 s, which Android
+                // accepts but never answers: the screen would wait for a signal forever (#117).
+                scanner.scanContinuously().collect { event ->
+                    when (event) {
+                        is ScanEvent.Result -> {
+                            scanFailure = null
+                            repository.onScanResult(event.result)
+                        }
+                        is ScanEvent.Failed -> scanFailure = event.reason
+                    }
                 }
             }
             launch {
@@ -153,7 +169,10 @@ class FinderViewModel(
         // Only while the screen is started (job), and never two GATT connections at once.
         if (job?.isActive != true || support != null) return
         if (probeJob?.isActive == true || soundJob?.isActive == true) return
-        if (state.stage == FinderStage.WAITING || state.stage == FinderStage.SIGNAL_LOST) return
+        val noSignal = state.stage == FinderStage.WAITING ||
+            state.stage == FinderStage.NOT_FOUND ||
+            state.stage == FinderStage.SIGNAL_LOST
+        if (noSignal) return
         if (!alert.hasPermission()) return
         val address = state.advanced.address
         if (repository.devices.value[address]?.serviceUuids16?.contains(ImmediateAlert.SERVICE_UUID_16) == true) {
@@ -187,13 +206,28 @@ class FinderViewModel(
         publish()
     }
 
+    /** "Try again" when no signal came or it was lost: a fresh scan and a fresh wait (#117). */
+    fun retry() {
+        stop()
+        start()
+        publish()
+    }
+
     fun spinAgain() {
         engine.restartSweep()
         publish()
     }
 
     private fun publish() {
-        val state = engine.state(clock(), vibrationOn.value)
+        val failure = scanFailure
+        val state = engine.state(clock(), vibrationOn.value).let {
+            // Without a scan there is nothing to point at: no arrow, and the reason instead of "no signal".
+            if (failure == null) {
+                it
+            } else {
+                it.copy(stage = FinderStage.NOT_FOUND, arrowDegrees = null, scanFailure = failure)
+            }
+        }
         checkSoundSupport(state)
         _uiState.value = state.copy(sound = sound.value)
     }
