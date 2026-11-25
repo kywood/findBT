@@ -75,11 +75,14 @@ internal fun DirectionDial(state: FinderUiState, modifier: Modifier = Modifier, 
     }
 }
 
-private fun FinderUiState.isSpinning(): Boolean =
-    stage == FinderStage.SPIN || stage == FinderStage.SPIN_AGAIN || stage == FinderStage.WAITING
+private fun FinderUiState.isSpinning(): Boolean = stage == FinderStage.SPIN || stage == FinderStage.SPIN_AGAIN
 
-/** No signal to point at: the 3D floor stays, without an arrow. */
-private fun FinderUiState.hasNoSignal(): Boolean = stage == FinderStage.NOT_FOUND || stage == FinderStage.SIGNAL_LOST
+/**
+ * No signal to point at: the 3D floor stays, without an arrow. This includes waiting for the first
+ * sighting, so a device that has not been heard yet never gets a direction (#195).
+ */
+private fun FinderUiState.hasNoSignal(): Boolean =
+    stage == FinderStage.WAITING || stage == FinderStage.NOT_FOUND || stage == FinderStage.SIGNAL_LOST
 
 /**
  * Stages the 3D scene draws: looking for a direction, pointing, "right here", and no signal (the
