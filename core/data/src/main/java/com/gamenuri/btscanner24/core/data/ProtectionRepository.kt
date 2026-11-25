@@ -75,8 +75,8 @@ class ProtectionRepository(private val store: DataStore<Preferences>) {
     /** Drops the alerts whose tracker was last heard [before] that time. */
     suspend fun dropTrackerAlerts(before: Long) {
         store.edit { preferences ->
-            val kept = TrackerAlertCodec.decode(preferences[TRACKER_ALERTS].orEmpty()).filter { it.lastHeardAt >= before }
-            preferences[TRACKER_ALERTS] = TrackerAlertCodec.encode(kept)
+            val alerts = TrackerAlertCodec.decode(preferences[TRACKER_ALERTS].orEmpty())
+            preferences[TRACKER_ALERTS] = TrackerAlertCodec.encode(alerts.filter { it.lastHeardAt >= before })
         }
     }
 
