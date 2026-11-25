@@ -52,7 +52,8 @@ val missingForRelease = listOf("appId", "banner", "interstitial", "rewarded")
 
 gradle.taskGraph.whenReady {
     val buildsRelease = allTasks.any { task ->
-        task.project == project && task.name.endsWith("Release") &&
+        task.project == project &&
+            task.name.endsWith("Release") &&
             (task.name.startsWith("assemble") || task.name.startsWith("bundle") || task.name.startsWith("package"))
     }
     if (buildsRelease && missingForRelease.isNotEmpty()) {
