@@ -245,6 +245,8 @@ private fun DeviceSections(
             onDismiss = { lastSeenFor = null },
         )
     }
+    // Read here: a CompositionLocal cannot be read inside the LazyColumn builder (#202).
+    val protectionNudge = LocalProtectionNudge.current
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         // Plain full-width rows like the Nearby tab (design home-header-v4); headers keep the 16 dp inset.
@@ -258,7 +260,7 @@ private fun DeviceSections(
                 onMute = { protection.onMute(alert.item) },
             )
         }
-        if (state.protectionOff && LocalProtectionNudge.current) {
+        if (state.protectionOff && protectionNudge) {
             item(key = "protection-off") { ProtectionOffStrip(protection.onOpen) }
         }
         // Saved by hand (#108): always first, with the count and, for free users, the limit.
