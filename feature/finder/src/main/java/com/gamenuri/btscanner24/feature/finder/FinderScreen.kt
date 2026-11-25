@@ -619,7 +619,11 @@ private fun StageText(state: FinderUiState) {
     val (title, body) = when (state.stage) {
         FinderStage.WAITING -> R.string.finder_waiting_title to R.string.finder_waiting_body
         FinderStage.NOT_FOUND -> when (state.scanFailure) {
-            null -> R.string.finder_not_found_title to R.string.finder_not_found_body
+            null -> if (state.isConnected) {
+                R.string.finder_connected_title to R.string.finder_connected_body
+            } else {
+                R.string.finder_not_found_title to R.string.finder_not_found_body
+            }
             ScanFailure.BLUETOOTH_OFF -> R.string.finder_bluetooth_off_title to R.string.finder_bluetooth_off_body
             ScanFailure.LOCATION_OFF -> R.string.finder_location_off_title to R.string.finder_location_off_body
             ScanFailure.PERMISSION_MISSING -> R.string.finder_permission_title to R.string.finder_permission_body

@@ -24,6 +24,8 @@
     <string name="finder_signal_lost_body">%1$d秒前に検出 · 信号が強かった場所に戻ってください</string>
     <string name="finder_not_found_title">信号が見つかりません</string>
     <string name="finder_not_found_body">もっと近づくか、電源が入っているか確認してください</string>
+    <string name="finder_connected_title">このスマートフォンに接続中です</string>
+    <string name="finder_connected_body">Bluetoothが届く約10m以内にあります。接続中のデバイスは距離を測るための信号をあまり出しません。</string>
     <string name="finder_bluetooth_off_title">Bluetoothがオフです</string>
     <string name="finder_bluetooth_off_body">Bluetoothをオンにして、もう一度お試しください</string>
     <string name="finder_location_off_title">位置情報がオフです</string>

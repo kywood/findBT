@@ -25,6 +25,8 @@
     <string name="finder_signal_lost_body">%1$d초 전에 마지막으로 잡힘 · 신호가 강했던 곳으로 돌아가세요</string>
     <string name="finder_not_found_title">신호를 못 찾았어요</string>
     <string name="finder_not_found_body">더 가까이 가거나 기기가 켜져 있는지 확인해 주세요</string>
+    <string name="finder_connected_title">이 휴대폰에 연결돼 있어요</string>
+    <string name="finder_connected_body">블루투스가 닿는 약 10m 안에 있어요. 연결 중인 기기는 거리를 잴 신호를 잘 내보내지 않아요.</string>
     <string name="finder_bluetooth_off_title">블루투스가 꺼져 있어요</string>
     <string name="finder_bluetooth_off_body">블루투스를 켠 뒤 다시 시도해 주세요</string>
     <string name="finder_location_off_title">위치가 꺼져 있어요</string>

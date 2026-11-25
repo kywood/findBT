@@ -9,11 +9,13 @@ data class MyDeviceItem(
     val paired: PairedDevice,
     /** The live advertisement matched to this paired device, if any was heard this session. */
     val sighting: BleDevice?,
-    /** Heard within the last [MyDevices.ACTIVE_WINDOW_MS]. */
+    /** Heard within the last [MyDevices.ACTIVE_WINDOW_MS], or connected to this phone. */
     val isNearby: Boolean,
     val distanceMeters: Double?,
     /** Saved by hand (#108), not paired: its menu removes it instead of hiding it. */
     val isSaved: Boolean = false,
+    /** Connected to this phone right now (#119): it is close even when the scan does not hear it. */
+    val isConnected: Boolean = false,
 ) {
     /** Address to open find mode with: the live (possibly rotated) one when known. */
     val findAddress: String get() = sighting?.address ?: paired.address

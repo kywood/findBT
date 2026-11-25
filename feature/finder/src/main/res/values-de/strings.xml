@@ -24,6 +24,8 @@
     <string name="finder_signal_lost_body">Vor %1$d s gesehen · geh zurück, wo das Signal stärker war</string>
     <string name="finder_not_found_title">Signal nicht gefunden</string>
     <string name="finder_not_found_body">Geh näher heran oder prüfe, ob es eingeschaltet ist</string>
+    <string name="finder_connected_title">Mit diesem Handy verbunden</string>
+    <string name="finder_connected_body">Es ist in Bluetooth-Reichweite, etwa 10 m. Ein verbundenes Gerät sendet oft kein Signal zum Messen.</string>
     <string name="finder_bluetooth_off_title">Bluetooth ist aus</string>
     <string name="finder_bluetooth_off_body">Schalte Bluetooth ein und versuche es erneut</string>
     <string name="finder_location_off_title">Standort ist aus</string>

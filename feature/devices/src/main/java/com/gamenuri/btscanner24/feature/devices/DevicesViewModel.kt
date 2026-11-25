@@ -8,10 +8,12 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.gamenuri.btscanner24.core.ble.BleDependencies
 import com.gamenuri.btscanner24.core.ble.BleScanner
 import com.gamenuri.btscanner24.core.ble.BondedDevices
+import com.gamenuri.btscanner24.core.ble.ConnectedDevices
 import com.gamenuri.btscanner24.core.ble.DeviceRepository
 import com.gamenuri.btscanner24.core.ble.ScanEvent
 import com.gamenuri.btscanner24.core.ble.ScanFailure
 import com.gamenuri.btscanner24.core.ble.scanContinuously
+import com.gamenuri.btscanner24.core.ble.watch
 import com.gamenuri.btscanner24.core.data.DataDependenciesProvider
 import com.gamenuri.btscanner24.core.data.HiddenDevicesRepository
 import com.gamenuri.btscanner24.core.data.SavedDevicesRepository
@@ -36,6 +38,7 @@ class DevicesViewModel(
     private val scanner: BleScanner,
     private val repository: DeviceRepository,
     private val bondedDevices: BondedDevices,
+    private val connectedDevices: ConnectedDevices,
     private val hiddenDevices: HiddenDevicesRepository,
     private val savedDevices: SavedDevicesRepository,
     private val clock: () -> Long = System::currentTimeMillis,
@@ -44,16 +47,18 @@ class DevicesViewModel(
     private val paired = MutableStateFlow<List<PairedDevice>>(emptyList())
     private val hasPermission = MutableStateFlow(bondedDevices.hasPermission())
     private val scanFailure = MutableStateFlow<ScanFailure?>(null)
+    private val connected = MutableStateFlow<Set<String>>(emptySet())
     private var scanJob: Job? = null
+    private var connectedJob: Job? = null
 
     val uiState: StateFlow<MyDevicesUiState> = combine(
         paired,
         repository.devices.sample(UI_REFRESH_MS),
         hiddenDevices.hidden,
-        combine(hasPermission, scanFailure, ::Pair),
+        combine(hasPermission, scanFailure, connected, ::Triple),
         savedDevices.saved,
-    ) { pairedList, seen, hidden, (permitted, failure), saved ->
-        MyDevices.build(pairedList, seen.values, hidden, clock(), saved) { it.distanceMeters }
+    ) { pairedList, seen, hidden, (permitted, failure, linked), saved ->
+        MyDevices.build(pairedList, seen.values, hidden, clock(), saved, linked) { it.distanceMeters }
             .copy(hasPermission = permitted, scanFailure = failure)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MyDevicesUiState())
 
@@ -61,6 +66,12 @@ class DevicesViewModel(
     fun onScreenStarted() {
         hasPermission.value = bondedDevices.hasPermission()
         paired.value = bondedDevices.list()
+        // Connected devices do not need the scan (or Location): they show even when it cannot run (#119).
+        if (connectedJob?.isActive != true) {
+            connectedJob = viewModelScope.launch(Dispatchers.Default) {
+                connectedDevices.watch(repository, { paired.value }) { connected.value = it }
+            }
+        }
         if (scanJob?.isActive == true || !scanner.hasScanPermission()) return
         scanFailure.value = null
         scanJob = viewModelScope.launch(Dispatchers.Default) {
@@ -81,6 +92,8 @@ class DevicesViewModel(
     fun onScreenStopped() {
         scanJob?.cancel()
         scanJob = null
+        connectedJob?.cancel()
+        connectedJob = null
     }
 
     fun hide(item: MyDeviceItem) {
@@ -104,7 +117,14 @@ class DevicesViewModel(
                 val app = checkNotNull(this[APPLICATION_KEY])
                 val ble = (app as BleDependencies.Provider).bleDependencies
                 val data = app as DataDependenciesProvider
-                DevicesViewModel(ble.scanner, ble.repository, ble.bondedDevices, data.hiddenDevices, data.savedDevices)
+                DevicesViewModel(
+                    ble.scanner,
+                    ble.repository,
+                    ble.bondedDevices,
+                    ble.connectedDevices,
+                    data.hiddenDevices,
+                    data.savedDevices,
+                )
             }
         }
     }

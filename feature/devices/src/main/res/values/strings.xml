@@ -7,6 +7,8 @@
     <string name="devices_last_seen_now">Seen just now</string>
     <string name="devices_last_seen_minutes">Last seen: %1$d min</string>
     <string name="devices_not_seen">Paired · not seen yet</string>
+    <string name="devices_connected">Connected to this phone</string>
+    <string name="devices_connected_no_distance">Connected to this phone · no distance while connected</string>
     <string name="devices_more_for">More for %1$s</string>
     <string name="devices_hide">Hide from list</string>
     <string name="devices_empty_title">No paired devices</string>

@@ -8,13 +8,16 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.gamenuri.btscanner24.core.ble.AlertSupport
 import com.gamenuri.btscanner24.core.ble.BleDependencies
 import com.gamenuri.btscanner24.core.ble.BleScanner
+import com.gamenuri.btscanner24.core.ble.ConnectedDevices
 import com.gamenuri.btscanner24.core.ble.DeviceRepository
 import com.gamenuri.btscanner24.core.ble.ImmediateAlert
 import com.gamenuri.btscanner24.core.ble.RingResult
 import com.gamenuri.btscanner24.core.ble.ScanEvent
 import com.gamenuri.btscanner24.core.ble.ScanFailure
 import com.gamenuri.btscanner24.core.ble.scanContinuously
+import com.gamenuri.btscanner24.core.ble.watch
 import com.gamenuri.btscanner24.core.model.BleDevice
+import com.gamenuri.btscanner24.core.model.PairedDevice
 import com.gamenuri.btscanner24.core.sensors.MotionSensor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -39,6 +42,9 @@ class FinderViewModel(
     private val motion: MotionSensor,
     private val alert: ImmediateAlert? = null,
     private val pairedAlias: String? = null,
+    /** Set together with [paired] when the target is the user's own paired device (#119). */
+    private val connectedDevices: ConnectedDevices? = null,
+    private val paired: PairedDevice? = null,
     private val clock: () -> Long = System::currentTimeMillis,
 ) : ViewModel() {
 
@@ -70,6 +76,10 @@ class FinderViewModel(
     @Volatile
     private var scanFailure: ScanFailure? = null
 
+    /** The target is connected to this phone right now; written by the connection watcher, read on Main. */
+    @Volatile
+    private var isConnected = false
+
     // "Play sound" (#28): support is learned once (advertised 0x1802 or a short GATT probe) and sticks.
     private var support: AlertSupport? = null
     private var probeJob: Job? = null
@@ -97,6 +107,12 @@ class FinderViewModel(
                         }
                         is ScanEvent.Failed -> scanFailure = event.reason
                     }
+                }
+            }
+            // The user's own device may be connected to the phone and silent: read the link instead (#119).
+            if (connectedDevices != null && paired != null) {
+                launch(Dispatchers.Default) {
+                    connectedDevices.watch(repository, { listOf(paired) }) { isConnected = it.isNotEmpty() }
                 }
             }
             launch {
@@ -229,7 +245,7 @@ class FinderViewModel(
             }
         }
         checkSoundSupport(state)
-        _uiState.value = state.copy(sound = sound.value)
+        _uiState.value = state.copy(sound = sound.value, isConnected = isConnected)
     }
 
     override fun onCleared() {
@@ -247,14 +263,16 @@ class FinderViewModel(
             initializer {
                 val app = checkNotNull(this[APPLICATION_KEY])
                 val ble = (app as BleDependencies.Provider).bleDependencies
-                val alias = ble.bondedDevices.list().firstOrNull { it.address == address }?.name
+                val paired = ble.bondedDevices.list().firstOrNull { it.address == address }
                 FinderViewModel(
                     address,
                     ble.scanner,
                     ble.repository,
                     MotionSensor(app),
                     alert = ImmediateAlert(app),
-                    pairedAlias = alias,
+                    pairedAlias = paired?.name,
+                    connectedDevices = ble.connectedDevices,
+                    paired = paired,
                 )
             }
         }

@@ -116,4 +116,27 @@ class MyDevicesTest {
         assertEquals(1, state.savedCount)
         assertEquals(1, (state.notNearby + state.nearby).count { it.paired.address == buds.address })
     }
+
+    @Test
+    fun `a connected device is active even when the scan does not hear it`() {
+        val linked = setOf(buds.address)
+        val state = MyDevices.build(listOf(buds, watch), emptyList(), emptySet(), now, connected = linked) { 2.0 }
+        val item = state.nearby.single()
+        assertEquals(buds, item.paired)
+        assertTrue(item.isConnected)
+        assertEquals(null, item.distanceMeters)
+        assertEquals(listOf(watch), state.notNearby.map { it.paired })
+    }
+
+    @Test
+    fun `a connected device that is heard keeps its distance`() {
+        val state = MyDevices.build(
+            listOf(buds),
+            listOf(seen(buds.address, null)),
+            emptySet(),
+            now,
+            connected = setOf(buds.address),
+        ) { 2.0 }
+        assertEquals(2.0, state.nearby.single().distanceMeters!!, 0.0)
+    }
 }

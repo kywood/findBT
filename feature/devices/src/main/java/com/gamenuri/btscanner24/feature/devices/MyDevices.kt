@@ -23,6 +23,7 @@ object MyDevices {
         hidden: Set<String>,
         now: Long,
         saved: List<SavedDevice> = emptyList(),
+        connected: Set<String> = emptySet(),
         distanceOf: (BleDevice) -> Double?,
     ): MyDevicesUiState {
         val byAddress = seen.associateBy { it.address }
@@ -31,13 +32,16 @@ object MyDevices {
         fun item(device: PairedDevice, matchNames: List<String>, isSaved: Boolean): MyDeviceItem {
             val sighting = byAddress[device.address]
                 ?: matchNames.flatMap { byName[it.trim().lowercase()].orEmpty() }.maxByOrNull { it.lastSeen }
-            val nearby = sighting != null && now - sighting.lastSeen <= ACTIVE_WINDOW_MS
+            val heard = sighting != null && now - sighting.lastSeen <= ACTIVE_WINDOW_MS
+            // A connected device is within Bluetooth range even when it sends nothing to measure (#119).
+            val isConnected = device.address in connected
             return MyDeviceItem(
                 paired = device,
                 sighting = sighting,
-                isNearby = nearby,
-                distanceMeters = sighting?.takeIf { nearby }?.let(distanceOf),
+                isNearby = heard || isConnected,
+                distanceMeters = sighting?.takeIf { heard }?.let(distanceOf),
                 isSaved = isSaved,
+                isConnected = isConnected,
             )
         }
         val pairedAddresses = paired.mapTo(HashSet()) { it.address }

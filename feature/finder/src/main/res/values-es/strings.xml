@@ -24,6 +24,8 @@
     <string name="finder_signal_lost_body">Visto hace %1$d s · vuelve a donde la señal era más fuerte</string>
     <string name="finder_not_found_title">No se encontró la señal</string>
     <string name="finder_not_found_body">Acércate o comprueba que esté encendido</string>
+    <string name="finder_connected_title">Conectado a este teléfono</string>
+    <string name="finder_connected_body">Está dentro del alcance del Bluetooth, unos 10 m. Un dispositivo conectado no suele emitir señal para medir.</string>
     <string name="finder_bluetooth_off_title">Bluetooth está desactivado</string>
     <string name="finder_bluetooth_off_body">Activa Bluetooth y vuelve a intentarlo</string>
     <string name="finder_location_off_title">La ubicación está desactivada</string>
