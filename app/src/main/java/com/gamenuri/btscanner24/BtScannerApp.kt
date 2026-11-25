@@ -30,6 +30,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
@@ -92,10 +93,14 @@ class BtScannerApp :
         val bonded = bleDependencies.bondedDevices
         val recorder = LastSeenRecorder(
             seen = bleDependencies.repository.devices.map { it.values },
-            paired = { if (bonded.hasPermission()) bonded.list() else emptyList() },
+            paired = { if (bonded.isReadable) bonded.list() else null },
             saved = savedDevices.saved,
             store = lastSeen,
-            locate = { location.current()?.let { LastSeen.Place(it.latitude, it.longitude, it.accuracyMeters) } },
+            // Only once the user turned place recording on (#178), and never closer than about 100 m.
+            locate = {
+                val fix = if (lastSeen.recordsPlace.first()) location.current() else null
+                fix?.let { LastSeen.Place.coarse(it.latitude, it.longitude, it.accuracyMeters) }
+            },
         )
         lastSeenRecorder = CoroutineScope(SupervisorJob() + Dispatchers.Default).launch { recorder.run() }
     }

@@ -50,4 +50,14 @@ class LastSeenTest {
         val moved = LastSeen.Place(35.1, 129.0, 30f)
         assertEquals(moved, LastSeenPolicy.next(LastSeen("AA:01", 1L, place), "AA:01", 2L, moved).place)
     }
+
+    @Test
+    fun `a place is kept to about a hundred metres however well the phone knew it`() {
+        val place = LastSeen.Place.coarse(37.566535, 126.977969, accuracyMeters = 4f)
+        assertEquals(37.567, place.latitude, 1e-9)
+        assertEquals(126.978, place.longitude, 1e-9)
+        assertEquals(100f, place.accuracyMeters)
+        assertEquals(800f, LastSeen.Place.coarse(-33.8568, 151.2153, 800f).accuracyMeters)
+        assertEquals(-33.857, LastSeen.Place.coarse(-33.8568, 151.2153, null).latitude, 1e-9)
+    }
 }

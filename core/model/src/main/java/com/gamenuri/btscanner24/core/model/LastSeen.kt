@@ -12,7 +12,23 @@ data class LastSeen(
     val place: Place? = null,
 ) {
     /** The phone's own position, not the device's: the device was within Bluetooth range of it. */
-    data class Place(val latitude: Double, val longitude: Double, val accuracyMeters: Float? = null)
+    data class Place(val latitude: Double, val longitude: Double, val accuracyMeters: Float? = null) {
+        companion object {
+            /** How closely a place is kept: about a city block. */
+            const val COARSE_METERS = 100f
+            private const val COARSE_STEPS_PER_DEGREE = 1_000.0
+
+            /**
+             * The place as it is stored (#178): rounded to three decimals of a degree, about 100 m, however
+             * exactly the phone knew it. Enough to say "at the office" or "at the gym", not which desk.
+             */
+            fun coarse(latitude: Double, longitude: Double, accuracyMeters: Float?): Place = Place(
+                latitude = Math.round(latitude * COARSE_STEPS_PER_DEGREE) / COARSE_STEPS_PER_DEGREE,
+                longitude = Math.round(longitude * COARSE_STEPS_PER_DEGREE) / COARSE_STEPS_PER_DEGREE,
+                accuracyMeters = maxOf(accuracyMeters ?: COARSE_METERS, COARSE_METERS),
+            )
+        }
+    }
 }
 
 /** When a sighting is worth writing down, so a device that stays nearby does not rewrite its record every second. */

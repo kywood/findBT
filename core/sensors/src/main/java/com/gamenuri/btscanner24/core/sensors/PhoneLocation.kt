@@ -72,8 +72,9 @@ class PhoneLocation(context: Context) {
     private companion object {
         val PERMISSIONS = listOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION)
 
-        // Cell and Wi-Fi first: quick, works indoors and is all an approximate permission gives anyway.
-        val PROVIDERS = listOf(LocationManager.NETWORK_PROVIDER, LocationManager.GPS_PROVIDER)
+        // Cell and Wi-Fi only, never GPS (#178): quick, works indoors and no closer than the app needs.
+        // "fused" is LocationManager.FUSED_PROVIDER (Android 12+), which honours an approximate permission.
+        val PROVIDERS = listOf(LocationManager.NETWORK_PROVIDER, "fused")
         const val REQUEST_TIMEOUT_MS = 8_000L
         const val MAX_AGE_MS = 2 * 60_000L
         const val NANOS_PER_MILLI = 1_000_000L

@@ -108,9 +108,13 @@ class LastSeenRecorderTest {
             this.records.value += records.associateBy { it.address }
         }
 
-        override suspend fun remove(address: String) {
-            records.value -= address
+        override suspend fun remove(addresses: Collection<String>) {
+            records.value -= addresses.toSet()
         }
+
+        override val recordsPlace: Flow<Boolean> = MutableStateFlow(true)
+
+        override suspend fun setRecordsPlace(on: Boolean) = Unit
     }
 
     private val home = LastSeen.Place(37.5, 127.0, 300f)
@@ -120,7 +124,33 @@ class LastSeenRecorderTest {
         seen: Flow<Collection<BleDevice>>,
         saved: MutableStateFlow<List<SavedDevice>>,
         locate: suspend () -> LastSeen.Place? = { home },
-    ) = LastSeenRecorder(seen, { listOf(buds) }, saved, store, locate, clock = { now }, checkEveryMs = 1_000)
+        paired: () -> List<PairedDevice>? = { listOf(buds) },
+    ) = LastSeenRecorder(seen, paired, saved, store, locate, clock = { now }, checkEveryMs = 1_000)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun `records of devices that are no longer the user's are dropped`() = runTest {
+        val store = FakeStore()
+        val old = "CC:00:00:00:00:09"
+        store.records.value = mapOf(old to LastSeen(old, 5L, home), tag.address to LastSeen(tag.address, 6L, null))
+        val seen = MutableStateFlow<Collection<BleDevice>>(emptyList())
+        val job = launch { recorder(store, seen, MutableStateFlow(listOf(tag))).run() }
+        advanceTimeBy(1_500)
+        assertEquals(setOf(tag.address), store.records.value.keys)
+        job.cancel()
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun `nothing is dropped while the paired devices cannot be read`() = runTest {
+        val store = FakeStore()
+        store.records.value = mapOf(buds.address to LastSeen(buds.address, 5L, home))
+        val seen = MutableStateFlow<Collection<BleDevice>>(emptyList())
+        val job = launch { recorder(store, seen, MutableStateFlow(emptyList()), paired = { null }).run() }
+        advanceTimeBy(1_500)
+        assertEquals(setOf(buds.address), store.records.value.keys)
+        job.cancel()
+    }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test

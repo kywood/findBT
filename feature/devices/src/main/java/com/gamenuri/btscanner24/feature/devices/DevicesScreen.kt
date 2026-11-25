@@ -106,6 +106,7 @@ fun DevicesScreen(
         onOpenSettings = onOpenSettings,
         onRetryScan = viewModel::onScreenStarted,
         saved = SavedActions(onRemove = viewModel::remove, onEdit = onEditSaved, freeLimit = freeSaveLimit),
+        onRecordPlace = viewModel::turnOnPlaceRecording,
     )
 }
 
@@ -129,6 +130,8 @@ fun DevicesContent(
     onOpenSettings: () -> Unit = {},
     onRetryScan: () -> Unit = {},
     saved: SavedActions = SavedActions(),
+    /** "Turn on place recording" on a last-seen card (#178). */
+    onRecordPlace: () -> Unit = {},
     now: Long = System.currentTimeMillis(),
 ) {
     Scaffold(
@@ -165,7 +168,7 @@ fun DevicesContent(
                         modifier = Modifier.padding(horizontal = 16.dp),
                     )
                 }
-                DeviceSections(state, now, onDeviceClick, onHide, onAddTracker, saved)
+                DeviceSections(state, now, onDeviceClick, onHide, onAddTracker, saved, onRecordPlace)
             }
         }
     }
@@ -179,8 +182,10 @@ private fun DeviceSections(
     onHide: (MyDeviceItem) -> Unit,
     onAddTracker: () -> Unit,
     saved: SavedActions,
+    onRecordPlace: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val place = PlaceRecording(state.recordsPlace, onRecordPlace)
     var othersOpen by rememberSaveable { mutableStateOf(false) }
     var helpOpen by rememberSaveable { mutableStateOf(false) }
     if (helpOpen) NotDetectedHelpSheet(onDismiss = { helpOpen = false })
@@ -201,15 +206,19 @@ private fun DeviceSections(
                 )
             }
         }
-        items(state.saved, key = { "s-" + it.paired.address }) { PairedRow(it, now, onDeviceClick, onHide, saved) }
+        items(state.saved, key = { "s-" + it.paired.address }) {
+            PairedRow(it, now, onDeviceClick, onHide, saved, place)
+        }
         if (state.nearby.isNotEmpty()) {
             item(key = "h-nearby") { SectionHeader(stringResource(R.string.devices_section_nearby)) }
-            items(state.nearby, key = { "n-" + it.paired.address }) { PairedRow(it, now, onDeviceClick, onHide, saved) }
+            items(state.nearby, key = { "n-" + it.paired.address }) {
+                PairedRow(it, now, onDeviceClick, onHide, saved, place)
+            }
         }
         if (state.notNearby.isNotEmpty()) {
             item(key = "h-away") { SectionHeader(stringResource(R.string.devices_section_not_nearby)) }
             items(state.notNearby, key = { "a-" + it.paired.address }) {
-                PairedRow(it, now, onDeviceClick, onHide, saved)
+                PairedRow(it, now, onDeviceClick, onHide, saved, place)
             }
         }
         if (state.others.isNotEmpty()) {
@@ -225,7 +234,7 @@ private fun DeviceSections(
             }
             if (othersOpen) {
                 items(state.others, key = { "o-" + it.paired.address }) {
-                    PairedRow(it, now, onDeviceClick, onHide, saved)
+                    PairedRow(it, now, onDeviceClick, onHide, saved, place)
                 }
             }
         }
@@ -292,6 +301,7 @@ private fun PairedRow(
     onClick: (MyDeviceItem) -> Unit,
     onHide: (MyDeviceItem) -> Unit,
     saved: SavedActions,
+    place: PlaceRecording,
 ) {
     var menuOpen by remember { mutableStateOf(false) }
     var lastSeenOpen by remember { mutableStateOf(false) }
@@ -301,6 +311,7 @@ private fun PairedRow(
             title = item.paired.name?.takeIf { it.isNotBlank() } ?: item.paired.category.label(),
             record = record,
             now = now,
+            place = place,
             onFind = {
                 lastSeenOpen = false
                 onClick(item)

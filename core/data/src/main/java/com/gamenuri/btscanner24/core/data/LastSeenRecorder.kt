@@ -19,13 +19,14 @@ import kotlinx.coroutines.flow.sample
  * awake or asks for anything itself. Other people's devices are never recorded.
  *
  * @param seen every device the scan has heard, as it changes.
- * @param paired the devices paired with the phone right now; empty without the permission to read them.
+ * @param paired the devices paired with the phone right now; null while they cannot be read (no
+ * permission, Bluetooth off), which is not the same as none.
  * @param locate the phone's position now, or null without permission or a fix. It can take seconds.
  */
 @OptIn(FlowPreview::class)
 class LastSeenRecorder(
     private val seen: Flow<Collection<BleDevice>>,
-    private val paired: () -> List<PairedDevice>,
+    private val paired: () -> List<PairedDevice>?,
     private val saved: Flow<List<SavedDevice>>,
     private val store: LastSeenStore,
     private val locate: suspend () -> LastSeen.Place?,
@@ -34,6 +35,7 @@ class LastSeenRecorder(
 ) {
     private var pairedNow: List<PairedDevice> = emptyList()
     private var pairedReadAt = Long.MIN_VALUE
+    private var pairedKnown = false
     private var place: LastSeen.Place? = null
     private var placeReadAt = Long.MIN_VALUE
 
@@ -52,7 +54,7 @@ class LastSeenRecorder(
     private suspend fun record(heard: Collection<BleDevice>, kept: List<SavedDevice>) {
         val now = clock()
         // Read each time, not remembered: a record the user removed in the meantime must not come back.
-        val known = store.lastSeen.first()
+        val known = prune(store.lastSeen.first(), kept, now)
         val due = due(pairedAt(now), kept, heard, known, now)
         if (due.isEmpty()) return
         val here = placeNow(now)
@@ -64,11 +66,34 @@ class LastSeenRecorder(
         )
     }
 
+    /**
+     * Drops the records of devices that are no longer the user's (#178): unpaired in the phone's
+     * settings, or removed from the saved list by a path that did not clean up. Only right after the
+     * paired devices were really read; while they cannot be, nothing is taken for gone.
+     */
+    private suspend fun prune(
+        known: Map<String, LastSeen>,
+        kept: List<SavedDevice>,
+        now: Long,
+    ): Map<String, LastSeen> {
+        val readBefore = pairedReadAt
+        val pairedList = pairedAt(now)
+        if (pairedReadAt == readBefore || !pairedKnown) return known
+        val own = OwnDevices.list(pairedList, kept).mapTo(HashSet()) { it.device.address }
+        val gone = known.keys - own
+        if (gone.isEmpty()) return known
+        store.remove(gone)
+        return known - gone
+    }
+
     /** Paired devices change rarely and reading them is a call into the system: once in a while is enough. */
     private fun pairedAt(now: Long): List<PairedDevice> {
         if (now - pairedReadAt >= PAIRED_EVERY_MS || now < pairedReadAt) {
             pairedReadAt = now
-            pairedNow = paired()
+            val read = paired()
+            pairedKnown = read != null
+            // Unreadable for now: the last list read still says which devices are the user's.
+            if (read != null) pairedNow = read
         }
         return pairedNow
     }

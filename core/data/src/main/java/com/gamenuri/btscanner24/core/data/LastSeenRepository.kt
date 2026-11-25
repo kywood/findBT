@@ -3,6 +3,7 @@ package com.gamenuri.btscanner24.core.data
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -28,7 +29,17 @@ interface LastSeenStore {
     /** Writes [records] over whatever was kept for the same devices. */
     suspend fun record(records: Collection<LastSeen>)
 
-    suspend fun remove(address: String)
+    suspend fun remove(addresses: Collection<String>)
+
+    suspend fun remove(address: String) = remove(listOf(address))
+
+    /**
+     * Whether the user turned place recording on (#178). Off until they do, on every Android version:
+     * having the location permission (which the scan itself needs on Android 11 and older) is not consent.
+     */
+    val recordsPlace: Flow<Boolean>
+
+    suspend fun setRecordsPlace(on: Boolean)
 }
 
 /** [LastSeenStore] in a file on the phone only, gone when the device is taken off My devices. */
@@ -48,14 +59,22 @@ class LastSeenRepository(private val store: DataStore<Preferences>) : LastSeenSt
         }
     }
 
-    override suspend fun remove(address: String) {
+    override suspend fun remove(addresses: Collection<String>) {
+        if (addresses.isEmpty()) return
         store.edit { preferences ->
-            val others = LastSeenCodec.decode(preferences[RECORDS].orEmpty()) - address
+            val others = LastSeenCodec.decode(preferences[RECORDS].orEmpty()) - addresses.toSet()
             preferences[RECORDS] = LastSeenCodec.encode(others.values)
         }
     }
 
+    override val recordsPlace: Flow<Boolean> = store.data.map { it[RECORDS_PLACE] ?: false }
+
+    override suspend fun setRecordsPlace(on: Boolean) {
+        store.edit { preferences -> preferences[RECORDS_PLACE] = on }
+    }
+
     private companion object {
         val RECORDS = stringPreferencesKey("records")
+        val RECORDS_PLACE = booleanPreferencesKey("records_place")
     }
 }

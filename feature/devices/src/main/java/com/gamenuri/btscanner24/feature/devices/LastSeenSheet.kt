@@ -43,12 +43,22 @@ import java.util.Locale
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun LastSeenSheet(title: String, record: LastSeen, now: Long, onFind: () -> Unit, onDismiss: () -> Unit) {
+internal fun LastSeenSheet(
+    title: String,
+    record: LastSeen,
+    now: Long,
+    place: PlaceRecording,
+    onFind: () -> Unit,
+    onDismiss: () -> Unit,
+) {
     val context = LocalContext.current
-    var canLocate by remember { mutableStateOf(context.hasLocationAccess()) }
+    var hasAccess by remember { mutableStateOf(context.hasLocationAccess()) }
     val askLocation = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        canLocate = granted
+        hasAccess = granted
     }
+    // Recording the place takes both: the user's own "turn it on" and the permission. On Android 11 and
+    // older the scan already has the permission, so there the switch alone is the consent (#178).
+    val canLocate = place.isOn && hasAccess
     val noMapApp = stringResource(R.string.last_seen_no_map_app)
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(modifier = Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, bottom = 24.dp)) {
@@ -97,7 +107,10 @@ internal fun LastSeenSheet(title: String, record: LastSeen, now: Long, onFind: (
                         )
                     } else if (!canLocate) {
                         OutlinedButton(
-                            onClick = { askLocation.launch(Manifest.permission.ACCESS_COARSE_LOCATION) },
+                            onClick = {
+                                place.onTurnOn()
+                                if (!hasAccess) askLocation.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
+                            },
                             modifier = Modifier.fillMaxWidth(),
                         ) {
                             Text(stringResource(R.string.last_seen_turn_on))
@@ -112,6 +125,9 @@ internal fun LastSeenSheet(title: String, record: LastSeen, now: Long, onFind: (
         }
     }
 }
+
+/** Whether the user turned place recording on, and how they do. */
+internal class PlaceRecording(val isOn: Boolean = false, val onTurnOn: () -> Unit = {})
 
 /** "3 min. ago", "Yesterday, 6:12 PM": the system's own wording in the app's language. */
 internal fun lastSeenTime(context: Context, seenAt: Long, now: Long): String =

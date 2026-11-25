@@ -37,6 +37,8 @@ data class MyDevicesUiState(
     val isEmpty: Boolean = false,
     /** The scan cannot run (Bluetooth or Location off…), so "nearby" cannot be known right now. */
     val scanFailure: ScanFailure? = null,
+    /** The user turned place recording on (#178); until then last-seen records hold the time only. */
+    val recordsPlace: Boolean = false,
 ) {
     /** The same lists with each device's kept record, by the address it is listed under. */
     fun withLastSeen(records: Map<String, LastSeen>): MyDevicesUiState {

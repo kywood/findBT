@@ -61,9 +61,10 @@ class DevicesViewModel(
             .copy(hasPermission = permitted, scanFailure = failure)
     }
 
-    val uiState: StateFlow<MyDevicesUiState> = combine(listed, lastSeen.lastSeen) { state, records ->
-        state.withLastSeen(records)
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MyDevicesUiState())
+    val uiState: StateFlow<MyDevicesUiState> =
+        combine(listed, lastSeen.lastSeen, lastSeen.recordsPlace) { state, records, recordsPlace ->
+            state.withLastSeen(records).copy(recordsPlace = recordsPlace)
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MyDevicesUiState())
 
     /** Called when the tab becomes visible: re-read paired devices (the user may have paired one) and scan. */
     fun onScreenStarted() {
@@ -90,6 +91,11 @@ class DevicesViewModel(
 
     fun hide(item: MyDeviceItem) {
         viewModelScope.launch { hiddenDevices.hide(item.paired.address) }
+    }
+
+    /** "Turn on place recording" on a last-seen card (#178): from now on records keep the place too. */
+    fun turnOnPlaceRecording() {
+        viewModelScope.launch { lastSeen.setRecordsPlace(true) }
     }
 
     /** Takes a saved device off the list for good (#108); paired ones are hidden instead. */
