@@ -37,6 +37,19 @@ class MyDevicesTest {
     }
 
     @Test
+    fun `a device renamed on the phone is matched by the name it advertises`() {
+        val renamed = PairedDevice(
+            "AA:00:00:00:00:09",
+            "Min's buds",
+            DeviceCategory.EARBUDS,
+            advertisedName = "Galaxy Buds FE",
+        )
+        val heard = listOf(seen("7F:11:22:33:44:66", "Galaxy Buds FE"))
+        val state = MyDevices.build(listOf(renamed), heard, emptySet(), now) { 1.0 }
+        assertEquals(renamed, state.nearby.single().paired)
+    }
+
+    @Test
     fun `not heard recently is not nearby`() {
         val state = build(listOf(seen(watch.address, "Galaxy Watch6", lastSeen = now - 60_000)))
         assertTrue(state.nearby.isEmpty())

@@ -8,7 +8,8 @@ import com.gamenuri.btscanner24.core.model.PairedDevice
  *
  * Matching: the paired address first. Most earbuds and watches advertise BLE from a random address
  * that differs from the paired (classic) one, so the fallback is the same device name; the newest
- * sighting wins. The match rate is one of the prototype measurements.
+ * sighting wins. A device the user renamed on the phone still advertises its own name, so that
+ * one is tried as well (#116). The match rate is one of the prototype measurements.
  */
 object MyDevices {
     const val ACTIVE_WINDOW_MS = 30_000L
@@ -27,7 +28,9 @@ object MyDevices {
             .filter { it.address !in hidden }
             .map { device ->
                 val sighting = byAddress[device.address]
-                    ?: device.name?.trim()?.lowercase()?.let { key -> byName[key]?.maxByOrNull { it.lastSeen } }
+                    ?: listOfNotNull(device.name, device.advertisedName)
+                        .flatMap { byName[it.trim().lowercase()].orEmpty() }
+                        .maxByOrNull { it.lastSeen }
                 val nearby = sighting != null && now - sighting.lastSeen <= ACTIVE_WINDOW_MS
                 MyDeviceItem(
                     paired = device,

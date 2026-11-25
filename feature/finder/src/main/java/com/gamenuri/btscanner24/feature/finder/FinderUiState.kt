@@ -1,5 +1,6 @@
 package com.gamenuri.btscanner24.feature.finder
 
+import com.gamenuri.btscanner24.core.ble.ScanFailure
 import com.gamenuri.btscanner24.core.ble.proximity.ProximityBand
 import com.gamenuri.btscanner24.core.ble.proximity.ProximityTrend
 import com.gamenuri.btscanner24.core.model.DeviceCategory
@@ -9,6 +10,9 @@ import com.gamenuri.btscanner24.core.model.DeviceLabel
 enum class FinderStage {
     /** No advertisement from the target yet. */
     WAITING,
+
+    /** Still none after a while: say so and offer to try again or go back, instead of waiting forever (#117). */
+    NOT_FOUND,
 
     /** Turn a full circle; the needle spins and the ring shows progress. */
     SPIN,
@@ -62,6 +66,11 @@ data class FinderUiState(
     /** "Play sound" button (#28); hidden while [SoundState.UNAVAILABLE]. */
     val sound: SoundState = SoundState.UNAVAILABLE,
     val advanced: AdvancedInfo = AdvancedInfo(),
+    /**
+     * The scan itself cannot run (Bluetooth or Location off, permission missing): the screen says that
+     * instead of "no signal", in the [FinderStage.NOT_FOUND] layout with its retry.
+     */
+    val scanFailure: ScanFailure? = null,
 )
 
 /** Immediate Alert (0x1802) "Play sound" state (#28). */

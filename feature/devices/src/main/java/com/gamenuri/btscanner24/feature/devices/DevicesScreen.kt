@@ -52,6 +52,7 @@ import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.gamenuri.btscanner24.core.ble.BleScanner
+import com.gamenuri.btscanner24.core.ble.ScanFailure
 import com.gamenuri.btscanner24.core.designsystem.component.StatusBanner
 import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
 import com.gamenuri.btscanner24.core.model.BleDevice
@@ -93,6 +94,7 @@ fun DevicesScreen(
         onOpenBluetoothSettings = { context.startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS)) },
         onAddTracker = onAddTracker,
         onOpenSettings = onOpenSettings,
+        onRetryScan = viewModel::onScreenStarted,
     )
 }
 
@@ -107,6 +109,7 @@ fun DevicesContent(
     modifier: Modifier = Modifier,
     onAddTracker: () -> Unit = {},
     onOpenSettings: () -> Unit = {},
+    onRetryScan: () -> Unit = {},
     now: Long = System.currentTimeMillis(),
 ) {
     Scaffold(
@@ -127,7 +130,24 @@ fun DevicesContent(
                 )
             }
             state.isEmpty -> EmptyState(onOpenBluetoothSettings, Modifier.padding(padding))
-            else -> DeviceSections(state, now, onDeviceClick, onHide, onAddTracker, Modifier.padding(padding))
+            else -> Column(Modifier.padding(padding)) {
+                // Without a scan nothing can be marked nearby: say why instead of showing everything as away.
+                state.scanFailure?.let { reason ->
+                    StatusBanner(
+                        message = stringResource(
+                            when (reason) {
+                                ScanFailure.BLUETOOTH_OFF -> R.string.devices_scan_bluetooth_off
+                                ScanFailure.LOCATION_OFF -> R.string.devices_scan_location_off
+                                else -> R.string.devices_scan_failed
+                            },
+                        ),
+                        actionLabel = stringResource(R.string.devices_scan_retry),
+                        onAction = onRetryScan,
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                    )
+                }
+                DeviceSections(state, now, onDeviceClick, onHide, onAddTracker)
+            }
         }
     }
 }
