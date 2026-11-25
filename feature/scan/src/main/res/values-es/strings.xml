@@ -45,7 +45,7 @@
     <string name="other_info_title">Otros dispositivos</string>
     <string name="other_info_what">Señales Bluetooth cercanas sin nombre o de un tipo difícil de identificar. Pueden ser dispositivos de vecinos, electrodomésticos, televisores o balizas.</string>
     <string name="other_info_why">Empiezan ocultas porque suelen ser muchas y la mayoría no son tuyas.</string>
-    <string name="other_info_mine">Si alguna es tuya, tócala para empezar a buscarla. Fíjate en si la distancia baja al acercarte.</string>
+    <string name="other_info_mine">Si alguna es tuya, tócala para empezar a buscarla. Fíjate en si la distancia baja al acercarte. Cuando lo tengas claro, ponle un nombre y guárdala en Mis dispositivos.</string>
     <string name="other_info_ok">Entendido</string>
     <string name="nearby_empty_personal">No hay dispositivos personales cerca</string>
     <plurals name="filter_show_results">

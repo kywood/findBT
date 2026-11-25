@@ -19,4 +19,11 @@
     <string name="devices_scan_failed">검색을 시작하지 못해 주변에 있는지 확인할 수 없어요.</string>
     <string name="devices_scan_retry">다시 시도</string>
     <string name="devices_add_tracker">트래커 추가</string>
+    <string name="devices_section_saved">저장한 기기</string>
+    <string name="devices_saved_count_free">%1$d · %2$d개 무료</string>
+    <string name="devices_saved_hint">주변 목록이나 찾기 화면에서 저장할 수 있어요</string>
+    <string name="devices_saved_mark">저장됨</string>
+    <string name="devices_saved_edit">이름·종류 바꾸기</string>
+    <string name="devices_saved_remove">저장 해제</string>
+    <string name="devices_saved_not_seen">저장됨 · 아직 감지 안 됨</string>
 </resources>

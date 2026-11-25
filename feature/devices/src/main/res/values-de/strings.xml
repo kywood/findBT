@@ -19,4 +19,11 @@
     <string name="devices_scan_failed">Die Suche konnte nicht starten, daher lässt sich nicht prüfen, was in der Nähe ist.</string>
     <string name="devices_scan_retry">Erneut versuchen</string>
     <string name="devices_add_tracker">Tracker hinzufügen</string>
+    <string name="devices_section_saved">Gespeicherte Geräte</string>
+    <string name="devices_saved_count_free">%1$d · %2$d kostenlos</string>
+    <string name="devices_saved_hint">Speichere aus der Liste „In der Nähe“ oder dem Suchbildschirm</string>
+    <string name="devices_saved_mark">Gespeichert</string>
+    <string name="devices_saved_edit">Name oder Typ ändern</string>
+    <string name="devices_saved_remove">Aus Gespeicherten entfernen</string>
+    <string name="devices_saved_not_seen">Gespeichert · noch nicht gesehen</string>
 </resources>

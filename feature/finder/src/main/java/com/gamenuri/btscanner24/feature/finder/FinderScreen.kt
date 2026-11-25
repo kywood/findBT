@@ -7,8 +7,6 @@ import android.os.Vibrator
 import android.os.VibratorManager
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -65,6 +63,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -90,7 +90,8 @@ import com.gamenuri.btscanner24.core.ble.ScanFailure
 import com.gamenuri.btscanner24.core.ble.proximity.ProximityBand
 import com.gamenuri.btscanner24.core.ble.proximity.ProximityTrend
 import com.gamenuri.btscanner24.core.designsystem.component.WATER_RISE_MS
-import com.gamenuri.btscanner24.core.designsystem.component.waterRise
+import com.gamenuri.btscanner24.core.designsystem.component.WaterMotion
+import com.gamenuri.btscanner24.core.designsystem.component.water
 import com.gamenuri.btscanner24.core.designsystem.theme.FindStateColors
 import com.gamenuri.btscanner24.core.designsystem.theme.NearoTextStyles
 import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
@@ -101,18 +102,23 @@ import com.gamenuri.btscanner24.core.ui.distanceText
 import com.gamenuri.btscanner24.core.ui.text
 import java.util.Locale
 import kotlin.math.roundToInt
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 /** Entry point: owns the ViewModel, lifecycle, haptics and keep-screen-on. Visuals are in [FinderContent]. */
 @Composable
 fun FinderScreen(
     address: String,
-    /** Leaves the screen; [Brush] is the background on screen now, for the drain over Home (#101). */
-    onClose: (cover: Brush) -> Unit,
+    /** Leaves the screen. It stays on top for [FINDER_EXIT_HOLD_MS] more while its water drains (#107). */
+    onClose: () -> Unit,
     /** "Done" on the Found screen, right before [onClose]; the app may show its full-screen ad then (#81). */
     onFoundDone: () -> Unit = {},
-    /** Water level of the entry from Home (#90), 0..1 over the press and the rise; 1 shows it fully. */
-    entryProgress: () -> Float = { 1f },
+    /** Where the row was tapped, 0..1 across the screen: the water gets its first push there. */
+    entryTapX: Float = 0.5f,
+    /** The water the opening tap set off already; without it the screen starts its own once drawn. */
+    entryWater: FindEntryWater? = null,
     viewModel: FinderViewModel = viewModel(key = "finder-$address", factory = FinderViewModel.factory(address)),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -125,21 +131,93 @@ fun FinderScreen(
     } else {
         findColorsFor(state).brush()
     }
-    val close by rememberUpdatedState { onClose(cover) }
+    // The screen comes in and leaves as water (#107): it fills from the bottom over Home, which stays
+    // underneath for the length of the navigation transition, and drains away the same way.
+    var entered by rememberSaveable { mutableStateOf(false) }
+    var leaving by remember { mutableStateOf(false) }
+    val ownWater = remember { WaterMotion(full = entered) }
+    val entry = entryWater?.motion ?: ownWater
+    val context = LocalContext.current
+    val reduceMotion = remember(context) { context.animationsOff() }
+    val slope = rememberWaterSlope()
+    // The live screen is slow to compose for the first time (230 to 480 ms on a Galaxy A50, #107), so
+    // this screen's first frame is empty and the content joins the water a few frames later, while the
+    // waterline is still low and the cover hides what is under it.
+    var live by remember { mutableStateOf(entered) }
+    LaunchedEffect(Unit) {
+        entryWater?.slope = slope
+        if (entered) {
+            // Restored (rotation, process death): no water, and a shared one may not know it is full.
+            if (!entry.isFull) entry.fill()
+            entryWater?.covering = false
+            return@LaunchedEffect
+        }
+        // One empty frame: this screen now draws under the water, so the cover over the list can go.
+        withFrameNanos { }
+        entryWater?.covering = false
+        coroutineScope {
+            // The opening tap has the water rising already; opened any other way, it starts here.
+            val rising = if (!entry.isEmpty) {
+                null
+            } else {
+                launch { entry.rise(kickAt = entryTapX, reduceMotion = reduceMotion, slope = slope) }
+            }
+            withFrameNanos { }
+            withFrameNanos { }
+            live = true
+            rising?.join() ?: snapshotFlow { entry.isFull }.first { it }
+        }
+        entered = true
+    }
+    LaunchedEffect(leaving) {
+        if (!leaving) return@LaunchedEffect
+        // Home's first frame after coming back is slow too; drain once it has drawn.
+        withFrameNanos { }
+        withFrameNanos { }
+        entry.drain(reduceMotion = reduceMotion, slope = slope)
+    }
+    val close by rememberUpdatedState {
+        // A second ✕ or back while draining would pop Home as well.
+        if (!leaving) {
+            leaving = true
+            onClose()
+        }
+    }
     // System back drains the same way as ✕ and Done.
     BackHandler { close() }
-    foundAfterSeconds?.let { seconds ->
-        FoundRise(
-            state,
-            seconds,
-            onDone = {
-                onFoundDone()
-                close()
-            },
-        )
-        return
+    Box(Modifier.fillMaxSize().water(entry, cover = cover)) {
+        val seconds = foundAfterSeconds
+        if (seconds != null) {
+            FoundRise(
+                state,
+                seconds,
+                reduceMotion,
+                onDone = {
+                    onFoundDone()
+                    close()
+                },
+            )
+        } else if (live) {
+            FinderLive(
+                viewModel = viewModel,
+                state = state,
+                paused = entry.isMoving,
+                onClose = { close() },
+                onFound = { foundAfterSeconds = state.advanced.elapsedSeconds },
+            )
+        }
     }
+}
 
+/** The live find screen: scanning, sensors, haptics and keep-screen-on while it is in composition. */
+@Composable
+private fun FinderLive(
+    viewModel: FinderViewModel,
+    state: FinderUiState,
+    paused: Boolean,
+    onClose: () -> Unit,
+    onFound: () -> Unit,
+) {
     // Scan and read sensors only while the screen is visible.
     LifecycleStartEffect(viewModel) {
         viewModel.start()
@@ -166,10 +244,10 @@ fun FinderScreen(
 
     FinderContent(
         state = state,
-        entryProgress = entryProgress,
+        paused = paused,
         actions = FinderActions(
-            onClose = { close() },
-            onFound = { foundAfterSeconds = state.advanced.elapsedSeconds },
+            onClose = onClose,
+            onFound = onFound,
             onToggleVibration = viewModel::toggleVibration,
             onSpinAgain = viewModel::spinAgain,
             onToggleSound = viewModel::toggleSound,
@@ -192,23 +270,29 @@ data class FinderActions(
  * in from 45 %, then the check pops once.
  */
 @Composable
-private fun FoundRise(state: FinderUiState, seconds: Int, onDone: () -> Unit) {
-    val rise = remember { Animatable(0f) }
-    LaunchedEffect(Unit) { rise.animateTo(1f, tween(WATER_RISE_MS, easing = LinearEasing)) }
+private fun FoundRise(state: FinderUiState, seconds: Int, reduceMotion: Boolean, onDone: () -> Unit) {
+    // Saved, so a rotation does not play it again.
+    var risen by rememberSaveable { mutableStateOf(false) }
+    val rise = remember { WaterMotion(full = risen) }
+    val popCheckAfterMs = remember { if (risen) null else WATER_RISE_MS }
+    LaunchedEffect(Unit) {
+        if (risen) return@LaunchedEffect
+        withFrameNanos { }
+        rise.rise(kickAt = FOUND_TAP_X, reduceMotion = reduceMotion)
+        risen = true
+    }
     val colors = NearoTheme.colors.found
     Box(Modifier.fillMaxSize()) {
-        if (rise.value < 1f) FinderContent(state, FinderActions())
+        if (!rise.isFull) FinderContent(state, FinderActions(), paused = true)
         FoundContent(
             label = state.deviceLabel,
             category = state.category,
             elapsedSeconds = seconds,
             onDone = onDone,
-            popCheckAfterMs = WATER_RISE_MS,
-            modifier = Modifier.waterRise(
-                progress = { rise.value },
+            popCheckAfterMs = popCheckAfterMs,
+            modifier = Modifier.water(
+                rise,
                 cover = Brush.verticalGradient(listOf(colors.backgroundTop, colors.backgroundBottom)),
-                contentFrom = FOUND_CONTENT_FROM,
-                pressMs = 0,
             ),
         )
     }
@@ -220,7 +304,8 @@ fun FinderContent(
     state: FinderUiState,
     actions: FinderActions,
     modifier: Modifier = Modifier,
-    entryProgress: () -> Float = { 1f },
+    /** Water is moving over this screen: hold the continuous animations until it is done (#106). */
+    paused: Boolean = false,
 ) {
     val palette = findColorsFor(state)
     val background = palette.background
@@ -233,42 +318,34 @@ fun FinderContent(
     val scene3d = LocalArFindScene.current && !sceneFailed && !LocalInspectionMode.current
     val dialSlot = remember { SceneSlot() }
     // A new stage colour rises like water over the old one (#90); the content stays where it is.
-    Box(
-        modifier
-            .fillMaxSize()
-            .waterRise(progress = entryProgress, cover = palette.brush())
-            .background(stage.previous.brush()),
-    ) {
-        Box(
-            Modifier
-                .matchParentSize()
-                .waterRise(progress = { stage.progress.value }, glint = STAGE_GLINT, pressMs = 0)
-                .background(palette.brush()),
-        )
-        if (scene3d && state.showsScene()) {
-            // Lower than the slot's middle (design find-flow v1.4): the ring sits just over the distance
-            // block, which leaves the far step and the device marker the room above it.
-            FindSceneLayer(
-                dialSlot,
-                fadeOutsideSlot = true,
-                centerBias = SCENE_CENTER_BIAS,
-            ) { centerY, topFade, bottomFade ->
-                CompositionLocalProvider(LocalContentColor provides accent) {
-                    val fades = SceneFades(topFade, bottomFade)
-                    ArrowScene(state, centerY, fades, onUnavailable = { sceneFailed = true })
+    Box(modifier.fillMaxSize().background(stage.previous.brush())) {
+        Box(Modifier.matchParentSize().water(stage.motion, glint = STAGE_GLINT).background(palette.brush()))
+        CompositionLocalProvider(LocalFindMotionPaused provides (paused || stage.motion.isMoving)) {
+            if (scene3d && state.showsScene()) {
+                // Lower than the slot's middle (design find-flow v1.4): the ring sits just over the
+                // distance block, which leaves the far step and the device marker the room above it.
+                FindSceneLayer(
+                    dialSlot,
+                    fadeOutsideSlot = true,
+                    centerBias = SCENE_CENTER_BIAS,
+                ) { centerY, topFade, bottomFade ->
+                    CompositionLocalProvider(LocalContentColor provides accent) {
+                        val fades = SceneFades(topFade, bottomFade)
+                        ArrowScene(state, centerY, fades, onUnavailable = { sceneFailed = true })
+                    }
                 }
             }
+            FinderScaffold(state, actions, content, accent, background, scene3d, dialSlot)
         }
-        FinderScaffold(state, actions, content, accent, background, scene3d, dialSlot)
     }
 }
 
-private fun FindStateColors.brush(): Brush = Brush.verticalGradient(listOf(background, backgroundBottom))
+internal fun FindStateColors.brush(): Brush = Brush.verticalGradient(listOf(background, backgroundBottom))
 
 /** Background colour of the last stage and the rise of the new one; quick back-and-forth just snaps. */
 private class StageRise(initial: FindStateColors) {
     var previous by mutableStateOf(initial)
-    val progress = Animatable(1f)
+    val motion = WaterMotion(full = true)
 }
 
 @Composable
@@ -286,11 +363,10 @@ private fun rememberStageRise(target: FindStateColors): StageRise {
         rise.previous = shown
         shown = target
         if (now - lastRiseAt < STAGE_RISE_GAP_MS) {
-            rise.progress.snapTo(1f)
+            rise.motion.fill()
         } else {
             lastRiseAt = now
-            rise.progress.snapTo(0f)
-            rise.progress.animateTo(1f, tween(WATER_RISE_MS, easing = LinearEasing))
+            rise.motion.rise()
         }
         rise.previous = target
     }
@@ -806,7 +882,12 @@ private const val COLOR_FADE_MS = 400
 private const val STAGE_RISE_GAP_MS = 1_500L
 private const val STAGE_GLINT = 0.8f
 private const val MENU_WHITE = 0.14f
-private const val FOUND_CONTENT_FROM = 0.45f
+
+/** The "found it" button sits right of the centre; the Found water starts there. */
+private const val FOUND_TAP_X = 0.74f
+
+/** How long the find screen stays on top of Home after closing, for its water to drain away. */
+const val FINDER_EXIT_HOLD_MS = 1_300
 
 private const val MUTED_ALPHA = 0.78f
 private const val HINT_ALPHA = 0.8f

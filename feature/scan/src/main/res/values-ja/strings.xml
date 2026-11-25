@@ -45,7 +45,7 @@
     <string name="other_info_title">その他のデバイス</string>
     <string name="other_info_what">名前がない、または種類がわからない近くのBluetooth信号です。近所の機器、家電、テレビ、ビーコンなどが含まれることがあります。</string>
     <string name="other_info_why">数が多く、ほとんどは自分のものではないため、最初は非表示にしています。</string>
-    <string name="other_info_mine">自分の機器がここにある場合は、タップして探し始めてください。近づくにつれて距離が縮まるか確認しましょう。</string>
+    <string name="other_info_mine">自分の機器がここにある場合は、タップして探し始めてください。近づくにつれて距離が縮まるか確認しましょう。自分の機器だとわかったら、名前を付けてマイデバイスに保存しておきましょう。</string>
     <string name="other_info_ok">OK</string>
     <string name="nearby_empty_personal">近くに持ち歩くデバイスはありません</string>
     <plurals name="filter_show_results">

@@ -14,6 +14,7 @@ import com.gamenuri.btscanner24.core.ble.ScanFailure
 import com.gamenuri.btscanner24.core.ble.scanContinuously
 import com.gamenuri.btscanner24.core.data.DataDependenciesProvider
 import com.gamenuri.btscanner24.core.data.HiddenDevicesRepository
+import com.gamenuri.btscanner24.core.data.SavedDevicesRepository
 import com.gamenuri.btscanner24.core.model.PairedDevice
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
@@ -36,6 +37,7 @@ class DevicesViewModel(
     private val repository: DeviceRepository,
     private val bondedDevices: BondedDevices,
     private val hiddenDevices: HiddenDevicesRepository,
+    private val savedDevices: SavedDevicesRepository,
     private val clock: () -> Long = System::currentTimeMillis,
 ) : ViewModel() {
 
@@ -48,10 +50,10 @@ class DevicesViewModel(
         paired,
         repository.devices.sample(UI_REFRESH_MS),
         hiddenDevices.hidden,
-        hasPermission,
-        scanFailure,
-    ) { pairedList, seen, hidden, permitted, failure ->
-        MyDevices.build(pairedList, seen.values, hidden, clock()) { it.distanceMeters }
+        combine(hasPermission, scanFailure, ::Pair),
+        savedDevices.saved,
+    ) { pairedList, seen, hidden, (permitted, failure), saved ->
+        MyDevices.build(pairedList, seen.values, hidden, clock(), saved) { it.distanceMeters }
             .copy(hasPermission = permitted, scanFailure = failure)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MyDevicesUiState())
 
@@ -85,6 +87,11 @@ class DevicesViewModel(
         viewModelScope.launch { hiddenDevices.hide(item.paired.address) }
     }
 
+    /** Takes a saved device off the list for good (#108); paired ones are hidden instead. */
+    fun remove(item: MyDeviceItem) {
+        viewModelScope.launch { savedDevices.remove(item.paired.address) }
+    }
+
     override fun onCleared() {
         onScreenStopped()
     }
@@ -97,7 +104,7 @@ class DevicesViewModel(
                 val app = checkNotNull(this[APPLICATION_KEY])
                 val ble = (app as BleDependencies.Provider).bleDependencies
                 val data = app as DataDependenciesProvider
-                DevicesViewModel(ble.scanner, ble.repository, ble.bondedDevices, data.hiddenDevices)
+                DevicesViewModel(ble.scanner, ble.repository, ble.bondedDevices, data.hiddenDevices, data.savedDevices)
             }
         }
     }

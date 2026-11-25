@@ -45,7 +45,7 @@
     <string name="other_info_title">기타 장치</string>
     <string name="other_info_what">이름이 없거나 종류를 구분하기 어려운 주변 블루투스 신호예요. 이웃의 기기, 가전, TV, 비콘 등이 포함될 수 있어요.</string>
     <string name="other_info_why">보통 개수가 많고 대부분 내 것이 아니어서 처음에는 숨겨 둬요.</string>
-    <string name="other_info_mine">내 기기가 여기 있다면 눌러서 찾기를 시작해 보세요. 그쪽으로 걸어갈 때 거리가 줄어드는지 확인하면 돼요.</string>
+    <string name="other_info_mine">내 기기가 여기 있다면 눌러서 찾기를 시작해 보세요. 그쪽으로 걸어갈 때 거리가 줄어드는지 확인하면 돼요. 내 기기가 맞다면 이름을 붙여 내 기기에 저장해 두세요.</string>
     <string name="other_info_ok">확인</string>
     <string name="nearby_empty_personal">근처에 들고 다니는 기기가 없어요</string>
     <plurals name="filter_show_results">
