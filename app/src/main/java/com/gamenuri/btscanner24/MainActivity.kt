@@ -86,7 +86,7 @@ class MainActivity : ComponentActivity() {
                     val onboardingPage = demo?.onboardingPage
                     CompositionLocalProvider(
                         LocalArFindScene provides (demo?.arScene != false),
-                        LocalFindScenePose provides (demo?.findState == null),
+                        LocalFindScenePose provides (demo?.findState == null || demo.followPose),
                     ) {
                         when {
                             findState != null -> DemoMode.FindScreen(findState, onClose = ::finish)
