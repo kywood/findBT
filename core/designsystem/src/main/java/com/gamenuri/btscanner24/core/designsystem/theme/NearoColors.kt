@@ -53,26 +53,35 @@ data class NearoColors(
 private val White = Color(0xFFFFFFFF)
 private val Mint = Color(0xFF2EE6A0)
 
+/** Find-mode blue (color-modes-v2): bright, matte and close to a pure blue. */
+private val FindBlue = Color(0xFF2563FF)
+
+/** [FindBlue] 7 % towards #0B2A8A: the screens are nearly flat, only a touch deeper at the bottom. */
+private val FindBlueBottom = Color(0xFF235FF7)
+
+/** Far and waiting: one step calmer than [FindBlue]. */
+private val FindBlueFar = Color(0xFF215AEC)
+
 private val findColors = NearoColors(
-    // Find mode is muted brand blue all the way through (#97, color-modes-v1); browsing stays dark.
-    findSearching = FindStateColors(Color(0xFF365CC4), White, backgroundBottom = Color(0xFF24418F)),
-    findFar = FindStateColors(Color(0xFF2E54B6), White),
-    findClose = FindStateColors(Color(0xFF4777E2), White),
+    // Find mode is brand blue all the way through (#97, color-modes-v2); browsing stays dark.
+    findSearching = FindStateColors(FindBlueFar, White),
+    findFar = FindStateColors(FindBlueFar, White),
+    findClose = FindStateColors(FindBlue, White, backgroundBottom = FindBlueBottom),
     // Mint only marks success on the arrow, rings and gauge (#77).
-    findVeryClose = FindStateColors(Color(0xFF4777E2), White, accent = Mint),
-    findHere = FindStateColors(Color(0xFF4777E2), White, accent = Mint),
+    findVeryClose = FindStateColors(FindBlue, White, accent = Mint, backgroundBottom = FindBlueBottom),
+    findHere = FindStateColors(FindBlue, White, accent = Mint, backgroundBottom = FindBlueBottom),
     // Signal lost: the same blue with less colour (slate), never black (#97).
     findLost = FindStateColors(Color(0xFF4A5A85), White, backgroundBottom = Color(0xFF2F3B5E)),
-    // Design found-blue-v2 (#77) with the muted tokens (#90 v2): mint only on the check and rings.
+    // Found: the same blue as "close"; mint only on the check and rings (#77).
     found = FoundColors(
-        backgroundTop = Color(0xFF4777E2),
-        backgroundBottom = Color(0xFF2A4A9E),
+        backgroundTop = FindBlue,
+        backgroundBottom = FindBlueBottom,
         content = White,
         rings = Mint,
         heroCircle = Mint,
         check = Color(0xFF00391F),
         buttonContainer = White,
-        buttonContent = Color(0xFF2A4A9E),
+        buttonContent = FindBlue,
     ),
     signalStrong = Color.Unspecified,
     signalMedium = Color.Unspecified,
