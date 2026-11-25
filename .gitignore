@@ -35,3 +35,6 @@ google-services.json
 
 # Screenshots copied for design review (not part of the app)
 .design-review/
+
+# Captures and review media stay out of git (code only, #191)
+docs/screenshots/
