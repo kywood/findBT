@@ -1,12 +1,17 @@
 package com.gamenuri.btscanner24
 
 import androidx.annotation.StringRes
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
@@ -23,6 +28,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -30,6 +36,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gamenuri.btscanner24.core.ads.AdBanner
 import com.gamenuri.btscanner24.core.billing.PremiumStore
 import com.gamenuri.btscanner24.core.data.DataDependenciesProvider
+import com.gamenuri.btscanner24.core.designsystem.component.WATER_RISE_MS
+import com.gamenuri.btscanner24.core.designsystem.theme.FindBlueDeep
+import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
 import com.gamenuri.btscanner24.core.model.SaveLimit
 import com.gamenuri.btscanner24.core.ui.R as UiR
 import com.gamenuri.btscanner24.feature.devices.DevicesScreen
@@ -96,13 +105,27 @@ fun HomeScreen(
     )
     // "★ 24h" next to the title while a rewarded day pass runs (#81 ⑥).
     val dayPass = premium.dayPassUntil != null && !premium.isPurchased
+    // With the 3D map up, the bar under it takes the map's blue (design bt-map-3d v2.2, #173); it
+    // changes over the time the water takes to rise, since the bar itself is not under the water.
+    var mapShown by rememberSaveable { mutableStateOf(false) }
+    val onBlue = tab == HomeTab.NEARBY && mapShown
+    val find = NearoTheme.colors.findFar
+    val barColor by animateColorAsState(
+        targetValue = if (onBlue) {
+            FindBlueDeep.copy(alpha = MAP_BAR_SHADE).compositeOver(find.background)
+        } else {
+            NavigationBarDefaults.containerColor
+        },
+        animationSpec = tween(WATER_RISE_MS),
+        label = "barColor",
+    )
     Scaffold(
         snackbarHost = { SnackbarHost(snackbar) },
         bottomBar = {
-            Column {
+            Column(Modifier.background(barColor)) {
                 // Anchored banner right above the tabs; no height until an ad may show (#81 ①).
                 AdBanner()
-                NavigationBar {
+                NavigationBar(containerColor = barColor) {
                     HomeTab.entries.forEach { item ->
                         NavigationBarItem(
                             selected = tab == item,
@@ -114,6 +137,17 @@ fun HomeScreen(
                                 }
                             },
                             label = { Text(stringResource(item.label)) },
+                            colors = if (onBlue) {
+                                NavigationBarItemDefaults.colors(
+                                    selectedIconColor = find.content,
+                                    selectedTextColor = find.content,
+                                    indicatorColor = find.content.copy(alpha = MAP_BAR_INDICATOR),
+                                    unselectedIconColor = find.content.copy(alpha = MAP_BAR_UNSELECTED),
+                                    unselectedTextColor = find.content.copy(alpha = MAP_BAR_UNSELECTED),
+                                )
+                            } else {
+                                NavigationBarItemDefaults.colors()
+                            },
                         )
                     }
                 }
@@ -130,6 +164,7 @@ fun HomeScreen(
                 onOpenSettings = onOpenSettings,
                 onSaveDevice = { saveTarget = SaveTarget.of(it) },
                 savedAddresses = savedAddresses,
+                onMapShown = { mapShown = it },
             )
             // "Add a tracker" opens Nearby, where a row's ⋮ menu saves it (#108).
             HomeTab.MY_DEVICES ->
@@ -149,6 +184,11 @@ fun HomeScreen(
         }
     }
 }
+
+/** How much of [FindBlueDeep] lies over the map's blue in the bar under it. */
+private const val MAP_BAR_SHADE = 0.3f
+private const val MAP_BAR_INDICATOR = 0.16f
+private const val MAP_BAR_UNSELECTED = 0.7f
 
 /** Not translated: a star and "24h" read the same in every app language. */
 private const val DAY_PASS_BADGE = "  ★ 24h"

@@ -126,6 +126,8 @@ fun ScanScreen(
     onSaveDevice: ((BleDevice) -> Unit)? = null,
     /** Addresses already saved: their rows offer no save. */
     savedAddresses: Set<String> = emptySet(),
+    /** Told whenever the blue 3D map takes over from the dark list or gives way to it (#173). */
+    onMapShown: (Boolean) -> Unit = {},
     viewModel: ScanViewModel = viewModel(factory = ScanViewModel.Factory),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -157,6 +159,7 @@ fun ScanScreen(
         state = state,
         showMap = forcedMap || state.preferences.showMap,
         followPose = mapOptions.followPose,
+        onMapShown = onMapShown,
         permissionBanner = when {
             permission.isGranted -> null
             permission.isPermanentlyDenied -> PermissionBanner.OPEN_SETTINGS
@@ -263,6 +266,7 @@ fun ScanContent(
     modifier: Modifier = Modifier,
     showMap: Boolean = false,
     followPose: Boolean = true,
+    onMapShown: (Boolean) -> Unit = {},
 ) {
     var searchOpen by rememberSaveable { mutableStateOf(false) }
     var filtersOpen by rememberSaveable { mutableStateOf(false) }
@@ -280,6 +284,7 @@ fun ScanContent(
     val context = LocalContext.current
     val mapWater = remember { WaterMotion(full = mapShown) }
     LaunchedEffect(mapShown) {
+        onMapShown(mapShown)
         val reduceMotion = context.animationsOff()
         when {
             mapShown && !mapWater.isFull -> mapWater.rise(kickAt = VIEW_SWITCH_X, reduceMotion = reduceMotion)
