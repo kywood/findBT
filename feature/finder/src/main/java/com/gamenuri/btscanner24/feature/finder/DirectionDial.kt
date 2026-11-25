@@ -68,8 +68,8 @@ internal fun DirectionDial(state: FinderUiState, modifier: Modifier = Modifier, 
             sceneBehind && state.showsScene() -> Unit
             // Below: only where the 3D scene cannot run.
             state.stage == FinderStage.RIGHT_HERE -> RightHereRings()
-            arrow != null -> FloorArrow(arrow, state.confidence, locked = state.stage == FinderStage.LOCKED)
             state.isSpinning() -> SpinningNeedle(state.sweepProgress)
+            arrow != null -> FloorArrow(arrow, state.confidence, locked = state.stage == FinderStage.LOCKED)
             else -> HeatRing(state.heat)
         }
     }
@@ -129,7 +129,8 @@ internal fun ArrowScene(state: FinderUiState, centerY: Float, fades: SceneFades,
         spec = FindSceneSpec(
             relativeDegrees = state.arrowDegrees ?: 0f,
             worldBearingDegrees = state.bearingDegrees,
-            spinning = state.isSpinning() && state.arrowDegrees == null,
+            // While turning, the sweep is all there is: no sharp arrow at an early guess (#198).
+            spinning = state.isSpinning(),
             rightHere = state.stage == FinderStage.RIGHT_HERE,
             noArrow = state.hasNoSignal(),
             fullBleed = true,
