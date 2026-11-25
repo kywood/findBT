@@ -24,7 +24,7 @@
     <!-- Filter screen and other devices (#85, #82) -->
     <string name="filter_close">Cerrar</string>
     <string name="filter_section_show">Mostrar</string>
-    <string name="filter_show_other_body">Balizas, TV, sensores y más · %1$d</string>
+    <string name="filter_show_other_body">Señales sin nombre o de tipo no identificado · %1$d</string>
     <string name="filter_show_unnamed">Mostrar dispositivos sin nombre</string>
     <string name="filter_distance">Distancia</string>
     <string name="filter_distance_within_5">A menos de 5 m</string>
@@ -37,6 +37,14 @@
     <string name="filter_no_results">Sin resultados</string>
     <string name="nearby_other_show">Ver</string>
     <string name="nearby_other_section">Otros dispositivos · %1$d</string>
+    <!-- Other devices: close and explanation (#142) -->
+    <string name="nearby_other_close">Cerrar</string>
+    <string name="nearby_other_info">Acerca de otros dispositivos</string>
+    <string name="other_info_title">Otros dispositivos</string>
+    <string name="other_info_what">Señales Bluetooth cercanas sin nombre o de un tipo difícil de identificar. Pueden ser dispositivos de vecinos, electrodomésticos, televisores o balizas.</string>
+    <string name="other_info_why">Empiezan ocultas porque suelen ser muchas y la mayoría no son tuyas.</string>
+    <string name="other_info_mine">Si alguna es tuya, tócala para empezar a buscarla. Fíjate en si la distancia baja al acercarte.</string>
+    <string name="other_info_ok">Entendido</string>
     <string name="nearby_empty_personal">No hay dispositivos personales cerca</string>
     <plurals name="filter_show_results">
         <item quantity="one">Ver %1$d dispositivo</item>

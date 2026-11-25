@@ -176,6 +176,9 @@ class ScanViewModel(
     /** "N other devices hidden · Show" at the end of the list (#82): same as turning the switch on. */
     fun showOther() = updateFilter { it.copy(showOther = true) }
 
+    /** "Other devices · N · Close" over that section (#142): the switch off again. */
+    fun hideOther() = updateFilter { it.copy(showOther = false) }
+
     /** The filter screen's "Show N devices" (#85): applies the whole edited filter at once. */
     fun applyFilter(filter: DeviceFilter) = updateFilter { filter }
 
