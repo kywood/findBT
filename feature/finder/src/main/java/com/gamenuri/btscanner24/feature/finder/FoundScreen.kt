@@ -55,8 +55,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.gamenuri.btscanner24.core.designsystem.theme.FoundColors
 import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
+import com.gamenuri.btscanner24.core.model.DeviceCategory
 import com.gamenuri.btscanner24.core.model.DeviceLabel
 import com.gamenuri.btscanner24.core.model.NameSource
+import com.gamenuri.btscanner24.core.ui.arrow3d.DeviceModel
 import com.gamenuri.btscanner24.core.ui.arrow3d.FindScene3d
 import com.gamenuri.btscanner24.core.ui.arrow3d.FindSceneSpec
 import com.gamenuri.btscanner24.core.ui.text
@@ -76,6 +78,8 @@ fun FoundContent(
     modifier: Modifier = Modifier,
     /** After the water rise (#90): pop the check once (1 → 1.12 → 1) with one haptic tick. */
     popCheckAfterMs: Int? = null,
+    /** The kind of device that was found: its 3D model leaves as the medal rises (#133). */
+    category: DeviceCategory = DeviceCategory.UNKNOWN,
 ) {
     val colors = NearoTheme.colors.found
     val checkScale = remember { Animatable(1f) }
@@ -112,6 +116,7 @@ fun FoundContent(
                     FindScene3d(
                         spec = FindSceneSpec(
                             found = true,
+                            model = DeviceModel.of(category),
                             arrowColor = Color.White,
                             floorColor = colors.content,
                             accentColor = colors.rings,

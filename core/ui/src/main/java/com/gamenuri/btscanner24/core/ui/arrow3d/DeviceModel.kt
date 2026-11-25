@@ -55,12 +55,15 @@ enum class DeviceModel(internal val asset: String) {
             DeviceCategory.GAMEPAD, DeviceCategory.HEALTH, DeviceCategory.SENSOR, DeviceCategory.UNKNOWN -> OTHER
         }
 
+        /** The model if it was read before; costs nothing, so safe on the main thread. */
+        internal fun cached(model: DeviceModel): FloatArray? = cache[model]
+
         /**
          * The model's triangles, [FLOATS_PER_VERTEX] floats per vertex, or null when the file cannot
          * be read (the scene then keeps its plain marker). Reads a file: call off the main thread.
          */
         internal fun load(context: Context, model: DeviceModel): FloatArray? {
-            cache[model]?.let { return it }
+            cached(model)?.let { return it }
             val vertices = try {
                 context.assets.open("models/${model.asset}.mesh").use { parse(it.readBytes()) }
             } catch (_: IOException) {

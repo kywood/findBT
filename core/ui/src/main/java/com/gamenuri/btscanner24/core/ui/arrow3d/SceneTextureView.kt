@@ -38,6 +38,11 @@ internal class SceneTextureView(context: Context) :
             state.modelMesh = null
             return
         }
+        // Read before (the find screen showed it): there at once, e.g. for its exit on "Found it".
+        DeviceModel.cached(next)?.let {
+            state.modelMesh = it
+            return
+        }
         val assets = context.applicationContext
         Thread {
             val mesh = DeviceModel.load(assets, next)

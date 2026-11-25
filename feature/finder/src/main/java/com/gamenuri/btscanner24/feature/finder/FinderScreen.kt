@@ -198,6 +198,7 @@ private fun FoundRise(state: FinderUiState, seconds: Int, onDone: () -> Unit) {
         if (rise.value < 1f) FinderContent(state, FinderActions())
         FoundContent(
             label = state.deviceLabel,
+            category = state.category,
             elapsedSeconds = seconds,
             onDone = onDone,
             popCheckAfterMs = WATER_RISE_MS,

@@ -178,9 +178,10 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         Matrix.translateM(model, 0, 0f, hover, 0f)
         Matrix.rotateM(model, 0, -yaw, 0f, 1f, 0f)
         val arrowScale = (1f - here) * MESH_SCALE
-        // Across the screen the arrow is smaller on its floor (#134); its thickness stays as it was.
+        // Across the screen the arrow is smaller on its floor (#134) and only a little thinner (v1.3).
         val across = if (state.fullBleed) FULL_BLEED_ARROW else 1f
-        Matrix.scaleM(model, 0, width * across * arrowScale, arrowScale, across * arrowScale)
+        val thick = if (state.fullBleed) FULL_BLEED_ARROW_THICKNESS else 1f
+        Matrix.scaleM(model, 0, width * across * arrowScale, thick * arrowScale, across * arrowScale)
         Matrix.setIdentityM(markerModel, 0)
         Matrix.translateM(markerModel, 0, 0f, PUCK_HEIGHT + bob, 0f)
         Matrix.scaleM(markerModel, 0, here * MESH_SCALE, here * MESH_SCALE, here * MESH_SCALE)
@@ -193,7 +194,9 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         if (showArrow) drawShadow(meshBuffer, meshVertices, model)
         val hasModel = modelVertices > 0
         if (showPuck && !hasModel) drawShadow(puckBuffer, puckVertices, markerModel)
-        if (showArrow) drawSolid(meshBuffer, meshVertices, model, state.arrowColor, stretch = width, across = across)
+        if (showArrow) {
+            drawSolid(meshBuffer, meshVertices, model, state.arrowColor, stretch = width, across = across, thick = thick)
+        }
         if (showPuck && hasModel) {
             drawHereModel()
         } else if (showPuck) {
@@ -246,6 +249,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         drawShadow(medalBuffer, medalVertices, markerModel)
         drawSolid(medalBuffer, medalVertices, markerModel, state.arrowColor)
         drawSolid(checkBuffer, checkVertices, markerModel, accent)
+        drawLeavingModel()
     }
 
     /** Moves every eased value one step and returns the arrow's yaw (clockwise from "ahead"). */
@@ -525,6 +529,30 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         Matrix.rotateM(deviceModel, 0, HERE_MODEL_LEAN_DEGREES, 1f, 0f, 0f)
         Matrix.rotateM(deviceModel, 0, turn, 0f, 1f, 0f)
         Matrix.scaleM(deviceModel, 0, size, size, size)
+        // Its shadow lies on the stand's top: tested against the stand, blended, and kept inside it.
+        GLES20.glEnable(GLES20.GL_DEPTH_TEST)
+        GLES20.glDepthMask(false)
+        GLES20.glEnable(GLES20.GL_BLEND)
+        val top = STAND_THICKNESS * grown + SHADOW_LIFT
+        val stride = DeviceModel.FLOATS_PER_VERTEX * BYTES_PER_FLOAT
+        drawShadow(modelBuffer, modelVertices, deviceModel, stride, height = top, spread = STAND_SHADOW_SPREAD)
+        GLES20.glDepthMask(true)
+        drawModel(deviceModel)
+    }
+
+    /**
+     * "Found it" (v1.3): as the medal starts to rise the device's model lifts off, turns and shrinks
+     * away in the first fifth of that time, so it does not simply vanish.
+     */
+    private fun drawLeavingModel() {
+        if (modelVertices == 0 || state.reduceMotion) return
+        val gone = foundTime / (MEDAL_RISE_SECONDS * MODEL_EXIT_SHARE)
+        if (gone >= 1f) return
+        val size = (1f - gone) * HERE_MODEL * MESH_SCALE
+        Matrix.setIdentityM(deviceModel, 0)
+        Matrix.translateM(deviceModel, 0, 0f, (HERE_MODEL_FLOAT + MODEL_EXIT_RISE * gone) * MESH_SCALE, 0f)
+        Matrix.rotateM(deviceModel, 0, HERE_MODEL_STILL_DEGREES + MODEL_EXIT_DEGREES * gone, 0f, 1f, 0f)
+        Matrix.scaleM(deviceModel, 0, size, size, size)
         drawModel(deviceModel)
     }
 
@@ -645,12 +673,19 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
      * A mesh dropped straight onto the floor, nudged towards the viewer. Three faint copies of
      * growing size stand in for a blur; the stencil keeps each copy from doubling up on itself.
      */
-    private fun drawShadow(buffer: Int, vertices: Int, model: FloatArray) {
+    private fun drawShadow(
+        buffer: Int,
+        vertices: Int,
+        model: FloatArray,
+        stride: Int = STRIDE_BYTES,
+        height: Float = 0f,
+        spread: Float = 1f,
+    ) {
         GLES20.glUseProgram(flatProgram)
         val position = GLES20.glGetAttribLocation(flatProgram, "aPos")
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, buffer)
         GLES20.glEnableVertexAttribArray(position)
-        GLES20.glVertexAttribPointer(position, 3, GLES20.GL_FLOAT, false, STRIDE_BYTES, 0)
+        GLES20.glVertexAttribPointer(position, 3, GLES20.GL_FLOAT, false, stride, 0)
         GLES20.glEnable(GLES20.GL_STENCIL_TEST)
         GLES20.glStencilOp(GLES20.GL_KEEP, GLES20.GL_KEEP, GLES20.GL_INCR)
         GLES20.glUniform1f(GLES20.glGetUniformLocation(flatProgram, "uRadial"), 0f)
@@ -667,9 +702,9 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
             // A fresh stencil per copy: each one covers its own footprint exactly once.
             GLES20.glClear(GLES20.GL_STENCIL_BUFFER_BIT)
             Matrix.setIdentityM(shadow, 0)
-            Matrix.translateM(shadow, 0, 0f, 0f, SHADOW_OFFSET)
-            // Height scaled to zero: straight down onto the floor, wherever the arrow hovers.
-            Matrix.scaleM(shadow, 0, scale, 0f, scale)
+            Matrix.translateM(shadow, 0, 0f, height, SHADOW_OFFSET * spread)
+            // Height scaled to zero: straight down onto the floor (or the stand), wherever the thing hovers.
+            Matrix.scaleM(shadow, 0, scale * spread, 0f, scale * spread)
             Matrix.multiplyMM(shadowModel, 0, shadow, 0, model, 0)
             Matrix.multiplyMM(mvp, 0, viewProjection, 0, shadowModel, 0)
             GLES20.glUniformMatrix4fv(GLES20.glGetUniformLocation(flatProgram, "uMvp"), 1, false, mvp, 0)
@@ -681,7 +716,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
 
     /**
      * A lit mesh; [stretch] is how much wider than its model it is drawn (the low-confidence arrow) and
-     * [across] how much it is shrunk along the floor while keeping its height.
+     * [across] and [thick] how much it is shrunk along the floor and in height.
      */
     private fun drawSolid(
         buffer: Int,
@@ -690,6 +725,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         color: Int,
         stretch: Float = 1f,
         across: Float = 1f,
+        thick: Float = 1f,
         soft: Boolean = false,
     ) {
         GLES20.glEnable(GLES20.GL_DEPTH_TEST)
@@ -714,7 +750,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         GLES20.glUniform3f(
             GLES20.glGetUniformLocation(arrowProgram, "uInvScale"),
             1f / (sideways * sideways),
-            1f,
+            1f / (thick * thick),
             1f / (across * across),
         )
         GLES20.glUniform3f(
@@ -879,6 +915,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         // underside floats 0.22 R above the floor (centre 0.29 R), bobbing by ± 0.02 R.
         const val MESH_SCALE = RING_OUTER
         const val FULL_BLEED_ARROW = 0.72f
+        const val FULL_BLEED_ARROW_THICKNESS = 0.86f
         const val HOVER_HEIGHT = 0.29f * RING_OUTER
         const val HOVER_BOB = 0.027f
         const val HOVER_PERIOD_SECONDS = 2.4f
@@ -990,6 +1027,12 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         const val STAND_RING = 0.33f
         const val STAND_RING_WIDTH = 0.02f
         const val STAND_RING_HEIGHT = 0.012f
+        const val STAND_SHADOW_SPREAD = 0.85f
+        const val SHADOW_LIFT = 0.004f
+        // Leaving on "Found it": up 0.4, about half a turn, gone in the first fifth of the medal's rise.
+        const val MODEL_EXIT_SHARE = 0.2f
+        const val MODEL_EXIT_RISE = 0.4f
+        const val MODEL_EXIT_DEGREES = 172f
 
         // "Found it" (same design): a white medal of radius 0.6 and thickness 0.13 with rounded
         // edges rises to 0.75 in 0.8 s, turning a little more than once and growing from 0.4; on
