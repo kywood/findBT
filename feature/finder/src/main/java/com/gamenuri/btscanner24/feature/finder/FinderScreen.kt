@@ -109,6 +109,8 @@ fun FinderScreen(
     address: String,
     /** Leaves the screen; [Brush] is the background on screen now, for the drain over Home (#101). */
     onClose: (cover: Brush) -> Unit,
+    /** "Done" on the Found screen, right before [onClose]; the app may show its full-screen ad then (#81). */
+    onFoundDone: () -> Unit = {},
     /** Water level of the entry from Home (#90), 0..1 over the press and the rise; 1 shows it fully. */
     entryProgress: () -> Float = { 1f },
     viewModel: FinderViewModel = viewModel(key = "finder-$address", factory = FinderViewModel.factory(address)),
@@ -127,7 +129,14 @@ fun FinderScreen(
     // System back drains the same way as ✕ and Done.
     BackHandler { close() }
     foundAfterSeconds?.let { seconds ->
-        FoundRise(state, seconds, onDone = { close() })
+        FoundRise(
+            state,
+            seconds,
+            onDone = {
+                onFoundDone()
+                close()
+            },
+        )
         return
     }
 

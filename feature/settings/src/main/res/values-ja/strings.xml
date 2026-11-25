@@ -8,6 +8,9 @@
     <string name="settings_premium_buy_no_price">プレミアムを入手</string>
     <string name="settings_premium_active">プレミアム有効</string>
     <string name="settings_premium_active_body">ありがとうございます！広告はオフです。</string>
+    <string name="settings_day_pass_title">プレミアム24時間</string>
+    <string name="settings_day_pass_until">%1$sまで</string>
+    <string name="settings_day_pass_on">プレミアムが24時間オン · %1$sまで</string>
     <string name="settings_restore">購入を復元</string>
     <string name="settings_restore_ok">プレミアムを復元しました</string>
     <string name="settings_restore_none">復元できる購入はありません</string>

@@ -8,6 +8,7 @@ import android.content.res.Resources
 import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.EnterTransition
@@ -36,10 +37,12 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.gamenuri.btscanner24.core.ads.NearoAds
 import com.gamenuri.btscanner24.core.ble.BleScanner
 import com.gamenuri.btscanner24.core.designsystem.component.WATER_PRESS_MS
 import com.gamenuri.btscanner24.core.designsystem.component.WATER_TOTAL_MS
@@ -53,11 +56,14 @@ import com.gamenuri.btscanner24.feature.onboarding.OnboardingPage
 import com.gamenuri.btscanner24.feature.onboarding.OnboardingScreen
 import com.gamenuri.btscanner24.feature.settings.AppInfo
 import com.gamenuri.btscanner24.feature.settings.LicensesScreen
+import com.gamenuri.btscanner24.feature.settings.PrivacyOptions
+import com.gamenuri.btscanner24.feature.settings.RewardedOffer
 import com.gamenuri.btscanner24.feature.settings.SettingsScreen
 import java.util.Locale
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -122,6 +128,9 @@ private fun DemoOnboarding(name: String) {
 private fun AppNavHost(start: String, startOnMyDevices: Boolean, openPaywall: Boolean, onOnboardingDone: () -> Unit) {
     val navController = rememberNavController()
     val water = rememberFindWater()
+    val activity = LocalActivity.current
+    val ads = remember(activity) { activity?.let { NearoAds.from(it) } }
+    val rewardedReady by (ads?.rewardedReady ?: NoRewardedAd).collectAsStateWithLifecycle()
     Box(Modifier.fillMaxSize()) {
         NavHost(navController = navController, startDestination = start) {
             composable(Routes.ONBOARDING) {
@@ -138,6 +147,8 @@ private fun AppNavHost(start: String, startOnMyDevices: Boolean, openPaywall: Bo
                 exitTransition = { if (targetState.isFinder()) ExitTransition.None else null },
                 popEnterTransition = { if (initialState.isFinder()) EnterTransition.None else null },
             ) {
+                // Consent (UMP) and the ads SDK start with Home, never during onboarding (#31).
+                LaunchedEffect(ads, activity) { if (ads != null && activity != null) ads.start(activity) }
                 HomeScreen(
                     onFind = { address -> water.rise { navController.navigate(Routes.finder(address)) } },
                     onOpenSettings = { navController.navigate(Routes.SETTINGS) },
@@ -150,6 +161,16 @@ private fun AppNavHost(start: String, startOnMyDevices: Boolean, openPaywall: Bo
                     onBack = { if (!navController.popBackStack()) navController.navigate(Routes.HOME) },
                     onLicenses = { navController.navigate(Routes.LICENSES) },
                     openPaywall = openPaywall,
+                    privacyOptions = ads?.let { nearoAds ->
+                        PrivacyOptions(nearoAds.isPrivacyOptionsRequired) {
+                            activity?.let(nearoAds::showPrivacyOptions)
+                        }
+                    },
+                    rewarded = ads?.let { nearoAds ->
+                        RewardedOffer(rewardedReady) { onDayPass ->
+                            activity?.let { nearoAds.showRewarded(it, onDayPass) }
+                        }
+                    },
                 )
             }
             composable(Routes.LICENSES) {
@@ -169,6 +190,8 @@ private fun AppNavHost(start: String, startOnMyDevices: Boolean, openPaywall: Bo
                 FinderScreen(
                     address = entry.arguments?.getString(Routes.ADDRESS_ARG).orEmpty(),
                     onClose = { cover -> water.drain(cover) { navController.popBackStack() } },
+                    // Full-screen ad only here, after a finished find, and only when the rules allow (#81 ③).
+                    onFoundDone = { if (ads != null && activity != null) ads.onFoundDone(activity) },
                 )
             }
         }
@@ -311,6 +334,9 @@ private val buildAppInfo = AppInfo(
 )
 
 private fun NavBackStackEntry.isFinder(): Boolean = destination.route == Routes.FINDER
+
+/** Stands in for the rewarded-ad state when there are no ads (demo mode). */
+private val NoRewardedAd = MutableStateFlow(false)
 
 /** Blue → dark drains faster than it rises (#97, color-modes-v1). */
 private const val WATER_DRAIN_MS = 500
