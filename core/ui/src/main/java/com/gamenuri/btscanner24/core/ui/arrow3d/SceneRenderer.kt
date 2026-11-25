@@ -75,6 +75,9 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
     /** 0 = the arrow, 1 = the "right here" puck. */
     private var here = 0f
 
+    /** 1 = no arrow at all (no signal to point at). */
+    private var gone = 0f
+
     /** Seconds since the medal started to rise. */
     private var foundTime = 0f
 
@@ -133,12 +136,12 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         Matrix.setIdentityM(model, 0)
         Matrix.translateM(model, 0, 0f, hover, 0f)
         Matrix.rotateM(model, 0, -yaw, 0f, 1f, 0f)
-        val arrowScale = (1f - here) * MESH_SCALE
+        val arrowScale = (1f - here) * (1f - gone) * MESH_SCALE
         Matrix.scaleM(model, 0, width * arrowScale, arrowScale, arrowScale)
         Matrix.setIdentityM(markerModel, 0)
         Matrix.translateM(markerModel, 0, 0f, PUCK_HEIGHT + bob, 0f)
         Matrix.scaleM(markerModel, 0, here * MESH_SCALE, here * MESH_SCALE, here * MESH_SCALE)
-        val showArrow = here < 1f - HERE_EPSILON
+        val showArrow = here < 1f - HERE_EPSILON && gone < 1f - HERE_EPSILON
         val showPuck = here > HERE_EPSILON
 
         drawFloor(yaw)
@@ -232,6 +235,8 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         marker += (targetMarker - marker) * slow
         val targetHere = if (state.rightHere) 1f else 0f
         here = if (state.reduceMotion) targetHere else here + (targetHere - here) * slow
+        val targetGone = if (state.noArrow) 1f else 0f
+        gone = if (state.reduceMotion) targetGone else gone + (targetGone - gone) * slow
 
         val spinning = state.spinning
         if (spinning) {
@@ -304,7 +309,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
                 flat(viewProjection, color, 1f)
                 GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, (segments + 1) * 2)
             }
-        } else if (here < 1f - HERE_EPSILON) {
+        } else if (here < 1f - HERE_EPSILON && !state.noArrow) {
             // "Somewhere this way": the sector turns with the arrow and widens as confidence drops.
             GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, sectorBuffer)
             GLES20.glVertexAttribPointer(position, 3, GLES20.GL_FLOAT, false, 0, 0)

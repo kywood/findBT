@@ -24,6 +24,9 @@ internal class SceneState {
     /** Direction locked: the arrow settles with a small overshoot. */
     @Volatile var locked: Boolean = false
 
+    /** No signal to point at (not found, signal lost): only the floor, the arrow sinks away. */
+    @Volatile var noArrow: Boolean = false
+
     /** Within reach: the arrow gives way to a puck with rings pulsing out over the floor. */
     @Volatile var rightHere: Boolean = false
 

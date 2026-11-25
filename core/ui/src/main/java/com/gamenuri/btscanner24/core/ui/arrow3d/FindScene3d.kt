@@ -29,6 +29,8 @@ data class FindSceneSpec(
     /** Low confidence: wider arrow and sector. */
     val wide: Boolean = false,
     val locked: Boolean = false,
+    /** No signal to point at: the floor stays, without the arrow, its sector or the device marker. */
+    val noArrow: Boolean = false,
     /** Within reach: a mint puck with rings pulsing over the floor instead of the arrow. */
     val rightHere: Boolean = false,
     /** "Found it": only the check medal, rising from the floor ring. */
@@ -96,6 +98,7 @@ fun FindScene3d(
                 wide = spec.wide
                 locked = spec.locked
                 rightHere = spec.rightHere
+                noArrow = spec.noArrow
                 found = spec.found
                 accentColor = spec.accentColor.toArgb()
                 arrowColor = spec.arrowColor.toArgb()

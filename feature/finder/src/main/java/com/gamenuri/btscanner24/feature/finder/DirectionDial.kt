@@ -77,9 +77,16 @@ internal fun DirectionDial(state: FinderUiState, modifier: Modifier = Modifier, 
 private fun FinderUiState.isSpinning(): Boolean =
     stage == FinderStage.SPIN || stage == FinderStage.SPIN_AGAIN || stage == FinderStage.WAITING
 
-/** Stages the 3D scene draws: looking for a direction, pointing, and "right here". */
+/** No signal to point at: the 3D floor stays, without an arrow. */
+private fun FinderUiState.hasNoSignal(): Boolean =
+    stage == FinderStage.NOT_FOUND || stage == FinderStage.SIGNAL_LOST
+
+/**
+ * Stages the 3D scene draws: looking for a direction, pointing, "right here", and no signal (the
+ * empty floor). Only a phone without a compass keeps the flat heat ring.
+ */
 internal fun FinderUiState.showsScene(): Boolean =
-    stage == FinderStage.RIGHT_HERE || arrowDegrees != null || isSpinning()
+    stage == FinderStage.RIGHT_HERE || arrowDegrees != null || isSpinning() || hasNoSignal()
 
 /**
  * The 3D, AR-style arrow scene (#76) for everything below. On by default; debug builds can show
@@ -123,12 +130,13 @@ internal fun ArrowScene(state: FinderUiState, centerY: Float, fades: SceneFades,
             worldBearingDegrees = state.bearingDegrees,
             spinning = state.isSpinning() && state.arrowDegrees == null,
             rightHere = state.stage == FinderStage.RIGHT_HERE,
+            noArrow = state.hasNoSignal(),
             fullBleed = true,
             centerY = centerY,
             topFade = fades.top,
             bottomFade = fades.bottom,
             // The device marker needs a direction worth pointing at, like the sector.
-            showTarget = state.arrowDegrees != null && state.confidence != ArrowConfidence.NONE,
+            showTarget = state.arrowDegrees != null && state.confidence != ArrowConfidence.NONE && !state.hasNoSignal(),
             accentColor = NearoTheme.colors.found.rings,
             progress = state.sweepProgress,
             wide = state.confidence != ArrowConfidence.HIGH,
