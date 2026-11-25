@@ -3,7 +3,14 @@
 Source: the PM's listing v1 (2026-11-26 KST) plus lines for the 3D map, last seen place, left-behind heads-up and tracker heads-up.
 
 Limits: title 30, short description 80, full description 4000 characters.
-Title: `Nearo: Bluetooth Finder` (23), except where a localized title was decided on 2026-11-23: KO `Nearo: 블루투스 기기 찾기` (16). The brand name Nearo stays in Latin letters in every language. Every title must be 30 characters or fewer.
+Titles (30 characters or fewer; the brand name Nearo stays in Latin letters; PM decision 2026-11-26):
+- EN: `Nearo: Bluetooth Finder` (23)
+- KO: `Nearo: 블루투스 기기 찾기` (17)
+- JA: `Nearo: Bluetooth デバイス検索` (23)
+- DE: `Nearo: Bluetooth-Finder` (23)
+- FR: `Nearo: Localisateur Bluetooth` (29)
+- ES: `Nearo: Buscador Bluetooth` (25)
+- PT: `Nearo: Localizador Bluetooth` (28)
 Rules: no claim of exact distance (always "approximate"), no brand names of other makers in the title or short description, no claim for the earbud loud-sound feature until #153 is confirmed in the build (the optional line is marked [153]). The line marked [79] goes in only if the tracker heads-up ships (as a test feature unless its release gate on #79 is passed). Remove the [153] and [79] markers before pasting. No promise of speed, accuracy or guaranteed alerts. Translations are not native-reviewed.
 
 ## EN (en-US, default)
