@@ -35,12 +35,8 @@ internal class SceneState {
 
     @Volatile var headingDegrees: Float = 0f
 
-    @Volatile var elevationDegrees: Float = DEFAULT_ELEVATION
+    /** The phone's pose (90 = lying flat, 0 = upright); [SceneCamera] turns it into a camera height. */
+    @Volatile var elevationDegrees: Float = SceneCamera.TYPICAL_POSE
 
     @Volatile var rollDegrees: Float = 0f
-
-    companion object {
-        /** The camera height of the design renders when the phone's pose is unknown. */
-        const val DEFAULT_ELEVATION = 34f
-    }
 }

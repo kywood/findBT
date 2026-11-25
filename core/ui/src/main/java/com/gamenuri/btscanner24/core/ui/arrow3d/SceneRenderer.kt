@@ -44,7 +44,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
     private var initialized = false
     private var time = 0f
     private var heading = 0f
-    private var elevation = SceneState.DEFAULT_ELEVATION
+    private var elevation = SceneCamera.TYPICAL
     private var roll = 0f
     private var bearing = 0f
     private var bearingVelocity = 0f
@@ -97,8 +97,8 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         val world = state.worldBearingDegrees
         val anchored = !world.isNaN() && state.hasPose
         val target = if (anchored) world else state.relativeDegrees
-        val poseElevation = if (state.hasPose) state.elevationDegrees else SceneState.DEFAULT_ELEVATION
-        val targetElevation = poseElevation.coerceIn(MIN_ELEVATION, MAX_ELEVATION)
+        val targetElevation =
+            if (state.hasPose) SceneCamera.elevationFor(state.elevationDegrees) else SceneCamera.TYPICAL
         // Lying flat, a sideways tilt is not a roll of the view; fade it out towards the top view.
         val targetRoll = if (state.hasPose) {
             state.rollDegrees.coerceIn(-MAX_ROLL, MAX_ROLL) * cos(radians(targetElevation))
@@ -330,9 +330,6 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         const val FAR = 30f
         const val CAMERA_DISTANCE = 6.6f
         const val TARGET_HEIGHT = 0.12f
-        // Design #76: seen from 14° with the phone upright, from 82° with it lying flat.
-        const val MIN_ELEVATION = 14f
-        const val MAX_ELEVATION = 82f
         const val MAX_ROLL = 30f
         const val POSE_SMOOTH_SECONDS = 0.09f
 
