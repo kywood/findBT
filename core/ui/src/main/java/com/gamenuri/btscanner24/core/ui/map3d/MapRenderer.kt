@@ -78,6 +78,7 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
         // Where its name tag hangs, set when it is drawn.
         var tagX = 0f
         var tagHeight = 0f
+        var tagMiddle = 0f
         var tagZ = 0f
     }
 
@@ -99,6 +100,9 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
     private val mvp = FloatArray(16)
     private val probe = FloatArray(4)
     private val projected = FloatArray(4)
+
+    /** The "me" marker on screen (left, bottom, right, top in pixels from the lower edge): no tag lies on it. */
+    private val meRect = FloatArray(RECT_FLOATS)
     private var viewportWidth = 1f
     private var viewportHeight = 1f
 
@@ -532,6 +536,7 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
         val pixelsPerUnit = viewportWidth / (2f * HALF_WIDTH_PER_DISTANCE * w)
         hitSpots[offset + 2] = maxOf(HIT_RADIUS * pixelsPerUnit, MIN_HIT_SHARE * viewportWidth) * spot.shown
         spot.tagHeight = top + TAG_GAP
+        spot.tagMiddle = middle
         spot.tagX = x
         spot.tagZ = z
     }
@@ -539,7 +544,8 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
     /**
      * The name tags, upright and sharp: one screen pixel per bitmap pixel whatever the distance. Where
      * two would overlap only one is shown (design v2.2): the picked device's first, then those with a
-     * measured direction, then the nearer ring. A tag pushed mostly off the side is not shown either.
+     * measured direction, then the nearer ring. A tag pushed mostly off the side is not shown either,
+     * nor one that would reach under the chips or the sheet (#193). A tag never covers "me" (#194).
      */
     private fun drawTags(pins: List<MapPin>) {
         if (pins.isEmpty() || tags.isEmpty()) return
@@ -570,6 +576,7 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
             }
             order[j + 1] = moved
         }
+        measureMe()
         var kept = 0
         for (index in order) {
             if (placeTag(pins[index], kept)) {
@@ -611,8 +618,9 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
 
     /**
      * Finds the place of [pin]'s tag in whole pixels (left, bottom from the view's lower edge, right,
-     * top) and writes it as rectangle number [kept]. False when it has no tag, is out of sight, or would
-     * lie on one of the [kept] tags placed before it.
+     * top) and writes it as rectangle number [kept]. Over the device first; where that lies on another
+     * tag, on "me" or past the visible band, beside the device, right then left. False when it has no
+     * tag, is out of sight, or no place is free.
      */
     private fun placeTag(pin: MapPin, kept: Int): Boolean {
         val tag = tags[pin.label] ?: return false
@@ -624,25 +632,66 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
         // Mostly past the side of the screen: not shown, rather than a tag far from its device.
         val past = maxOf(-anchor, anchor - viewportWidth)
         if (past > TAG_OFF_SCREEN_SHARE * tag.width) return false
+        val aboveBottom = (projected[1] / w + 1f) / 2f * viewportHeight
+        project(spot.tagX, spot.tagMiddle, spot.tagZ)
+        val middleW = projected[3]
+        if (middleW <= 0f) return false
+        val middle = (projected[1] / middleW + 1f) / 2f * viewportHeight
+        val beside = TAG_SIDE_GAP * viewportWidth / (2f * HALF_WIDTH_PER_DISTANCE * middleW)
+        val sideBottom = middle - tag.height / 2f
+        return tryTag(tag, kept, anchor - tag.width / 2f, aboveBottom) ||
+            tryTag(tag, kept, anchor + beside, sideBottom) ||
+            tryTag(tag, kept, anchor - beside - tag.width, sideBottom)
+    }
+
+    /** Writes rectangle number [kept] at [left], [bottom] if it fits the visible band and lies on nothing. */
+    private fun tryTag(tag: Tag, kept: Int, left: Float, bottom: Float): Boolean {
         val edge = maxOf(0f, minOf(TAG_EDGE_MARGIN, (viewportWidth - tag.width) / 2f))
-        val left = Math.round((anchor - tag.width / 2f).coerceIn(edge, maxOf(edge, viewportWidth - tag.width - edge)))
-        val bottom = Math.round((projected[1] / w + 1f) / 2f * viewportHeight)
-        val right = left + tag.width
-        val top = bottom + tag.height
+        val l = Math.round(left.coerceIn(edge, maxOf(edge, viewportWidth - tag.width - edge))).toFloat()
+        val b = Math.round(bottom).toFloat()
+        val r = l + tag.width
+        val t = b + tag.height
+        // The band between the chips above and the sheet below, as the scissor test cuts it.
+        val lowest = (1f - state.clipBottom.coerceIn(0f, 1f)) * viewportHeight + TAG_PADDING
+        val highest = (1f - state.clipTop.coerceIn(0f, 1f)) * viewportHeight - TAG_PADDING
+        if (b < lowest || t > highest) return false
+        if (overlaps(l, b, r, t, meRect, 0)) return false
         for (other in 0 until kept) {
-            val at = other * RECT_FLOATS
-            val apart = left - TAG_PADDING >= rects[at + 2] ||
-                right + TAG_PADDING <= rects[at] ||
-                bottom - TAG_PADDING >= rects[at + 3] ||
-                top + TAG_PADDING <= rects[at + 1]
-            if (!apart) return false
+            if (overlaps(l, b, r, t, rects, other * RECT_FLOATS)) return false
         }
         val at = kept * RECT_FLOATS
-        rects[at] = left.toFloat()
-        rects[at + 1] = bottom.toFloat()
-        rects[at + 2] = right.toFloat()
-        rects[at + 3] = top.toFloat()
+        rects[at] = l
+        rects[at + 1] = b
+        rects[at + 2] = r
+        rects[at + 3] = t
         return true
+    }
+
+    private fun overlaps(left: Float, bottom: Float, right: Float, top: Float, other: FloatArray, at: Int): Boolean =
+        !(
+            left - TAG_PADDING >= other[at + 2] ||
+                right + TAG_PADDING <= other[at] ||
+                bottom - TAG_PADDING >= other[at + 3] ||
+                top + TAG_PADDING <= other[at + 1]
+            )
+
+    /** Where "me" stands on screen this frame, from the floor to the top of the chevron; empty when behind. */
+    private fun measureMe() {
+        meRect.fill(0f)
+        project(0f, 0f, 0f)
+        val w = projected[3]
+        if (w <= 0f) return
+        val x = (projected[0] / w + 1f) / 2f * viewportWidth
+        val bottom = (projected[1] / w + 1f) / 2f * viewportHeight
+        project(0f, ME_HOVER + ME_SIZE, 0f)
+        val topW = projected[3]
+        if (topW <= 0f) return
+        val top = (projected[1] / topW + 1f) / 2f * viewportHeight
+        val half = ME_RING * viewportWidth / (2f * HALF_WIDTH_PER_DISTANCE * w)
+        meRect[0] = x - half
+        meRect[1] = bottom
+        meRect[2] = x + half
+        meRect[3] = maxOf(top, bottom)
     }
 
     private fun project(x: Float, y: Float, z: Float) {
@@ -971,6 +1020,9 @@ internal class MapRenderer(private val state: MapSceneState) : GlScene {
         const val TAG_PADDING = 4f
         const val TAG_EDGE_MARGIN = 8f
         const val TAG_OFF_SCREEN_SHARE = 0.6f
+
+        /** From a device's middle to the near edge of a tag set beside it, in scene units (#194). */
+        const val TAG_SIDE_GAP = 0.75f
         const val HIT_RADIUS = 0.7f
         const val MIN_HIT_SHARE = 0.06f
 
