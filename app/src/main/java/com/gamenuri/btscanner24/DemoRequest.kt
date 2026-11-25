@@ -17,6 +17,8 @@ internal data class DemoRequest(
     val arScene: Boolean = true,
     /** Keeps (test) ads on in a demo launch, for ad placement shots (`--ez demo_ads true`). Off otherwise. */
     val showAds: Boolean = false,
+    /** Lets the 3D find camera follow the phone's real tilt in a demo launch (`--ez demo_pose true`). */
+    val followPose: Boolean = false,
 ) {
     val startOnMyDevices: Boolean get() = screen == "devices"
 
