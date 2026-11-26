@@ -18,6 +18,27 @@ import kotlin.math.log10
 /** Fixed demo content. Names are generic on purpose: no brands, no real people's devices. */
 internal object DemoData {
 
+    /** Korean demo names for the KO store set (#14); every other language keeps the English ones. */
+    var korean: Boolean = false
+
+    private val KOREAN = mapOf(
+        "My Earbuds" to "내 이어폰",
+        "Running Watch" to "러닝 워치",
+        "Office Keyboard" to "사무실 키보드",
+        "Bike Sensor" to "자전거 센서",
+        "Keys Tag" to "열쇠 태그",
+        "Studio Headphones" to "스튜디오 헤드폰",
+        "Speaker" to "스피커",
+        "Living Room TV" to "거실 TV",
+        "Bathroom Scale" to "욕실 체중계",
+        "My Car" to "내 차",
+        "Work Laptop" to "업무용 노트북",
+        "Gym Band" to "운동 밴드",
+    )
+
+    /** [name] in the demo's language. */
+    fun local(name: String): String = if (korean) KOREAN[name] ?: name else name
+
     /** Makers are made up as well, so the filter's maker section has something to show (#100). */
     private class Fake(val name: String?, val category: DeviceCategory, val meters: Double, val maker: String? = null)
 
@@ -29,7 +50,7 @@ internal object DemoData {
         Fake("Keys Tag", DeviceCategory.TRACKER, 4.0, "Tagly"),
         Fake(null, DeviceCategory.TRACKER, 6.5, "Tagly"),
         Fake("Studio Headphones", DeviceCategory.HEADPHONES, 7.5, "Lumen Audio"),
-        Fake("Living Room Speaker", DeviceCategory.SPEAKER, 12.0, "Lumen Audio"),
+        Fake("Speaker", DeviceCategory.SPEAKER, 12.0, "Lumen Audio"),
         // "Other devices" (#82): hidden by default, behind "N other devices hidden · Show".
         Fake(null, DeviceCategory.UNKNOWN, 4.2),
         Fake("Living Room TV", DeviceCategory.TV, 7.0, "Vista"),
@@ -44,7 +65,7 @@ internal object DemoData {
         val rssi = -59.0 - 22.0 * log10(fake.meters)
         BleDevice(
             address = address(index),
-            name = fake.name,
+            name = fake.name?.let(::local),
             rssi = rssi.toInt(),
             smoothedRssi = rssi,
             distanceMeters = fake.meters,
@@ -56,19 +77,19 @@ internal object DemoData {
         )
     }
 
-    val paired: List<PairedDevice> = listOf(
-        PairedDevice(address(0), "My Earbuds", DeviceCategory.EARBUDS),
-        PairedDevice(address(1), "Running Watch", DeviceCategory.WATCH),
+    val paired: List<PairedDevice> get() = listOf(
+        PairedDevice(address(0), local("My Earbuds"), DeviceCategory.EARBUDS),
+        PairedDevice(address(1), local("Running Watch"), DeviceCategory.WATCH),
         // Car and computer go into the collapsed "Other paired devices" group (design home-v3).
-        PairedDevice("DE:00:00:00:00:F1", "My Car", DeviceCategory.CAR),
-        PairedDevice("DE:00:00:00:00:F2", "Work Laptop", DeviceCategory.COMPUTER),
-        PairedDevice("DE:00:00:00:00:F3", "Gym Band", DeviceCategory.FITNESS_BAND),
+        PairedDevice("DE:00:00:00:00:F1", local("My Car"), DeviceCategory.CAR),
+        PairedDevice("DE:00:00:00:00:F2", local("Work Laptop"), DeviceCategory.COMPUTER),
+        PairedDevice("DE:00:00:00:00:F3", local("Gym Band"), DeviceCategory.FITNESS_BAND),
     )
 
     /** Every find state the design review asks for (#52): spin, walk, locked, far, close, very close, here, lost. */
     fun findState(name: String): FinderUiState {
         val base = FinderUiState(
-            deviceLabel = DeviceLabel.Named("My Earbuds", NameSource.ADVERTISED, suffix = "0001"),
+            deviceLabel = DeviceLabel.Named(local("My Earbuds"), NameSource.ADVERTISED, suffix = "0001"),
             category = DeviceCategory.EARBUDS,
             advanced = AdvancedInfo(address = address(0)),
             // The demo earbuds can ring, so every in-range state shows the same bottom bar (#28, #60).
