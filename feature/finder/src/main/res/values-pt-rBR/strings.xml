@@ -24,6 +24,8 @@
     <string name="finder_signal_lost_body">Visto há %1$d s · volte para onde o sinal estava mais forte</string>
     <string name="finder_not_found_title">Sinal não encontrado</string>
     <string name="finder_not_found_body">Chegue mais perto ou veja se está ligado</string>
+    <string name="finder_connected_title">Conectado a este celular</string>
+    <string name="finder_connected_body">Está dentro do alcance do Bluetooth, cerca de 10 m. Um dispositivo conectado quase não emite sinal para medir.</string>
     <string name="finder_bluetooth_off_title">O Bluetooth está desativado</string>
     <string name="finder_bluetooth_off_body">Ative o Bluetooth e tente de novo</string>
     <string name="finder_location_off_title">A localização está desativada</string>
@@ -45,6 +47,7 @@
     <string name="finder_trend_farther">▼ Esfriando</string>
     <string name="finder_trend_steady">Continue</string>
     <string name="finder_advanced_values">MAC %1$s · RSSI %2$s dBm (suavizado %3$s) · rumo %4$s° · direção %5$s° · trocas de MAC %6$d · %7$d s</string>
+    <string name="finder_advanced_apple_find_my">É um sinal do Buscar da Apple. Pode ser AirPods, um AirTag, um iPhone ou outro dispositivo Apple.</string>
     <string name="finder_confirm_hint">Não tem certeza se é este? Aproxime o celular bem perto dele. Se aparecer \"Bem aqui\", você achou.</string>
     <string name="found_title">Achou!</string>
     <string name="found_summary">%1$s · encontrado em %2$s</string>
@@ -62,4 +65,11 @@
     <string name="finder_sound_retry">Tentar de novo</string>
     <string name="finder_sound_failed">Não foi possível tocar o som. Chegue mais perto e tente de novo.</string>
     <string name="finder_sound_not_supported">Este dispositivo não pode tocar som.</string>
+    <string name="finder_sound_ear_title">Você está usando agora?</string>
+    <string name="finder_sound_ear_body">Um som vai tocar neste dispositivo, baixo no início e depois mais alto. Se você ou outra pessoa estiver usando, tire antes de começar.</string>
+    <string name="finder_sound_ear_confirm">Tocar som</string>
+    <string name="finder_sound_ear_cancel">Cancelar</string>
+    <string name="finder_sound_louder">Mais alto</string>
+    <string name="finder_sound_output_note">Está conectado, mas o som está saindo por outra saída. Mude a saída para este dispositivo para tocar um som nele.</string>
+    <string name="finder_sound_output_button">Mudar saída de som</string>
 </resources>

@@ -2,6 +2,7 @@ package com.gamenuri.btscanner24.feature.devices
 
 import com.gamenuri.btscanner24.core.model.BleDevice
 import com.gamenuri.btscanner24.core.model.DeviceCategory
+import com.gamenuri.btscanner24.core.model.LastSeen
 import com.gamenuri.btscanner24.core.model.PairedDevice
 import com.gamenuri.btscanner24.core.model.SavedDevice
 import org.junit.Assert.assertEquals
@@ -115,5 +116,44 @@ class MyDevicesTest {
         assertTrue(state.others.none { it.isSaved })
         assertEquals(1, state.savedCount)
         assertEquals(1, (state.notNearby + state.nearby).count { it.paired.address == buds.address })
+    }
+
+    @Test
+    fun `a connected device is active even when the scan does not hear it`() {
+        val linked = setOf(buds.address)
+        val state = MyDevices.build(listOf(buds, watch), emptyList(), emptySet(), now, connected = linked) { 2.0 }
+        val item = state.nearby.single()
+        assertEquals(buds, item.paired)
+        assertTrue(item.isConnected)
+        assertEquals(null, item.distanceMeters)
+        assertEquals(listOf(watch), state.notNearby.map { it.paired })
+    }
+
+    @Test
+    fun `a connected device that is heard keeps its distance`() {
+        val state = MyDevices.build(
+            listOf(buds),
+            listOf(seen(buds.address, null)),
+            emptySet(),
+            now,
+            connected = setOf(buds.address),
+        ) { 2.0 }
+        assertEquals(2.0, state.nearby.single().distanceMeters!!, 0.0)
+    }
+
+    @Test
+    fun `last seen shows for a device not heard in this run`() {
+        val hour = 60 * 60_000L
+        val record = LastSeen(buds.address, seenAt = 10 * hour)
+        assertTrue(MyDevices.showsLastSeen(record, heardAt = null, now = 12 * hour))
+    }
+
+    @Test
+    fun `last seen waits an hour and gives way to a newer sighting`() {
+        val hour = 60 * 60_000L
+        val record = LastSeen(buds.address, seenAt = 10 * hour)
+        assertFalse(MyDevices.showsLastSeen(record, heardAt = null, now = 10 * hour + 59 * 60_000L))
+        assertFalse(MyDevices.showsLastSeen(record, heardAt = 11 * hour, now = 12 * hour))
+        assertTrue(MyDevices.showsLastSeen(record, heardAt = 10 * hour + 60_000L, now = 12 * hour))
     }
 }

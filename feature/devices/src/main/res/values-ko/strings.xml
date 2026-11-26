@@ -7,6 +7,8 @@
     <string name="devices_last_seen_now">방금 확인됨</string>
     <string name="devices_last_seen_minutes">마지막 확인: %1$d분 전</string>
     <string name="devices_not_seen">페어링됨 · 아직 안 보임</string>
+    <string name="devices_connected">이 휴대폰에 연결됨</string>
+    <string name="devices_connected_no_distance">이 휴대폰에 연결됨 · 연결 중에는 거리를 잴 수 없어요</string>
     <string name="devices_more_for">%1$s 더보기</string>
     <string name="devices_hide">목록에서 숨기기</string>
     <string name="devices_empty_title">페어링된 기기가 없어요</string>
@@ -26,4 +28,25 @@
     <string name="devices_saved_edit">이름·종류 바꾸기</string>
     <string name="devices_saved_remove">저장 해제</string>
     <string name="devices_saved_not_seen">저장됨 · 아직 감지 안 됨</string>
+    <!-- Last seen (#162) -->
+    <string name="devices_last_detected">마지막 감지 · %1$s</string>
+    <string name="devices_last_detected_map">마지막 감지 · %1$s · 지도 보기</string>
+    <string name="last_seen_menu">마지막 감지</string>
+    <string name="last_seen_place">이 폰이 마지막으로 신호를 받은 곳</string>
+    <string name="last_seen_open_map">지도에서 열기</string>
+    <string name="last_seen_note">기기의 현재 위치가 아니라, 이 폰이 마지막으로 감지한 위치예요. 위치는 이 폰에만 저장돼요.</string>
+    <string name="last_seen_no_permission">위치 권한이 없어 장소는 기록하지 못했어요</string>
+    <string name="last_seen_no_fix">그때는 위치를 읽지 못했어요</string>
+    <string name="last_seen_turn_on">위치 기록 켜기</string>
+    <string name="last_seen_find">찾기 시작</string>
+    <string name="last_seen_no_map_app">지도 앱을 찾지 못했어요</string>
+    <!-- Protection mode and left-behind alerts (#163) -->
+    <string name="devices_protection_menu">보호 모드</string>
+    <string name="devices_protection_off_title">보호 모드 꺼짐</string>
+    <string name="devices_protection_off_body">두고 가면 알림과 트래커 감지가 멈춰 있어요</string>
+    <string name="devices_protection_turn_on">켜기</string>
+    <string name="devices_left_behind_title">%1$s · 두고 온 것 같아요</string>
+    <string name="devices_left_behind_body">마지막 감지 %1$s</string>
+    <string name="devices_left_behind_view">마지막 위치 보기</string>
+    <string name="devices_left_behind_mute">1시간 동안 알리지 않기</string>
 </resources>

@@ -5,6 +5,7 @@ import com.gamenuri.btscanner24.core.model.BleDevice
 import com.gamenuri.btscanner24.core.model.DeviceLabel
 import com.gamenuri.btscanner24.core.model.DeviceNaming
 import com.gamenuri.btscanner24.core.model.ListPreferences
+import com.gamenuri.btscanner24.core.model.MapSpot
 
 sealed interface ScanStatus {
     data object Idle : ScanStatus
@@ -45,6 +46,8 @@ data class ScanUiState(
     val hiddenOtherCount: Int = 0,
     /** Personal/other split and makers of the whole scan, before filters (#82, #85). */
     val census: ScanCensus = ScanCensus(),
+    /** Where each device still around stands on the 3D map (#86), by its address. */
+    val mapSpots: Map<String, MapSpot> = emptyMap(),
 ) {
     val isScanning: Boolean get() = status == ScanStatus.Scanning
 

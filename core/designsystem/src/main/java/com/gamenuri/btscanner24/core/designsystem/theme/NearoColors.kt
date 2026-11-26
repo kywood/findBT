@@ -56,6 +56,9 @@ private val Mint = Color(0xFF2EE6A0)
 /** Find-mode blue (color-modes-v2): bright, matte and close to a pure blue. */
 private val FindBlue = Color(0xFF2563FF)
 
+/** The deep blue the find screens shade towards; bars that sit on a blue screen are tinted with it (#173). */
+val FindBlueDeep = Color(0xFF0B2A8A)
+
 /** [FindBlue] 7 % towards #0B2A8A: the screens are nearly flat, only a touch deeper at the bottom. */
 private val FindBlueBottom = Color(0xFF235FF7)
 

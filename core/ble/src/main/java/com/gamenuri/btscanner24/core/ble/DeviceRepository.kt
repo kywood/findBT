@@ -2,6 +2,7 @@ package com.gamenuri.btscanner24.core.ble
 
 import com.gamenuri.btscanner24.core.ble.proximity.ProximityEstimator
 import com.gamenuri.btscanner24.core.model.BleDevice
+import com.gamenuri.btscanner24.core.model.PairedDevice
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -59,6 +60,27 @@ class DeviceRepository(
                 smooth(mapped.copy(firstSeen = old.firstSeen), now)
                     .also { _devices.value = _devices.value - old.address + (address to it) }
             }
+        }
+        _sightings.tryEmit(device)
+    }
+
+    /**
+     * A signal reading from the link to one of the user's own connected devices (#119), which often
+     * does not advertise while connected. It counts like an advertisement heard just now.
+     */
+    fun onConnectionRssi(paired: PairedDevice, rssi: Int) {
+        val now = clock()
+        val device = synchronized(lock) {
+            val next = _devices.value[paired.address]?.copy(rssi = rssi, lastSeen = now)
+                ?: BleDevice(
+                    address = paired.address,
+                    name = paired.advertisedName ?: paired.name,
+                    rssi = rssi,
+                    firstSeen = now,
+                    lastSeen = now,
+                    category = paired.category,
+                )
+            smooth(next, now).also { _devices.value += (paired.address to it) }
         }
         _sightings.tryEmit(device)
     }

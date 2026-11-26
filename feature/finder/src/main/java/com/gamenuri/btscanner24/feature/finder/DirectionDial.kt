@@ -68,18 +68,21 @@ internal fun DirectionDial(state: FinderUiState, modifier: Modifier = Modifier, 
             sceneBehind && state.showsScene() -> Unit
             // Below: only where the 3D scene cannot run.
             state.stage == FinderStage.RIGHT_HERE -> RightHereRings()
-            arrow != null -> FloorArrow(arrow, state.confidence, locked = state.stage == FinderStage.LOCKED)
             state.isSpinning() -> SpinningNeedle(state.sweepProgress)
+            arrow != null -> FloorArrow(arrow, state.confidence, locked = state.stage == FinderStage.LOCKED)
             else -> HeatRing(state.heat)
         }
     }
 }
 
-private fun FinderUiState.isSpinning(): Boolean =
-    stage == FinderStage.SPIN || stage == FinderStage.SPIN_AGAIN || stage == FinderStage.WAITING
+private fun FinderUiState.isSpinning(): Boolean = stage == FinderStage.SPIN || stage == FinderStage.SPIN_AGAIN
 
-/** No signal to point at: the 3D floor stays, without an arrow. */
-private fun FinderUiState.hasNoSignal(): Boolean = stage == FinderStage.NOT_FOUND || stage == FinderStage.SIGNAL_LOST
+/**
+ * No signal to point at: the 3D floor stays, without an arrow. This includes waiting for the first
+ * sighting, so a device that has not been heard yet never gets a direction (#195).
+ */
+private fun FinderUiState.hasNoSignal(): Boolean =
+    stage == FinderStage.WAITING || stage == FinderStage.NOT_FOUND || stage == FinderStage.SIGNAL_LOST
 
 /**
  * Stages the 3D scene draws: looking for a direction, pointing, "right here", and no signal (the
@@ -126,7 +129,8 @@ internal fun ArrowScene(state: FinderUiState, centerY: Float, fades: SceneFades,
         spec = FindSceneSpec(
             relativeDegrees = state.arrowDegrees ?: 0f,
             worldBearingDegrees = state.bearingDegrees,
-            spinning = state.isSpinning() && state.arrowDegrees == null,
+            // While turning, the sweep is all there is: no sharp arrow at an early guess (#198).
+            spinning = state.isSpinning(),
             rightHere = state.stage == FinderStage.RIGHT_HERE,
             noArrow = state.hasNoSignal(),
             fullBleed = true,
@@ -138,7 +142,8 @@ internal fun ArrowScene(state: FinderUiState, centerY: Float, fades: SceneFades,
             showTarget = state.arrowDegrees != null && state.confidence != ArrowConfidence.NONE && !state.hasNoSignal(),
             accentColor = NearoTheme.colors.found.rings,
             progress = state.sweepProgress,
-            wide = state.confidence != ArrowConfidence.HIGH,
+            // Turning to find a direction is never a confident direction (#198).
+            wide = state.confidence != ArrowConfidence.HIGH || state.isSpinning(),
             locked = state.stage == FinderStage.LOCKED,
             arrowColor = color,
             floorColor = color,

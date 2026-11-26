@@ -24,6 +24,8 @@
     <string name="finder_signal_lost_body">%1$d秒前に検出 · 信号が強かった場所に戻ってください</string>
     <string name="finder_not_found_title">信号が見つかりません</string>
     <string name="finder_not_found_body">もっと近づくか、電源が入っているか確認してください</string>
+    <string name="finder_connected_title">このスマートフォンに接続中です</string>
+    <string name="finder_connected_body">Bluetoothが届く約10m以内にあります。接続中のデバイスは距離を測るための信号をあまり出しません。</string>
     <string name="finder_bluetooth_off_title">Bluetoothがオフです</string>
     <string name="finder_bluetooth_off_body">Bluetoothをオンにして、もう一度お試しください</string>
     <string name="finder_location_off_title">位置情報がオフです</string>
@@ -45,6 +47,7 @@
     <string name="finder_trend_farther">▼ 離れている</string>
     <string name="finder_trend_steady">そのまま進んで</string>
     <string name="finder_advanced_values">MAC %1$s · RSSI %2$s dBm（平滑化 %3$s）· 方位 %4$s° · 推定方向 %5$s° · MAC変更 %6$d回 · %7$d秒</string>
+    <string name="finder_advanced_apple_find_my">Appleの「探す」の信号です。AirPods、AirTag、iPhoneなどのApple製デバイスの可能性があります。</string>
     <string name="finder_confirm_hint">迷ったらスマホをすぐ⁠そ⁠ば⁠に。「ここです」と出たら見つかりました。</string>
     <string name="found_title">見つかりました！</string>
     <string name="found_summary">%1$s · %2$sで発見</string>
@@ -61,4 +64,11 @@
     <string name="finder_sound_retry">もう一度試す</string>
     <string name="finder_sound_failed">音を鳴らせませんでした。もう少し近づいてもう一度お試しください。</string>
     <string name="finder_sound_not_supported">このデバイスは音を鳴らせません。</string>
+    <string name="finder_sound_ear_title">今、耳に着けていますか?</string>
+    <string name="finder_sound_ear_body">このデバイスから音が小さく始まり、だんだん大きくなります。自分やほかの人が着けている場合は、必ず外してから始めてください。</string>
+    <string name="finder_sound_ear_confirm">音を鳴らす</string>
+    <string name="finder_sound_ear_cancel">キャンセル</string>
+    <string name="finder_sound_louder">もっと大きく</string>
+    <string name="finder_sound_output_note">接続されていますが、音は別の出力先から出ています。出力先をこのデバイスに切り替えると音を鳴らせます。</string>
+    <string name="finder_sound_output_button">音の出力先を切り替える</string>
 </resources>

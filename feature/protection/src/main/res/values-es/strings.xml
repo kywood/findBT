@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Protection mode and left-behind alerts (#163) -->
+    <string name="protection_title">Modo de protección</string>
+    <string name="protection_back">Atrás</string>
+    <string name="protection_intro_headline">Vigila los dispositivos que dejas atrás y los rastreadores ajenos</string>
+    <string name="protection_point_alert">Te avisa cuando te alejas de un dispositivo guardado</string>
+    <string name="protection_point_notification">Una notificación permanece visible mientras está activado</string>
+    <string name="protection_point_battery">El uso de batería puede aumentar un poco</string>
+    <string name="protection_point_privacy">Los datos de los dispositivos y los lugares se quedan en este teléfono</string>
+    <string name="protection_turn_on">Activar el modo de protección</string>
+    <string name="protection_not_now">Ahora no</string>
+    <string name="protection_permissions_needed">Concede los permisos para que el modo de protección pueda avisarte</string>
+    <string name="protection_section_left_behind">Avisos de olvido</string>
+    <string name="protection_no_devices">Guarda un dispositivo en la pestaña Cerca o vincúlalo con el teléfono y aparecerá aquí</string>
+    <string name="protection_footer">El uso de batería puede aumentar un poco. Los datos de los dispositivos y los lugares se quedan en este teléfono.</string>
+    <string name="protection_channel_status">Estado del modo de protección</string>
+    <string name="protection_channel_alerts">Avisos de olvido</string>
+    <string name="protection_status_title">El modo de protección está activado</string>
+    <string name="protection_status_none">Aún no has elegido dispositivos para vigilar</string>
+    <string name="protection_status_bluetooth_off">El Bluetooth está desactivado y no se pueden vigilar los dispositivos</string>
+    <string name="protection_status_location_off">La ubicación está desactivada y no se pueden vigilar los dispositivos</string>
+    <string name="protection_status_cannot_scan">No se pudo iniciar la búsqueda y no se pueden vigilar los dispositivos</string>
+    <string name="protection_turn_off">Desactivar</string>
+    <string name="protection_alert_title">Puede que hayas olvidado %1$s</string>
+    <string name="protection_alert_text">Detectado por última vez a las %1$s. Mira dónde se vio por última vez.</string>
+    <string name="protection_alert_view">Ver último lugar</string>
+    <string name="protection_mute_hour">Silenciar 1 hora</string>
+    <string name="protection_mute_today">Silenciar por hoy</string>
+    <string name="protection_off_title">El modo de protección está desactivado</string>
+    <string name="protection_off_restart">Se detuvo al reiniciar el teléfono. Toca para volver a activarlo.</string>
+    <string name="protection_off_stopped">Android lo detuvo. Toca para volver a activarlo.</string>
+    <string name="protection_turn_on_short">Activar</string>
+    <plurals name="protection_status_watching">
+        <item quantity="one">Vigilando %d dispositivo</item>
+        <item quantity="other">Vigilando %d dispositivos</item>
+    </plurals>
+    <!-- Unknown tracker detection (#79) -->
+    <string name="protection_point_tracker">Te avisa cuando un rastreador que no es tuyo sigue moviéndose contigo</string>
+    <string name="protection_section_trackers">Rastreadores</string>
+    <string name="protection_tracker_setting">Detección de rastreadores ajenos</string>
+    <string name="protection_tracker_test_feature">Función de prueba</string>
+    <string name="protection_tracker_how">Se valora si se mueve contigo a partir del movimiento del teléfono y del tiempo transcurrido.</string>
+    <string name="protection_tracker_unavailable">Este teléfono no tiene sensor de movimiento, así que la detección de rastreadores no está disponible</string>
+    <string name="protection_channel_trackers">Avisos de rastreadores ajenos</string>
+    <string name="protection_status_trackers_only">Vigilando rastreadores ajenos</string>
+    <string name="protection_tracker_alert_title">Puede que un rastreador ajeno se esté moviendo contigo</string>
+    <string name="protection_tracker_details">Ver detalles</string>
+    <string name="protection_tracker_known">Conozco este dispositivo</string>
+    <string name="protection_tracker_title">Rastreador ajeno</string>
+    <string name="protection_tracker_last">Detectado por última vez a las %1$s</string>
+    <string name="protection_tracker_first">Primera detección</string>
+    <string name="protection_tracker_duration">Tiempo moviéndose contigo</string>
+    <string name="protection_tracker_type">Tipo</string>
+    <string name="protection_tracker_type_value">Rastreador (probable)</string>
+    <string name="protection_tracker_calm_title">Casi siempre es de alguien que está cerca</string>
+    <string name="protection_tracker_calm_body">En lugares concurridos, como un autobús o una cafetería, el rastreador de otra persona puede aparecer durante un rato.</string>
+    <string name="protection_tracker_find">Empezar a buscar</string>
+    <string name="protection_tracker_what">¿Qué debo hacer?</string>
+    <string name="protection_tracker_gone">Ya no se guarda nada sobre este rastreador</string>
+    <string name="protection_help_title">Qué puedes hacer</string>
+    <string name="protection_help_1_title">Primero búscalo</string>
+    <string name="protection_help_1_body">Usa la pantalla de búsqueda para revisar tu bolso, tus bolsillos y el coche.</string>
+    <string name="protection_help_2_title">Comprueba si es de alguien que conoces</string>
+    <string name="protection_help_2_body">Si es de un familiar o de alguien que va contigo, márcalo como conocido y no se te volverá a avisar.</string>
+    <string name="protection_help_3_title">Si no es tuyo, apágalo</string>
+    <string name="protection_help_3_body">La mayoría de los rastreadores se apagan al quitarles la pila. Consulta las instrucciones del fabricante.</string>
+    <string name="protection_help_4_title">Si no te sientes a salvo, pide ayuda</string>
+    <string name="protection_help_4_body">Ve a un lugar seguro y contacta con la policía.</string>
+    <string name="protection_help_note">La señal Bluetooth por sí sola no indica de quién es un rastreador.</string>
+    <plurals name="protection_status_watching_trackers">
+        <item quantity="one">Vigilando %d dispositivo y rastreadores ajenos</item>
+        <item quantity="other">Vigilando %d dispositivos y rastreadores ajenos</item>
+    </plurals>
+    <plurals name="protection_tracker_alert_text">
+        <item quantity="one">Detectado cerca durante %d minuto. Puede ser de un familiar o de alguien que va contigo.</item>
+        <item quantity="other">Detectado cerca durante %d minutos. Puede ser de un familiar o de alguien que va contigo.</item>
+    </plurals>
+    <plurals name="protection_tracker_duration_value">
+        <item quantity="one">Unos %d min</item>
+        <item quantity="other">Unos %d min</item>
+    </plurals>
+</resources>

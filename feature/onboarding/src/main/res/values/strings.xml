@@ -20,6 +20,5 @@
     <string name="onboarding_try_again">Try again</string>
     <string name="onboarding_check_mark" translatable="false">✓</string>
     <string name="onboarding_hero_device">My Earbuds</string>
-    <string name="onboarding_hero_distance" translatable="false">~3 m</string>
     <string name="onboarding_hero_distance_label">Close · approximate</string>
 </resources>

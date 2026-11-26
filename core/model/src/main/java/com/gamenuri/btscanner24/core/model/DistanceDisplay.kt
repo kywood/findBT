@@ -7,22 +7,31 @@ import kotlin.math.roundToInt
  * so far devices get a coarse range instead of a jumping value (PM decision, #21).
  */
 sealed interface DistanceDisplay {
-    /** "within 1 m": below that RSSI cannot tell 0.3 m from 0.9 m, so no decimals (design review, #52). */
+    /** "within 1 m" or "within 3 ft": below that RSSI cannot tell 0.3 m from 0.9 m, so no decimals (#52). */
     data object WithinOne : DistanceDisplay
 
-    /** "~3 m": whole metres from 1 to 5 m. */
-    data class About(val meters: Int) : DistanceDisplay
+    /** "~3 m" or "~10 ft": a whole number of [unit] between 1 and 5 m. */
+    data class About(val amount: Int, val unit: DistanceUnit = DistanceUnit.METERS) : DistanceDisplay
 
-    /** "~5–10 m". */
+    /** "~5–10 m" or "~15–30 ft". */
     data object FiveToTen : DistanceDisplay
 
-    /** "10 m+". */
+    /** "10 m+" or "30 ft+". */
     data object OverTen : DistanceDisplay
 
     companion object {
-        fun of(meters: Double): DistanceDisplay = when {
+        private const val FEET_PER_METER = 3.28084
+
+        /**
+         * The ranges are the same in both units (1, 5 and 10 m read as 3, 15 and 30 ft), so a device
+         * sits in the same list filter whichever unit is shown (#83).
+         */
+        fun of(meters: Double, unit: DistanceUnit = DistanceUnit.METERS): DistanceDisplay = when {
             meters < 1.0 -> WithinOne
-            meters < 5.0 -> About(meters.roundToInt().coerceIn(1, 4))
+            meters < 5.0 -> when (unit) {
+                DistanceUnit.METERS -> About(meters.roundToInt().coerceIn(1, 4), unit)
+                DistanceUnit.FEET -> About((meters * FEET_PER_METER).roundToInt().coerceIn(3, 15), unit)
+            }
             meters < 10.0 -> FiveToTen
             else -> OverTen
         }

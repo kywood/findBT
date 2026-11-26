@@ -7,6 +7,8 @@
     <string name="devices_last_seen_now">たった今検出</string>
     <string name="devices_last_seen_minutes">最終検出: %1$d分前</string>
     <string name="devices_not_seen">ペアリング済み · 未検出</string>
+    <string name="devices_connected">このスマートフォンに接続中</string>
+    <string name="devices_connected_no_distance">このスマートフォンに接続中 · 接続中は距離を測れません</string>
     <string name="devices_more_for">%1$sのその他</string>
     <string name="devices_hide">リストに表示しない</string>
     <string name="devices_empty_title">ペアリング済みのデバイスはありません</string>
@@ -26,4 +28,25 @@
     <string name="devices_saved_edit">名前・種類を変更</string>
     <string name="devices_saved_remove">保存を解除</string>
     <string name="devices_saved_not_seen">保存済み · まだ検出されていません</string>
+    <!-- Last seen (#162) -->
+    <string name="devices_last_detected">最終検出 · %1$s</string>
+    <string name="devices_last_detected_map">最終検出 · %1$s · 地図を見る</string>
+    <string name="last_seen_menu">最終検出</string>
+    <string name="last_seen_place">このスマートフォンが最後に信号を受信した場所</string>
+    <string name="last_seen_open_map">マップで開く</string>
+    <string name="last_seen_note">デバイスの現在地ではなく、このスマートフォンが最後に検出した場所です。位置情報はこのスマートフォンにのみ保存されます。</string>
+    <string name="last_seen_no_permission">位置情報へのアクセスがオフのため、場所は記録されませんでした</string>
+    <string name="last_seen_no_fix">その時は場所を取得できませんでした</string>
+    <string name="last_seen_turn_on">場所の記録をオンにする</string>
+    <string name="last_seen_find">探し始める</string>
+    <string name="last_seen_no_map_app">マップアプリが見つかりません</string>
+    <!-- Protection mode and left-behind alerts (#163) -->
+    <string name="devices_protection_menu">保護モード</string>
+    <string name="devices_protection_off_title">保護モードはオフです</string>
+    <string name="devices_protection_off_body">置き忘れアラートとトラッカーの検出は停止中です</string>
+    <string name="devices_protection_turn_on">オンにする</string>
+    <string name="devices_left_behind_title">%1$s · 置き忘れたかもしれません</string>
+    <string name="devices_left_behind_body">最後の検出 %1$s</string>
+    <string name="devices_left_behind_view">最後の場所を見る</string>
+    <string name="devices_left_behind_mute">1時間通知しない</string>
 </resources>

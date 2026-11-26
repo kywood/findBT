@@ -1,21 +1,32 @@
 package com.gamenuri.btscanner24.feature.devices
 
 import com.gamenuri.btscanner24.core.model.BleDevice
+import com.gamenuri.btscanner24.core.model.LastSeen
+import com.gamenuri.btscanner24.core.model.OwnDevices
 import com.gamenuri.btscanner24.core.model.PairedDevice
 import com.gamenuri.btscanner24.core.model.SavedDevice
 
 /**
- * Builds the My Devices tab from paired and saved devices and what the scan hears.
- *
- * Matching: the paired address first. Most earbuds and watches advertise BLE from a random address
- * that differs from the paired (classic) one, so the fallback is the same device name; the newest
- * sighting wins. A device the user renamed on the phone still advertises its own name, so that
- * one is tried as well (#116). The match rate is one of the prototype measurements. Saved devices
- * (#108) behave the same; they match on the name they advertised when saved, not on what the user
- * called them.
+ * Builds the My Devices tab from paired and saved devices and what the scan hears. Which sighting
+ * belongs to which device is decided by [OwnDevices], the same for every part of the app.
  */
 object MyDevices {
-    const val ACTIVE_WINDOW_MS = 30_000L
+    const val ACTIVE_WINDOW_MS = OwnDevices.ACTIVE_WINDOW_MS
+
+    /** The kept record is written at most once a minute, so it may trail the live sighting by that much. */
+    private const val RECORD_SLACK_MS = 2 * 60_000L
+
+    /** Up to here "Last seen: n min" from the live scan reads better than a date. */
+    private const val RECORD_SHOWN_AFTER_MS = 60 * 60_000L
+
+    /**
+     * Whether a device that is not here shows its kept last-seen [record] (#162): it is at least as new
+     * as anything heard this run ([heardAt], null when nothing was), and over an hour old. Not heard
+     * this run is a plain null, never a sentinel: `Long.MIN_VALUE - slack` wrapped round and hid the line.
+     */
+    fun showsLastSeen(record: LastSeen, heardAt: Long?, now: Long): Boolean =
+        (heardAt == null || record.seenAt >= heardAt - RECORD_SLACK_MS) &&
+            now - record.seenAt >= RECORD_SHOWN_AFTER_MS
 
     fun build(
         paired: List<PairedDevice>,
@@ -23,31 +34,24 @@ object MyDevices {
         hidden: Set<String>,
         now: Long,
         saved: List<SavedDevice> = emptyList(),
+        connected: Set<String> = emptySet(),
         distanceOf: (BleDevice) -> Double?,
     ): MyDevicesUiState {
-        val byAddress = seen.associateBy { it.address }
-        val byName = seen.filter { it.hasName }.groupBy { it.name!!.trim().lowercase() }
-
-        fun item(device: PairedDevice, matchNames: List<String>, isSaved: Boolean): MyDeviceItem {
-            val sighting = byAddress[device.address]
-                ?: matchNames.flatMap { byName[it.trim().lowercase()].orEmpty() }.maxByOrNull { it.lastSeen }
-            val nearby = sighting != null && now - sighting.lastSeen <= ACTIVE_WINDOW_MS
-            return MyDeviceItem(
-                paired = device,
+        val sightings = OwnDevices.Sightings(seen)
+        val items = OwnDevices.list(paired, saved, hidden).map { own ->
+            val sighting = sightings.of(own)
+            val heard = sighting != null && now - sighting.lastSeen <= ACTIVE_WINDOW_MS
+            // A connected device is within Bluetooth range even when it sends nothing to measure (#119).
+            val isConnected = own.device.address in connected
+            MyDeviceItem(
+                paired = own.device,
                 sighting = sighting,
-                isNearby = nearby,
-                distanceMeters = sighting?.takeIf { nearby }?.let(distanceOf),
-                isSaved = isSaved,
+                isNearby = heard || isConnected,
+                distanceMeters = sighting?.takeIf { heard }?.let(distanceOf),
+                isSaved = own.isSaved,
+                isConnected = isConnected,
             )
         }
-        val pairedAddresses = paired.mapTo(HashSet()) { it.address }
-        val items = paired
-            .filter { it.address !in hidden }
-            .map { item(it, listOfNotNull(it.name, it.advertisedName), isSaved = false) } +
-            // A device that is paired as well shows once, as paired.
-            saved
-                .filter { it.address !in pairedAddresses }
-                .map { item(it.asPaired(), listOfNotNull(it.advertisedName), isSaved = true) }
         // Whatever the user saved by hand is something they look for: never in the collapsed group.
         val (priority, others) = items.partition { it.isSaved || it.paired.isPriority }
         val (heard, notNearby) = priority.partition { it.isNearby }

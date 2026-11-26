@@ -30,6 +30,9 @@
     <string name="filter_distance_within_5">5m 이내</string>
     <string name="filter_distance_5_10">5~10m</string>
     <string name="filter_distance_over_10">10m 이상</string>
+    <string name="filter_distance_within_15_ft">15ft 이내</string>
+    <string name="filter_distance_15_30_ft">15~30ft</string>
+    <string name="filter_distance_over_30_ft">30ft 이상</string>
     <string name="filter_signal">신호 세기</string>
     <string name="filter_maker">제조사</string>
     <string name="filter_maker_count">%1$s %2$d</string>
@@ -74,4 +77,21 @@
     <string name="filter_active_description">필터, %1$d개 적용됨</string>
     <string name="home_reorder_chip">↑ 새 순서 · 정렬</string>
     <string name="home_reorder_chip_description">목록 순서가 바뀌었어요. 눌러서 정렬</string>
+    <!-- Device map (#86) -->
+    <string name="map_arranged_by_distance">거리순으로 배치</string>
+    <string name="map_direction_measured">방향 확인됨</string>
+    <string name="map_scanning">찾는 중</string>
+    <string name="map_empty_title">주변에 기기가 없어요</string>
+    <string name="map_empty_body">블루투스 기기를 켜고 가까이 가져오세요</string>
+    <string name="map_find">찾기</string>
+    <string name="map_pin_label">%1$s · %2$s</string>
+    <string name="map_step_near">1m</string>
+    <string name="map_step_mid">5m</string>
+    <string name="map_step_far">10m+</string>
+    <string name="map_step_near_ft">3ft</string>
+    <string name="map_step_mid_ft">15ft</string>
+    <string name="map_step_far_ft">30ft+</string>
+    <string name="map_unavailable">이 폰에서는 3D 맵을 그릴 수 없어요. 아래 목록에서 같은 기기를 볼 수 있어요.</string>
+    <string name="map_view_list">목록</string>
+    <string name="map_view_map">맵</string>
 </resources>

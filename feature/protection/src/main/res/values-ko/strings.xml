@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Protection mode and left-behind alerts (#163) -->
+    <string name="protection_title">보호 모드</string>
+    <string name="protection_back">뒤로</string>
+    <string name="protection_intro_headline">두고 온 기기와 모르는 트래커를 지켜봐요</string>
+    <string name="protection_point_alert">저장한 기기와 멀어지면 알려 드려요</string>
+    <string name="protection_point_notification">켜져 있는 동안 알림이 계속 표시돼요</string>
+    <string name="protection_point_battery">배터리 사용이 조금 늘 수 있어요</string>
+    <string name="protection_point_privacy">기기 정보와 위치는 이 폰에만 저장돼요</string>
+    <string name="protection_turn_on">보호 모드 켜기</string>
+    <string name="protection_not_now">나중에</string>
+    <string name="protection_permissions_needed">권한을 허용해야 보호 모드가 알려 드릴 수 있어요</string>
+    <string name="protection_section_left_behind">두고 가면 알림</string>
+    <string name="protection_no_devices">주변 탭에서 기기를 저장하거나 폰에 페어링하면 여기에 나타나요</string>
+    <string name="protection_footer">배터리 사용이 조금 늘 수 있어요. 기기 정보와 위치는 이 폰에만 저장돼요.</string>
+    <string name="protection_channel_status">보호 모드 상태</string>
+    <string name="protection_channel_alerts">두고 가면 알림</string>
+    <string name="protection_status_title">보호 모드 켜짐</string>
+    <string name="protection_status_none">지켜볼 기기를 아직 고르지 않았어요</string>
+    <string name="protection_status_bluetooth_off">블루투스가 꺼져 있어 기기를 지켜볼 수 없어요</string>
+    <string name="protection_status_location_off">위치가 꺼져 있어 기기를 지켜볼 수 없어요</string>
+    <string name="protection_status_cannot_scan">스캔을 시작하지 못해 기기를 지켜볼 수 없어요</string>
+    <string name="protection_turn_off">끄기</string>
+    <string name="protection_alert_title">%1$s, 두고 온 것 같아요</string>
+    <string name="protection_alert_text">%1$s에 마지막으로 감지했어요. 마지막 위치를 확인해 보세요.</string>
+    <string name="protection_alert_view">마지막 위치 보기</string>
+    <string name="protection_mute_hour">1시간 동안 알리지 않기</string>
+    <string name="protection_mute_today">오늘은 알리지 않기</string>
+    <string name="protection_off_title">보호 모드가 꺼져 있어요</string>
+    <string name="protection_off_restart">폰을 다시 시작해서 꺼졌어요. 다시 켜려면 탭하세요.</string>
+    <string name="protection_off_stopped">Android가 보호 모드를 멈췄어요. 다시 켜려면 탭하세요.</string>
+    <string name="protection_turn_on_short">켜기</string>
+    <plurals name="protection_status_watching">
+        <item quantity="other">기기 %d개를 지켜보는 중</item>
+    </plurals>
+    <!-- Unknown tracker detection (#79) -->
+    <string name="protection_point_tracker">내 것이 아닌 트래커가 계속 함께 이동하면 알려 드려요</string>
+    <string name="protection_section_trackers">트래커</string>
+    <string name="protection_tracker_setting">모르는 트래커 감지</string>
+    <string name="protection_tracker_test_feature">시험 기능</string>
+    <string name="protection_tracker_how">폰의 움직임과 지난 시간으로 함께 이동했는지 판단해요.</string>
+    <string name="protection_tracker_unavailable">이 폰에는 움직임 센서가 없어 트래커 감지를 쓸 수 없어요</string>
+    <string name="protection_channel_trackers">모르는 트래커 알림</string>
+    <string name="protection_status_trackers_only">모르는 트래커를 지켜보는 중</string>
+    <string name="protection_tracker_alert_title">모르는 트래커가 함께 이동하고 있을 수 있어요</string>
+    <string name="protection_tracker_details">자세히 보기</string>
+    <string name="protection_tracker_known">내가 아는 기기예요</string>
+    <string name="protection_tracker_title">모르는 트래커</string>
+    <string name="protection_tracker_last">%1$s에 마지막으로 감지</string>
+    <string name="protection_tracker_first">처음 감지</string>
+    <string name="protection_tracker_duration">함께 이동한 시간</string>
+    <string name="protection_tracker_type">종류</string>
+    <string name="protection_tracker_type_value">트래커 (추정)</string>
+    <string name="protection_tracker_calm_title">대부분은 근처 사람의 물건이에요</string>
+    <string name="protection_tracker_calm_body">버스나 카페처럼 사람이 많은 곳에서는 다른 사람의 트래커가 잠시 잡힐 수 있어요.</string>
+    <string name="protection_tracker_find">찾기 시작</string>
+    <string name="protection_tracker_what">어떻게 하면 되나요?</string>
+    <string name="protection_tracker_gone">이 트래커의 기록은 더 이상 남아 있지 않아요</string>
+    <string name="protection_help_title">이렇게 해 보세요</string>
+    <string name="protection_help_1_title">먼저 찾아보기</string>
+    <string name="protection_help_1_body">찾기 화면으로 가방, 주머니, 차 안을 확인해 보세요.</string>
+    <string name="protection_help_2_title">아는 사람의 것인지 확인</string>
+    <string name="protection_help_2_body">가족이나 동행의 물건이면 ‘내가 아는 기기예요’로 표시하세요. 다시 알리지 않아요.</string>
+    <string name="protection_help_3_title">모르는 물건이면 끄기</string>
+    <string name="protection_help_3_body">대부분의 트래커는 배터리를 빼면 꺼져요. 제조사 안내를 확인하세요.</string>
+    <string name="protection_help_4_title">불안하다면 도움 요청</string>
+    <string name="protection_help_4_body">안전이 걱정되면 안전한 곳으로 이동해 경찰에 알리세요.</string>
+    <string name="protection_help_note">블루투스 신호만으로는 누구의 것인지 알 수 없어요.</string>
+    <plurals name="protection_status_watching_trackers">
+        <item quantity="other">기기 %d개와 모르는 트래커를 지켜보는 중</item>
+    </plurals>
+    <plurals name="protection_tracker_alert_text">
+        <item quantity="other">%d분 동안 근처에서 감지됐어요. 가족이나 동행의 물건일 수도 있어요.</item>
+    </plurals>
+    <plurals name="protection_tracker_duration_value">
+        <item quantity="other">약 %d분</item>
+    </plurals>
+</resources>

@@ -1,10 +1,13 @@
 package com.gamenuri.btscanner24.feature.finder
 
+import android.content.ActivityNotFoundException
 import android.content.Context
+import android.content.Intent
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
@@ -31,10 +34,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.outlined.BookmarkBorder
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -99,6 +105,7 @@ import com.gamenuri.btscanner24.core.model.DeviceLabel
 import com.gamenuri.btscanner24.core.model.NameSource
 import com.gamenuri.btscanner24.core.ui.R as UiR
 import com.gamenuri.btscanner24.core.ui.distanceText
+import com.gamenuri.btscanner24.core.ui.help.NotDetectedHelpSheet
 import com.gamenuri.btscanner24.core.ui.text
 import java.util.Locale
 import kotlin.math.roundToInt
@@ -119,6 +126,8 @@ fun FinderScreen(
     entryTapX: Float = 0.5f,
     /** The water the opening tap set off already; without it the screen starts its own once drawn. */
     entryWater: FindEntryWater? = null,
+    /** "Save to My devices" from here (#152); null hides the bookmark. */
+    save: FinderSave? = null,
     viewModel: FinderViewModel = viewModel(key = "finder-$address", factory = FinderViewModel.factory(address)),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -204,6 +213,7 @@ fun FinderScreen(
                 paused = entry.isMoving,
                 onClose = { close() },
                 onFound = { foundAfterSeconds = state.advanced.elapsedSeconds },
+                save = save,
             )
         }
     }
@@ -217,6 +227,7 @@ private fun FinderLive(
     paused: Boolean,
     onClose: () -> Unit,
     onFound: () -> Unit,
+    save: FinderSave?,
 ) {
     // Scan and read sensors only while the screen is visible.
     LifecycleStartEffect(viewModel) {
@@ -252,7 +263,10 @@ private fun FinderLive(
             onSpinAgain = viewModel::spinAgain,
             onToggleSound = viewModel::toggleSound,
             onRetry = viewModel::retry,
+            onOpenOutput = { openMediaOutput(context) },
+            onLouder = viewModel::louder,
         ),
+        save = save,
     )
 }
 
@@ -263,7 +277,15 @@ data class FinderActions(
     val onSpinAgain: () -> Unit = {},
     val onToggleSound: () -> Unit = {},
     val onRetry: () -> Unit = {},
+    val onOpenOutput: () -> Unit = {},
+    val onLouder: () -> Unit = {},
 )
+
+/**
+ * "Save to My devices" without leaving the find screen (#152). The app owns the sheets and the saved
+ * list; this screen shows the bookmark and, once saved, the bar with "View".
+ */
+class FinderSave(val isSaved: Boolean, val justSaved: Boolean, val onSave: () -> Unit, val onView: () -> Unit)
 
 /**
  * Found it (#90 v2): the Found screen rises over a still picture of the find screen, its content fades
@@ -306,6 +328,7 @@ fun FinderContent(
     modifier: Modifier = Modifier,
     /** Water is moving over this screen: hold the continuous animations until it is done (#106). */
     paused: Boolean = false,
+    save: FinderSave? = null,
 ) {
     val palette = findColorsFor(state)
     val background = palette.background
@@ -335,7 +358,7 @@ fun FinderContent(
                     }
                 }
             }
-            FinderScaffold(state, actions, content, accent, background, scene3d, dialSlot)
+            FinderScaffold(state, actions, content, accent, background, scene3d, dialSlot, save)
         }
     }
 }
@@ -383,6 +406,7 @@ private fun FinderScaffold(
     background: Color,
     sceneBehind: Boolean,
     dialSlot: SceneSlot,
+    save: FinderSave?,
 ) {
     Scaffold(
         containerColor = Color.Transparent,
@@ -403,11 +427,27 @@ private fun FinderScaffold(
                 },
                 // "⋯" opens the raw numbers (design v3: top-right is details/advanced), so nothing sits
                 // under the navigation bar at the bottom of a long screen.
-                actions = { AdvancedMenu(state.advanced, tint = content, background = background) },
+                actions = {
+                    if (save != null) {
+                        IconButton(onClick = save.onSave) {
+                            Icon(
+                                if (save.isSaved) Icons.Filled.Bookmark else Icons.Outlined.BookmarkBorder,
+                                contentDescription = stringResource(UiR.string.save_title),
+                            )
+                        }
+                    }
+                    val label = state.deviceLabel
+                    AdvancedMenu(
+                        info = state.advanced,
+                        tint = content,
+                        background = background,
+                        appleFindMy = label is DeviceLabel.Generic && label.appleFindMy,
+                    )
+                },
             )
         },
         // The action row is pinned above the navigation bar and never scrolls away (design review #55).
-        bottomBar = { ActionRow(state, actions, content, background) },
+        bottomBar = { ActionRow(state, actions, content, background, save) },
     ) { padding ->
         CompositionLocalProvider(LocalFindAccent provides accent) {
             Column(
@@ -436,6 +476,7 @@ private fun FinderScaffold(
                 // always takes its space, so the rows above keep their place (#60).
                 Box(Modifier.fillMaxWidth().heightIn(min = BOTTOM_SLOT), contentAlignment = Alignment.Center) {
                     val noSignal = state.stage == FinderStage.NOT_FOUND || state.stage == FinderStage.SIGNAL_LOST
+                    var helpOpen by rememberSaveable { mutableStateOf(false) }
                     if (noSignal) {
                         // Never a dead end (#117): scan afresh, or leave for the list.
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -445,7 +486,14 @@ private fun FinderScaffold(
                             TextButton(onClick = actions.onClose) {
                                 Text(stringResource(R.string.finder_back_to_list), color = content)
                             }
+                            // Why it may not be picked up and what to try (#154); scan failures say their own reason.
+                            if (state.scanFailure == null) {
+                                TextButton(onClick = { helpOpen = true }) {
+                                    Text(stringResource(UiR.string.help_not_detected_short), color = content)
+                                }
+                            }
                         }
+                        if (helpOpen) NotDetectedHelpSheet(onDismiss = { helpOpen = false })
                     } else if (state.showConfirmHint) {
                         // Names can be vague ("hiot0"); confirming by touch matters more than the name (#46).
                         Text(
@@ -465,7 +513,13 @@ private fun FinderScaffold(
 }
 
 @Composable
-private fun ActionRow(state: FinderUiState, actions: FinderActions, content: Color, background: Color) {
+private fun ActionRow(
+    state: FinderUiState,
+    actions: FinderActions,
+    content: Color,
+    background: Color,
+    save: FinderSave? = null,
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -473,6 +527,7 @@ private fun ActionRow(state: FinderUiState, actions: FinderActions, content: Col
             .padding(horizontal = 24.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
+        if (save?.justSaved == true) SavedBar(save.onView, content)
         // "Spin again" shares the sound button's row, half each (design find-flow v1.4, #138).
         // Also while locked: a lock can be wrong, and the design keeps the way back to a new sweep.
         val canRespin = state.stage == FinderStage.WALK ||
@@ -483,12 +538,129 @@ private fun ActionRow(state: FinderUiState, actions: FinderActions, content: Col
         } else {
             null
         }
-        if (state.showSoundButton) {
-            SoundButton(state.sound, actions.onToggleSound, content, respin)
+        // A loud tone in someone's ears hurts: ask before it starts; stopping never asks (#153).
+        var earCheckOpen by rememberSaveable { mutableStateOf(false) }
+        val starting = state.sound != SoundState.PLAYING && state.sound != SoundState.CONNECTING
+        val onSound = if (state.soundViaPhone && starting) ({ earCheckOpen = true }) else actions.onToggleSound
+        if (earCheckOpen) {
+            EarCheckDialog(
+                onConfirm = {
+                    earCheckOpen = false
+                    actions.onToggleSound()
+                },
+                onDismiss = { earCheckOpen = false },
+            )
+        }
+        if (state.soundViaPhone && state.sound == SoundState.PLAYING) {
+            TonePlayingControls(onStop = actions.onToggleSound, onLouder = actions.onLouder, content, background)
+        } else if (state.soundNeedsOutput) {
+            OutputGuide(actions.onOpenOutput, content)
+            respin?.invoke(Modifier.fillMaxWidth())
+        } else if (state.showSoundButton) {
+            SoundButton(state.sound, onSound, content, respin)
         } else {
             respin?.invoke(Modifier.fillMaxWidth())
         }
         MainActions(state, actions, content, background)
+    }
+}
+
+/**
+ * Android does not let an app choose where sound goes, so when the earbuds are connected but media
+ * plays somewhere else, the user switches the output and the sound button takes over (#153).
+ */
+@Composable
+private fun OutputGuide(onOpen: () -> Unit, content: Color) {
+    Text(
+        text = stringResource(R.string.finder_sound_output_note),
+        modifier = Modifier.fillMaxWidth(),
+        style = MaterialTheme.typography.bodySmall,
+        color = content.copy(alpha = MUTED_ALPHA),
+        textAlign = TextAlign.Center,
+    )
+    OutlinedButton(
+        onClick = onOpen,
+        modifier = Modifier.fillMaxWidth(),
+        colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.Transparent, contentColor = content),
+        border = BorderStroke(1.dp, content.copy(alpha = 0.5f)),
+    ) {
+        Icon(painterResource(UiR.drawable.ic_sound), contentDescription = null, modifier = Modifier.size(18.dp))
+        Spacer(Modifier.size(8.dp))
+        Text(stringResource(R.string.finder_sound_output_button), maxLines = 1, overflow = TextOverflow.Ellipsis)
+    }
+}
+
+/** The system's media output picker (Android 10 and 11); Bluetooth settings where that panel is gone. */
+private fun openMediaOutput(context: Context) {
+    val panel = Intent("com.android.settings.panel.action.MEDIA_OUTPUT")
+        .putExtra("com.android.settings.panel.extra.PACKAGE_NAME", context.packageName)
+    for (intent in listOf(panel, Intent(Settings.ACTION_BLUETOOTH_SETTINGS))) {
+        try {
+            context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            return
+        } catch (_: ActivityNotFoundException) {
+            // Try the next one.
+        } catch (_: SecurityException) {
+            // Some phones keep the panel to themselves.
+        }
+    }
+}
+
+/** While the tone plays in the earbuds: a big stop that is hard to miss, and louder only on request (#153). */
+@Composable
+private fun TonePlayingControls(onStop: () -> Unit, onLouder: () -> Unit, content: Color, background: Color) {
+    Button(
+        onClick = onStop,
+        modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = content, contentColor = background),
+    ) {
+        Icon(painterResource(UiR.drawable.ic_sound_off), contentDescription = null, modifier = Modifier.size(20.dp))
+        Spacer(Modifier.size(8.dp))
+        Text(stringResource(R.string.finder_sound_stop), style = MaterialTheme.typography.titleMedium)
+    }
+    OutlinedButton(
+        onClick = onLouder,
+        modifier = Modifier.fillMaxWidth(),
+        colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.Transparent, contentColor = content),
+        border = BorderStroke(1.dp, content.copy(alpha = 0.5f)),
+    ) {
+        Text(stringResource(R.string.finder_sound_louder), maxLines = 1, overflow = TextOverflow.Ellipsis)
+    }
+}
+
+/** Asked before every tone. Cancel is the filled button: starting takes a deliberate tap (#153). */
+@Composable
+private fun EarCheckDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.finder_sound_ear_title)) },
+        text = { Text(stringResource(R.string.finder_sound_ear_body)) },
+        confirmButton = {
+            Button(onClick = onDismiss) { Text(stringResource(R.string.finder_sound_ear_cancel)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onConfirm) { Text(stringResource(R.string.finder_sound_ear_confirm)) }
+        },
+    )
+}
+
+/** "Saved to My devices · View" right after saving from here (#152): a light surface, never a dark card. */
+@Composable
+private fun SavedBar(onView: () -> Unit, content: Color) {
+    Surface(color = content.copy(alpha = 0.16f), contentColor = content, shape = RoundedCornerShape(12.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(UiR.string.save_done),
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            TextButton(onClick = onView) { Text(stringResource(UiR.string.save_view), color = content) }
+        }
     }
 }
 
@@ -512,7 +684,9 @@ private val FinderUiState.showSoundButton: Boolean
         SoundState.UNAVAILABLE -> false
         SoundState.CONNECTING, SoundState.PLAYING, SoundState.NOT_SUPPORTED -> true
         SoundState.READY, SoundState.FAILED ->
-            stage != FinderStage.WAITING && stage != FinderStage.NOT_FOUND && stage != FinderStage.SIGNAL_LOST
+            // Connected earbuds can sound without a signal to measure (#153).
+            soundViaPhone ||
+                (stage != FinderStage.WAITING && stage != FinderStage.NOT_FOUND && stage != FinderStage.SIGNAL_LOST)
     }
 
 @Composable
@@ -619,7 +793,11 @@ private fun StageText(state: FinderUiState) {
     val (title, body) = when (state.stage) {
         FinderStage.WAITING -> R.string.finder_waiting_title to R.string.finder_waiting_body
         FinderStage.NOT_FOUND -> when (state.scanFailure) {
-            null -> R.string.finder_not_found_title to R.string.finder_not_found_body
+            null -> if (state.isConnected) {
+                R.string.finder_connected_title to R.string.finder_connected_body
+            } else {
+                R.string.finder_not_found_title to R.string.finder_not_found_body
+            }
             ScanFailure.BLUETOOTH_OFF -> R.string.finder_bluetooth_off_title to R.string.finder_bluetooth_off_body
             ScanFailure.LOCATION_OFF -> R.string.finder_location_off_title to R.string.finder_location_off_body
             ScanFailure.PERMISSION_MISSING -> R.string.finder_permission_title to R.string.finder_permission_body
@@ -770,7 +948,7 @@ private fun findColorsFor(state: FinderUiState): FindStateColors {
 
 /** Raw numbers for testers, behind the "⋯" button in the top bar. */
 @Composable
-private fun AdvancedMenu(info: AdvancedInfo, tint: Color, background: Color) {
+private fun AdvancedMenu(info: AdvancedInfo, tint: Color, background: Color, appleFindMy: Boolean = false) {
     var expanded by rememberSaveable { mutableStateOf(false) }
     Box {
         IconButton(onClick = { expanded = true }) {
@@ -788,6 +966,15 @@ private fun AdvancedMenu(info: AdvancedInfo, tint: Color, background: Color) {
                 style = MaterialTheme.typography.titleSmall,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             )
+            // "Apple device" on the list says little; here is what the signal is and what it may be (#147).
+            if (appleFindMy) {
+                Text(
+                    text = stringResource(R.string.finder_advanced_apple_find_my),
+                    color = tint,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).widthIn(max = 280.dp),
+                )
+            }
             Text(
                 text = stringResource(
                     R.string.finder_advanced_values,

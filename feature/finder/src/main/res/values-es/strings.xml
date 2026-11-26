@@ -24,6 +24,8 @@
     <string name="finder_signal_lost_body">Visto hace %1$d s · vuelve a donde la señal era más fuerte</string>
     <string name="finder_not_found_title">No se encontró la señal</string>
     <string name="finder_not_found_body">Acércate o comprueba que esté encendido</string>
+    <string name="finder_connected_title">Conectado a este teléfono</string>
+    <string name="finder_connected_body">Está dentro del alcance del Bluetooth, unos 10 m. Un dispositivo conectado no suele emitir señal para medir.</string>
     <string name="finder_bluetooth_off_title">Bluetooth está desactivado</string>
     <string name="finder_bluetooth_off_body">Activa Bluetooth y vuelve a intentarlo</string>
     <string name="finder_location_off_title">La ubicación está desactivada</string>
@@ -45,6 +47,7 @@
     <string name="finder_trend_farther">▼ Frío</string>
     <string name="finder_trend_steady">Sigue</string>
     <string name="finder_advanced_values">MAC %1$s · RSSI %2$s dBm (suavizado %3$s) · rumbo %4$s° · orientación %5$s° · cambios de MAC %6$d · %7$d s</string>
+    <string name="finder_advanced_apple_find_my">Es una señal de Buscar de Apple. Puede ser unos AirPods, un AirTag, un iPhone u otro dispositivo Apple.</string>
     <string name="finder_confirm_hint">¿No sabes si es este? Acerca el teléfono justo a su lado. Si dice \"Aquí mismo\", lo encontraste.</string>
     <string name="found_title">¡Lo encontraste!</string>
     <string name="found_summary">%1$s · encontrado en %2$s</string>
@@ -62,4 +65,11 @@
     <string name="finder_sound_retry">Reintentar</string>
     <string name="finder_sound_failed">No se pudo reproducir el sonido. Acércate y vuelve a intentarlo.</string>
     <string name="finder_sound_not_supported">Este dispositivo no puede reproducir sonido.</string>
+    <string name="finder_sound_ear_title">¿Los llevas puestos ahora?</string>
+    <string name="finder_sound_ear_body">Sonará un sonido en este dispositivo, bajo al principio y luego más fuerte. Si tú u otra persona lo lleváis puesto, quitadlo antes de empezar.</string>
+    <string name="finder_sound_ear_confirm">Reproducir sonido</string>
+    <string name="finder_sound_ear_cancel">Cancelar</string>
+    <string name="finder_sound_louder">Más fuerte</string>
+    <string name="finder_sound_output_note">Está conectado, pero el sonido sale por otra salida. Cambia la salida a este dispositivo para hacerlo sonar.</string>
+    <string name="finder_sound_output_button">Cambiar salida de sonido</string>
 </resources>

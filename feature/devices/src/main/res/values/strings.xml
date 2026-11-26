@@ -7,6 +7,8 @@
     <string name="devices_last_seen_now">Seen just now</string>
     <string name="devices_last_seen_minutes">Last seen: %1$d min</string>
     <string name="devices_not_seen">Paired · not seen yet</string>
+    <string name="devices_connected">Connected to this phone</string>
+    <string name="devices_connected_no_distance">Connected to this phone · no distance while connected</string>
     <string name="devices_more_for">More for %1$s</string>
     <string name="devices_hide">Hide from list</string>
     <string name="devices_empty_title">No paired devices</string>
@@ -26,4 +28,25 @@
     <string name="devices_saved_edit">Change name or type</string>
     <string name="devices_saved_remove">Remove from saved</string>
     <string name="devices_saved_not_seen">Saved · not seen yet</string>
+    <!-- Last seen (#162) -->
+    <string name="devices_last_detected">Last seen · %1$s</string>
+    <string name="devices_last_detected_map">Last seen · %1$s · View map</string>
+    <string name="last_seen_menu">Last seen</string>
+    <string name="last_seen_place">Where this phone last picked up its signal</string>
+    <string name="last_seen_open_map">Open in Maps</string>
+    <string name="last_seen_note">This is where this phone last detected it, not where the device is now. The location stays on this phone.</string>
+    <string name="last_seen_no_permission">Place not recorded because location access is off</string>
+    <string name="last_seen_no_fix">The place could not be read at that moment</string>
+    <string name="last_seen_turn_on">Turn on place recording</string>
+    <string name="last_seen_find">Start finding</string>
+    <string name="last_seen_no_map_app">No maps app found</string>
+    <!-- Protection mode and left-behind alerts (#163) -->
+    <string name="devices_protection_menu">Protection mode</string>
+    <string name="devices_protection_off_title">Protection mode is off</string>
+    <string name="devices_protection_off_body">Left-behind alerts and tracker detection are paused</string>
+    <string name="devices_protection_turn_on">Turn on</string>
+    <string name="devices_left_behind_title">%1$s · May be left behind</string>
+    <string name="devices_left_behind_body">Last detected %1$s</string>
+    <string name="devices_left_behind_view">View last seen</string>
+    <string name="devices_left_behind_mute">Mute for 1 hour</string>
 </resources>

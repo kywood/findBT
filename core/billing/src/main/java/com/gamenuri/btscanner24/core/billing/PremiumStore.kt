@@ -17,7 +17,15 @@ data class PremiumState(
     val dayPassUntil: Long? = null,
     /** A rewarded ad may grant a day pass now: not bought, none running, none used today. */
     val dayPassAvailable: Boolean = false,
-)
+    /**
+     * Premium can be bought in this build. Off in 2.0 (#205): no merchant account yet, so nothing is
+     * sold, every free limit is lifted and the rewarded ad only buys 24 hours without ads.
+     */
+    val canBuy: Boolean = true,
+) {
+    /** Every limit is off: Premium was bought or a day pass runs, or nothing is sold so nothing is locked. */
+    val unlocked: Boolean get() = isPremium || !canBuy
+}
 
 enum class RestoreResult { RESTORED, NOTHING_TO_RESTORE, FAILED }
 

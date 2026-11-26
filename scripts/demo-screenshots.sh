@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Takes demo-mode screenshots (#47) from a debug build on a connected phone.
 #
-#   ./gradlew installDebug
+#   adb -s R59N300DBHH install -r app/build/outputs/apk/debug/app-debug.apk   (never `gradlew installDebug`)
 #   ANDROID_SERIAL=R59N300DBHH scripts/demo-screenshots.sh [out-dir] [locales...]
 #
 # Default: out-dir shots/demo, locales "en ko". Files: <out>/<locale>/<screen>.png

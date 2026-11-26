@@ -23,6 +23,13 @@ open class BondedDevices(context: Context) {
         ContextCompat.checkSelfPermission(appContext, Manifest.permission.BLUETOOTH_CONNECT) ==
         PackageManager.PERMISSION_GRANTED
 
+    /**
+     * Whether [list] is the whole truth right now. With Bluetooth off Android reports no paired
+     * devices at all, which must not be read as "everything was unpaired" (#178).
+     */
+    open val isReadable: Boolean
+        get() = hasPermission() && adapter?.isEnabled == true
+
     /** Empty when Bluetooth is off, unsupported or the permission is missing. */
     @SuppressLint("MissingPermission") // checked by hasPermission()
     open fun list(): List<PairedDevice> {

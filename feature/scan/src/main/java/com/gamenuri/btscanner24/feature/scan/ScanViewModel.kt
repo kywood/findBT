@@ -6,11 +6,10 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.gamenuri.btscanner24.core.ble.BleDependencies
-import com.gamenuri.btscanner24.core.ble.BleScanner
 import com.gamenuri.btscanner24.core.ble.BondedDevices
 import com.gamenuri.btscanner24.core.ble.DeviceRepository
-import com.gamenuri.btscanner24.core.ble.ScanEvent
-import com.gamenuri.btscanner24.core.ble.scanContinuously
+import com.gamenuri.btscanner24.core.ble.ScanFailure
+import com.gamenuri.btscanner24.core.ble.ScanSession
 import com.gamenuri.btscanner24.core.data.DataDependenciesProvider
 import com.gamenuri.btscanner24.core.data.ListPreferencesRepository
 import com.gamenuri.btscanner24.core.model.BleDevice
@@ -18,9 +17,11 @@ import com.gamenuri.btscanner24.core.model.DeviceFilter
 import com.gamenuri.btscanner24.core.model.DeviceNaming
 import com.gamenuri.btscanner24.core.model.DeviceSort
 import com.gamenuri.btscanner24.core.model.ListPreferences
-import kotlinx.coroutines.Dispatchers
+import com.gamenuri.btscanner24.core.model.MapBandHold
+import com.gamenuri.btscanner24.core.model.MapLayout
+import com.gamenuri.btscanner24.core.model.MapSpot
+import com.gamenuri.btscanner24.core.model.MeasuredBearing
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -33,14 +34,16 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class ScanViewModel(
-    private val scanner: BleScanner,
+    private val scan: ScanSession,
     private val repository: DeviceRepository,
     private val listPreferences: ListPreferencesRepository,
     private val bondedDevices: BondedDevices? = null,
+    /** Directions the find screen measured (#174); the map shows the fresh ones. */
+    private val bearings: StateFlow<Map<String, MeasuredBearing>> = MutableStateFlow(emptyMap()),
     private val clock: () -> Long = System::currentTimeMillis,
 ) : ViewModel() {
 
-    private val status = MutableStateFlow<ScanStatus>(ScanStatus.Idle)
+    private val mapBands = MapBandHold()
     private val query = MutableStateFlow("")
     private val reorderRequests = MutableStateFlow(0)
 
@@ -53,7 +56,21 @@ class ScanViewModel(
     private val preferences: StateFlow<ListPreferences> = listPreferences.preferences
         .stateIn(viewModelScope, SharingStarted.Eagerly, ListPreferences())
 
-    private var scanJob: Job? = null
+    /** This screen's hold on the shared scan (#177); null while it does not want one. */
+    private var scanHold: AutoCloseable? = null
+    private val holding = MutableStateFlow(false)
+
+    /** The failure the user closed the message for; it stays closed until the scan is asked for again. */
+    private val dismissedFailure = MutableStateFlow<ScanFailure?>(null)
+
+    /** Scanning while this screen holds the scan, unless the scan says why it cannot run. */
+    private val status = combine(scan.failure, holding, dismissedFailure) { failure, held, dismissed ->
+        when {
+            !held || (failure != null && failure == dismissed) -> ScanStatus.Idle
+            failure == null -> ScanStatus.Scanning
+            else -> ScanStatus.Error(failure)
+        }
+    }
 
     private val paused = MutableStateFlow(false)
 
@@ -85,7 +102,8 @@ class ScanViewModel(
     private val scanState = combine(status, paused) { status, paused -> status to paused }
 
     val uiState: StateFlow<ScanUiState> =
-        combine(scanState, throttledDevices, listInputs, ticker) { (status, paused), devices, inputs, _ ->
+        combine(scanState, throttledDevices, listInputs, bearings, ticker) { scanNow, devices, inputs, measured, _ ->
+            val (status, paused) = scanNow
             val now = clock()
             val (prefs, q, token, autoToken, aliases) = inputs
             val list = ordering.update(devices.values, prefs, q, token, now, aliases, autoToken)
@@ -100,32 +118,41 @@ class ScanViewModel(
                 isPaused = paused,
                 totalCount = devices.size,
                 census = DeviceListOrdering.census(devices.values, aliases.keys),
+                mapSpots = mapSpots(list.items, measured, now),
             )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ScanUiState())
 
+    /**
+     * Where each device that is still around stands on the map (#86): by distance, and by direction
+     * only for those the find screen measured a moment ago (#174).
+     */
+    private fun mapSpots(
+        items: List<DeviceListItem>,
+        measured: Map<String, MeasuredBearing>,
+        now: Long,
+    ): Map<String, MapSpot> {
+        val distances = items.filter { !it.isGone }.map { it.device.address to it.distanceMeters }
+        // A distance wobbling across a band's edge keeps the device on its ring (#193).
+        return MapLayout.arrange(mapBands.hold(MeasuredBearing.entries(distances, measured, now), now))
+    }
+
     fun startScan() {
-        if (scanJob?.isActive == true) return
         paused.value = false
-        status.value = ScanStatus.Scanning
-        // Parsing and the company-table lookup are too heavy for the main thread (cold-start jank, #34).
-        scanJob = viewModelScope.launch(Dispatchers.Default) {
-            // Android allows 5 scan starts per 30 s. Switching tabs quickly can hit that; the scan waits
-            // it out instead of showing an error (#62) and starts again when it dies quietly (#116).
-            scanner.scanContinuously().collect { event ->
-                when (event) {
-                    is ScanEvent.Result -> repository.onScanResult(event.result)
-                    is ScanEvent.Failed -> status.value = ScanStatus.Error(event.reason)
-                }
-            }
-            // Flow completed on its own (failure); keep the error status if one was set.
-            if (status.value == ScanStatus.Scanning) status.value = ScanStatus.Idle
+        dismissedFailure.value = null
+        // The shared scan waits out Android's 5 starts per 30 s instead of showing an error (#62) and
+        // starts again when it dies quietly (#116). After a failure this is the retry.
+        if (scanHold == null) {
+            scanHold = scan.acquire()
+            holding.value = true
+        } else {
+            scan.retry()
         }
     }
 
     fun stopScan() {
-        scanJob?.cancel()
-        scanJob = null
-        status.value = ScanStatus.Idle
+        scanHold?.close()
+        scanHold = null
+        holding.value = false
     }
 
     /** Top-bar pause; the scan stays off until [resume] or until the user leaves and comes back. */
@@ -145,7 +172,7 @@ class ScanViewModel(
     /** Scanning is automatic while the Nearby tab is visible (#62). */
     fun onScreenStarted() {
         refreshPaired()
-        if (scanner.hasScanPermission()) startScan()
+        if (scan.hasPermission) startScan()
     }
 
     private fun refreshPaired() {
@@ -156,7 +183,7 @@ class ScanViewModel(
     }
 
     fun dismissError() {
-        if (status.value is ScanStatus.Error) status.value = ScanStatus.Idle
+        dismissedFailure.value = scan.failure.value
     }
 
     fun reset() {
@@ -184,6 +211,9 @@ class ScanViewModel(
     }
 
     fun setSort(sort: DeviceSort) = updatePreferences { it.copy(sort = sort) }
+
+    /** List or 3D map on the Nearby tab (#86); remembered like the sort. */
+    fun setShowMap(show: Boolean) = updatePreferences { it.copy(showMap = show) }
 
     /** "N other devices hidden · Show" at the end of the list (#82): same as turning the switch on. */
     fun showOther() = updateFilter { it.copy(showOther = true) }
@@ -219,7 +249,13 @@ class ScanViewModel(
                 val app = this[APPLICATION_KEY]
                 val ble = (app as BleDependencies.Provider).bleDependencies
                 val data = app as DataDependenciesProvider
-                ScanViewModel(ble.scanner, ble.repository, data.listPreferences, ble.bondedDevices)
+                ScanViewModel(
+                    scan = ble.scanSession,
+                    repository = ble.repository,
+                    listPreferences = data.listPreferences,
+                    bondedDevices = ble.bondedDevices,
+                    bearings = ble.measuredBearings.bearings,
+                )
             }
         }
     }

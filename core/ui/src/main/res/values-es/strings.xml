@@ -45,6 +45,10 @@
     <string name="device_distance_within_1">a menos de 1 m</string>
     <string name="device_distance_5_to_10">~5–10 m</string>
     <string name="device_distance_over_10">más de 10 m</string>
+    <string name="device_distance_ft">~%1$s ft</string>
+    <string name="device_distance_within_3_ft">a menos de 3 ft</string>
+    <string name="device_distance_15_to_30_ft">~15–30 ft</string>
+    <string name="device_distance_over_30_ft">más de 30 ft</string>
     <string name="paywall_restore">Restaurar</string>
     <string name="paywall_close">Cerrar</string>
     <string name="paywall_title">Nearo Premium</string>
@@ -75,4 +79,14 @@
     <string name="save_locked_ad_used">Ya lo usaste hoy</string>
     <string name="save_locked_later">Ahora no</string>
     <string name="device_more_for">Más opciones para %1$s</string>
+    <!-- Help when a device is not detected (#154). -->
+    <string name="help_not_detected_link">¿No aparece el dispositivo?</string>
+    <string name="help_not_detected_short">Ayuda</string>
+    <string name="help_not_detected_title">Cuando un dispositivo no aparece</string>
+    <string name="help_not_detected_case">Los auriculares dentro de un estuche cerrado no emiten señal. Abre la tapa o sácalos.</string>
+    <string name="help_not_detected_battery">Un dispositivo apagado o sin batería no emite señal.</string>
+    <string name="help_not_detected_range">El Bluetooth llega a unos 10 m en interiores, y menos si hay paredes. Empieza donde lo usaste por última vez y camina despacio.</string>
+    <string name="help_not_detected_one_bud">¿Perdiste solo un auricular? Guarda el que tienes en su estuche y cierra la tapa para que solo se detecte el perdido.</string>
+    <string name="help_not_detected_settings">Comprueba que el Bluetooth y la ubicación estén activados en los ajustes del teléfono.</string>
+    <string name="help_not_detected_ok">Entendido</string>
 </resources>

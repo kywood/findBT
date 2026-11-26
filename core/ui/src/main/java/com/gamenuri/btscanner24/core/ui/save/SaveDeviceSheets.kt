@@ -38,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -46,6 +47,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
 import com.gamenuri.btscanner24.core.model.DeviceCategory
 import com.gamenuri.btscanner24.core.ui.R
 import com.gamenuri.btscanner24.core.ui.iconRes
@@ -82,14 +84,45 @@ fun SaveDeviceSheet(
     initialCategory: DeviceCategory,
     onSave: (name: String, category: DeviceCategory) -> Unit,
     onDismiss: () -> Unit,
+    /** Over the find screen: a light blue sheet with white controls instead of the dark card (#152). */
+    onFindScreen: Boolean = false,
 ) {
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-    ) {
-        SaveDeviceContent(initialName, initialCategory, onSave, onDismiss)
+    if (!onFindScreen) {
+        ModalBottomSheet(
+            onDismissRequest = onDismiss,
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        ) {
+            SaveDeviceContent(initialName, initialCategory, onSave, onDismiss)
+        }
+        return
+    }
+    val blue = NearoTheme.colors.findFar.background
+    val surface = lerp(blue, Color.White, FIND_SHEET_LIGHTEN)
+    val scheme = MaterialTheme.colorScheme.copy(
+        primary = Color.White,
+        onPrimary = blue,
+        primaryContainer = Color.White,
+        onPrimaryContainer = blue,
+        secondaryContainer = Color.White,
+        onSecondaryContainer = blue,
+        surface = surface,
+        onSurface = Color.White,
+        onSurfaceVariant = Color.White.copy(alpha = 0.8f),
+        outline = Color.White.copy(alpha = 0.7f),
+    )
+    MaterialTheme(colorScheme = scheme) {
+        ModalBottomSheet(
+            onDismissRequest = onDismiss,
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            containerColor = surface,
+            contentColor = Color.White,
+        ) {
+            SaveDeviceContent(initialName, initialCategory, onSave, onDismiss)
+        }
     }
 }
+
+private const val FIND_SHEET_LIGHTEN = 0.14f
 
 @Composable
 fun SaveDeviceContent(

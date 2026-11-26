@@ -5,7 +5,7 @@ package com.gamenuri.btscanner24
  * Release builds never produce one: their DemoMode always returns null.
  */
 internal data class DemoRequest(
-    /** "nearby", "devices", "find", "onboarding", "settings", "settings_premium" or "paywall". */
+    /** "nearby", "map", "devices", "find", "onboarding", "settings", "settings_premium" or "paywall". */
     val screen: String,
     /** Find-screen state for screen "find", e.g. "spin", "locked", "here". */
     val findState: String? = null,

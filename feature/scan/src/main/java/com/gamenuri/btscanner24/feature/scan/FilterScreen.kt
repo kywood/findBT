@@ -52,7 +52,9 @@ import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
 import com.gamenuri.btscanner24.core.model.CategoryGroup
 import com.gamenuri.btscanner24.core.model.DeviceFilter
 import com.gamenuri.btscanner24.core.model.DistanceBucket
+import com.gamenuri.btscanner24.core.model.DistanceUnit
 import com.gamenuri.btscanner24.core.model.SignalLevel
+import com.gamenuri.btscanner24.core.ui.LocalDistanceUnit
 import com.gamenuri.btscanner24.core.ui.R as UiR
 import com.gamenuri.btscanner24.core.ui.SignalBars
 import com.gamenuri.btscanner24.core.ui.label
@@ -144,7 +146,8 @@ internal fun FilterContent(
             ChipGroup(CategoryGroup.entries, draft.types, { it.label() }) { onChange(draft.copy(types = it)) }
 
             Section(R.string.filter_distance)
-            ChipGroup(DistanceBucket.entries, draft.distances, { stringResource(it.labelRes()) }) {
+            val feet = LocalDistanceUnit.current == DistanceUnit.FEET
+            ChipGroup(DistanceBucket.entries, draft.distances, { stringResource(it.labelRes(feet)) }) {
                 onChange(draft.copy(distances = it))
             }
 
@@ -310,10 +313,11 @@ private fun MakerChips(makers: List<MakerCount>, selected: Set<String>, onChange
     }
 }
 
-private fun DistanceBucket.labelRes(): Int = when (this) {
-    DistanceBucket.WITHIN_5_M -> R.string.filter_distance_within_5
-    DistanceBucket.FIVE_TO_TEN_M -> R.string.filter_distance_5_10
-    DistanceBucket.OVER_10_M -> R.string.filter_distance_over_10
+/** The buckets stay 5 and 10 m; in feet they read as the nearest round numbers, 15 and 30 ft (#83). */
+private fun DistanceBucket.labelRes(feet: Boolean): Int = when (this) {
+    DistanceBucket.WITHIN_5_M -> if (feet) R.string.filter_distance_within_15_ft else R.string.filter_distance_within_5
+    DistanceBucket.FIVE_TO_TEN_M -> if (feet) R.string.filter_distance_15_30_ft else R.string.filter_distance_5_10
+    DistanceBucket.OVER_10_M -> if (feet) R.string.filter_distance_over_30_ft else R.string.filter_distance_over_10
 }
 
 private fun SignalLevel.labelRes(): Int = when (this) {

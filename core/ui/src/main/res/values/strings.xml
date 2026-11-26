@@ -46,6 +46,10 @@
     <string name="device_distance_within_1">within 1 m</string>
     <string name="device_distance_5_to_10">~5–10 m</string>
     <string name="device_distance_over_10">10 m+</string>
+    <string name="device_distance_ft">~%1$s ft</string>
+    <string name="device_distance_within_3_ft">within 3 ft</string>
+    <string name="device_distance_15_to_30_ft">~15–30 ft</string>
+    <string name="device_distance_over_30_ft">30 ft+</string>
     <!-- Paywall (#32, design screens-rest-v3 §3) -->
     <string name="paywall_glyph_devices" translatable="false">∞</string>
     <string name="paywall_glyph_ads" translatable="false">⊘</string>
@@ -80,4 +84,14 @@
     <string name="save_locked_ad_used">Already used today</string>
     <string name="save_locked_later">Not now</string>
     <string name="device_more_for">More for %1$s</string>
+    <!-- Help when a device is not detected (#154). -->
+    <string name="help_not_detected_link">Device not showing up?</string>
+    <string name="help_not_detected_short">Help</string>
+    <string name="help_not_detected_title">When a device doesn\'t show up</string>
+    <string name="help_not_detected_case">Earbuds inside a closed case send no signal. Open the lid or take them out.</string>
+    <string name="help_not_detected_battery">A device that is switched off or has an empty battery sends no signal.</string>
+    <string name="help_not_detected_range">Bluetooth reaches about 10 m (30 ft) indoors, and less through walls. Start where you last used it and walk around slowly.</string>
+    <string name="help_not_detected_one_bud">Lost only one earbud? Put the one you still have in its case and close the lid, so only the lost one is picked up.</string>
+    <string name="help_not_detected_settings">Check that Bluetooth and Location are turned on in this phone\'s settings.</string>
+    <string name="help_not_detected_ok">Got it</string>
 </resources>

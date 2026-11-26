@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Protection mode and left-behind alerts (#163) -->
+    <string name="protection_title">Schutzmodus</string>
+    <string name="protection_back">Zurück</string>
+    <string name="protection_intro_headline">Achtet auf zurückgelassene Geräte und fremde Tracker</string>
+    <string name="protection_point_alert">Sagt dir Bescheid, wenn du dich von einem gespeicherten Gerät entfernst</string>
+    <string name="protection_point_notification">Solange er an ist, bleibt eine Benachrichtigung sichtbar</string>
+    <string name="protection_point_battery">Der Akkuverbrauch kann leicht steigen</string>
+    <string name="protection_point_privacy">Gerätedaten und Orte bleiben auf diesem Handy</string>
+    <string name="protection_turn_on">Schutzmodus einschalten</string>
+    <string name="protection_not_now">Nicht jetzt</string>
+    <string name="protection_permissions_needed">Erlaube die Berechtigungen, damit der Schutzmodus dich benachrichtigen kann</string>
+    <string name="protection_section_left_behind">Hinweise bei zurückgelassenen Geräten</string>
+    <string name="protection_no_devices">Speichere ein Gerät im Tab „In der Nähe“ oder kopple es mit dem Handy, dann erscheint es hier</string>
+    <string name="protection_footer">Der Akkuverbrauch kann leicht steigen. Gerätedaten und Orte bleiben auf diesem Handy.</string>
+    <string name="protection_channel_status">Status des Schutzmodus</string>
+    <string name="protection_channel_alerts">Hinweise bei zurückgelassenen Geräten</string>
+    <string name="protection_status_title">Schutzmodus ist an</string>
+    <string name="protection_status_none">Du hast noch keine Geräte ausgewählt</string>
+    <string name="protection_status_bluetooth_off">Bluetooth ist aus, Geräte können nicht beobachtet werden</string>
+    <string name="protection_status_location_off">Der Standort ist aus, Geräte können nicht beobachtet werden</string>
+    <string name="protection_status_cannot_scan">Die Suche konnte nicht starten, Geräte können nicht beobachtet werden</string>
+    <string name="protection_turn_off">Ausschalten</string>
+    <string name="protection_alert_title">Du hast %1$s vielleicht zurückgelassen</string>
+    <string name="protection_alert_text">Zuletzt erkannt um %1$s. Sieh nach, wo es zuletzt gesehen wurde.</string>
+    <string name="protection_alert_view">Letzten Ort ansehen</string>
+    <string name="protection_mute_hour">1 Stunde stumm</string>
+    <string name="protection_mute_today">Heute stumm</string>
+    <string name="protection_off_title">Schutzmodus ist aus</string>
+    <string name="protection_off_restart">Er wurde beim Neustart des Handys beendet. Tippe, um ihn wieder einzuschalten.</string>
+    <string name="protection_off_stopped">Android hat ihn beendet. Tippe, um ihn wieder einzuschalten.</string>
+    <string name="protection_turn_on_short">Einschalten</string>
+    <plurals name="protection_status_watching">
+        <item quantity="one">%d Gerät wird beobachtet</item>
+        <item quantity="other">%d Geräte werden beobachtet</item>
+    </plurals>
+    <!-- Unknown tracker detection (#79) -->
+    <string name="protection_point_tracker">Sagt dir Bescheid, wenn ein Tracker, der dir nicht gehört, sich länger mit dir bewegt</string>
+    <string name="protection_section_trackers">Tracker</string>
+    <string name="protection_tracker_setting">Fremde Tracker erkennen</string>
+    <string name="protection_tracker_test_feature">Testfunktion</string>
+    <string name="protection_tracker_how">Ob er sich mit dir bewegt, wird aus der Bewegung des Handys und der vergangenen Zeit geschlossen.</string>
+    <string name="protection_tracker_unavailable">Dieses Handy hat keinen Bewegungssensor, daher ist die Tracker-Erkennung nicht verfügbar</string>
+    <string name="protection_channel_trackers">Hinweise auf fremde Tracker</string>
+    <string name="protection_status_trackers_only">Achtet auf fremde Tracker</string>
+    <string name="protection_tracker_alert_title">Ein fremder Tracker bewegt sich vielleicht mit dir</string>
+    <string name="protection_tracker_details">Details ansehen</string>
+    <string name="protection_tracker_known">Ich kenne dieses Gerät</string>
+    <string name="protection_tracker_title">Fremder Tracker</string>
+    <string name="protection_tracker_last">Zuletzt erkannt um %1$s</string>
+    <string name="protection_tracker_first">Zuerst erkannt</string>
+    <string name="protection_tracker_duration">Zeit in Bewegung mit dir</string>
+    <string name="protection_tracker_type">Art</string>
+    <string name="protection_tracker_type_value">Tracker (vermutlich)</string>
+    <string name="protection_tracker_calm_title">Meist gehört er jemandem in der Nähe</string>
+    <string name="protection_tracker_calm_body">An belebten Orten wie im Bus oder im Café kann der Tracker einer anderen Person eine Weile auftauchen.</string>
+    <string name="protection_tracker_find">Suche starten</string>
+    <string name="protection_tracker_what">Was soll ich tun?</string>
+    <string name="protection_tracker_gone">Zu diesem Tracker ist nichts mehr gespeichert</string>
+    <string name="protection_help_title">Das kannst du tun</string>
+    <string name="protection_help_1_title">Zuerst danach suchen</string>
+    <string name="protection_help_1_body">Prüfe mit der Suchansicht deine Tasche, deine Kleidung und dein Auto.</string>
+    <string name="protection_help_2_title">Prüfen, ob er jemandem gehört, den du kennst</string>
+    <string name="protection_help_2_body">Gehört er jemandem aus der Familie oder deiner Begleitung, markiere ihn als bekannt. Dann gibt es keinen Hinweis mehr.</string>
+    <string name="protection_help_3_title">Wenn er dir nicht gehört, ausschalten</string>
+    <string name="protection_help_3_body">Die meisten Tracker gehen aus, wenn man die Batterie entfernt. Sieh in der Anleitung des Herstellers nach.</string>
+    <string name="protection_help_4_title">Wenn du dich unsicher fühlst, hol dir Hilfe</string>
+    <string name="protection_help_4_body">Geh an einen sicheren Ort und wende dich an die Polizei.</string>
+    <string name="protection_help_note">Ein Bluetooth-Signal allein verrät nicht, wem ein Tracker gehört.</string>
+    <plurals name="protection_status_watching_trackers">
+        <item quantity="one">Achtet auf %d Gerät und fremde Tracker</item>
+        <item quantity="other">Achtet auf %d Geräte und fremde Tracker</item>
+    </plurals>
+    <plurals name="protection_tracker_alert_text">
+        <item quantity="one">Seit %d Minute in der Nähe erkannt. Er kann jemandem aus der Familie oder deiner Begleitung gehören.</item>
+        <item quantity="other">Seit %d Minuten in der Nähe erkannt. Er kann jemandem aus der Familie oder deiner Begleitung gehören.</item>
+    </plurals>
+    <plurals name="protection_tracker_duration_value">
+        <item quantity="one">Etwa %d Min.</item>
+        <item quantity="other">Etwa %d Min.</item>
+    </plurals>
+</resources>

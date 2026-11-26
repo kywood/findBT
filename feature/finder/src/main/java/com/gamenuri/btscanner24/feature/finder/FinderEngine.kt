@@ -43,7 +43,7 @@ internal class FinderEngine(
     private var veryCloseSinceMs: Long? = null
     private var shownDistance: Double? = null
     private var listDistance: Double? = null
-    private var shownAtMs: Long = Long.MIN_VALUE
+    private var shownAtMs: Long? = null
     private var waitingSinceMs: Long = startMs
 
     /** @return true when the sighting belonged to the target. */
@@ -59,7 +59,13 @@ internal class FinderEngine(
         // Show the repository's per-device estimate when it has one, so the number matches the list (#21).
         listDistance = device.distanceMeters
         lastSightingMs = nowMs
-        rightHereSinceMs = if (newReading.band == ProximityBand.RIGHT_HERE) rightHereSinceMs ?: nowMs else null
+        // "Right here" once the screen says "within 1 m" and it holds (#198); a little further to leave it,
+        // so it does not flicker at the edge.
+        val shown = listDistance ?: newReading.distanceMeters
+        val wasHere = rightHereSinceMs != null
+        val here = newReading.band == ProximityBand.RIGHT_HERE ||
+            shown < if (wasHere) RIGHT_HERE_LEAVE_METERS else RIGHT_HERE_METERS
+        rightHereSinceMs = if (here) rightHereSinceMs ?: nowMs else null
         val close = newReading.band == ProximityBand.VERY_CLOSE || newReading.band == ProximityBand.RIGHT_HERE
         veryCloseSinceMs = if (close) veryCloseSinceMs ?: nowMs else null
         return true
@@ -137,7 +143,8 @@ internal class FinderEngine(
     /** The number changes at most once a second so it can be read while walking (design v3). */
     private fun shownDistance(nowMs: Long, latest: Double?): Double? {
         if (latest == null) return shownDistance
-        if (shownDistance == null || nowMs - shownAtMs >= DISTANCE_REFRESH_MS) {
+        val shownAt = shownAtMs
+        if (shownDistance == null || shownAt == null || nowMs - shownAt >= DISTANCE_REFRESH_MS) {
             shownDistance = latest
             shownAtMs = nowMs
         }
@@ -178,6 +185,8 @@ internal class FinderEngine(
         const val SIGNAL_LOST_MS = 8_000L
         const val NOT_FOUND_AFTER_MS = 10_000L
         const val RIGHT_HERE_HOLD_MS = 2_000L
+        const val RIGHT_HERE_METERS = 1.0
+        const val RIGHT_HERE_LEAVE_METERS = 1.3
         const val DISTANCE_REFRESH_MS = 1_000L
         const val CONFIRM_HINT_AFTER_MS = 15_000L
         const val TURN_AROUND_DEGREES = 135.0

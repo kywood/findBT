@@ -25,6 +25,9 @@ class ScanWatch(val silenceMs: Long = SILENCE_MS, val maxRunMs: Long = MAX_RUN_M
     companion object {
         const val SILENCE_MS = 12_000L
         const val MAX_RUN_MS = 20 * 60_000L
+
+        /** For a filtered scan silence is normal (the device is away); only the 30-minute rule applies. */
+        val FILTERED = ScanWatch(silenceMs = Long.MAX_VALUE / 2)
     }
 }
 
@@ -37,6 +40,8 @@ class ScanWatch(val silenceMs: Long = SILENCE_MS, val maxRunMs: Long = MAX_RUN_M
 fun BleScanner.scanContinuously(
     watch: ScanWatch = ScanWatch(),
     elapsed: () -> Long = SystemClock::elapsedRealtime,
+    /** The scan to keep alive; [BleScanner.watch] for the protection service's filtered one (#163). */
+    source: () -> Flow<ScanEvent> = { scan() },
 ): Flow<ScanEvent> = channelFlow {
     while (isActive) {
         val cooldown = startCooldownMillis()
@@ -45,7 +50,7 @@ fun BleScanner.scanContinuously(
         val lastResultAt = AtomicLong(startedAt)
         val failure = AtomicReference<ScanFailure?>(null)
         val run = launch {
-            scan().collect { event ->
+            source().collect { event ->
                 when (event) {
                     is ScanEvent.Result -> {
                         lastResultAt.set(elapsed())

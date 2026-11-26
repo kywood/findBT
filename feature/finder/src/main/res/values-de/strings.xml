@@ -3,7 +3,7 @@
     <string name="finder_close">Schließen</string>
     <string name="finder_found">Gefunden</string>
     <string name="finder_vibration">Vibration</string>
-    <string name="finder_spin_again">Noch einmal drehen</string>
+    <string name="finder_spin_again">Erneut drehen</string>
     <string name="finder_advanced">Erweitert</string>
     <string name="finder_direction_label">Ungefähre Richtung</string>
     <string name="finder_waiting_title">Suche nach dem Signal…</string>
@@ -24,6 +24,8 @@
     <string name="finder_signal_lost_body">Vor %1$d s gesehen · geh zurück, wo das Signal stärker war</string>
     <string name="finder_not_found_title">Signal nicht gefunden</string>
     <string name="finder_not_found_body">Geh näher heran oder prüfe, ob es eingeschaltet ist</string>
+    <string name="finder_connected_title">Mit diesem Handy verbunden</string>
+    <string name="finder_connected_body">Es ist in Bluetooth-Reichweite, etwa 10 m. Ein verbundenes Gerät sendet oft kein Signal zum Messen.</string>
     <string name="finder_bluetooth_off_title">Bluetooth ist aus</string>
     <string name="finder_bluetooth_off_body">Schalte Bluetooth ein und versuche es erneut</string>
     <string name="finder_location_off_title">Standort ist aus</string>
@@ -45,6 +47,7 @@
     <string name="finder_trend_farther">▼ Kälter</string>
     <string name="finder_trend_steady">Weiter so</string>
     <string name="finder_advanced_values">MAC %1$s · RSSI %2$s dBm (geglättet %3$s) · Kurs %4$s° · Peilung %5$s° · MAC-Wechsel %6$d · %7$d s</string>
+    <string name="finder_advanced_apple_find_my">Das ist ein „Wo ist?“-Signal von Apple. Es kann von AirPods, einem AirTag, einem iPhone oder einem anderen Apple-Gerät stammen.</string>
     <string name="finder_confirm_hint">Nicht sicher? Halte das Handy direkt daneben. Bei \"Genau hier\" hast du es.</string>
     <string name="found_title">Gefunden!</string>
     <string name="found_summary">%1$s · gefunden in %2$s</string>
@@ -62,4 +65,11 @@
     <string name="finder_sound_retry">Erneut versuchen</string>
     <string name="finder_sound_failed">Ton konnte nicht abgespielt werden. Geh näher heran und versuch es erneut.</string>
     <string name="finder_sound_not_supported">Dieses Gerät kann keinen Ton abspielen.</string>
+    <string name="finder_sound_ear_title">Trägst du sie gerade?</string>
+    <string name="finder_sound_ear_body">Auf diesem Gerät wird ein Ton abgespielt, erst leise, dann lauter. Wenn du oder jemand anderes es trägt, nimm es vorher ab.</string>
+    <string name="finder_sound_ear_confirm">Ton abspielen</string>
+    <string name="finder_sound_ear_cancel">Abbrechen</string>
+    <string name="finder_sound_louder">Lauter</string>
+    <string name="finder_sound_output_note">Es ist verbunden, aber der Ton läuft über eine andere Ausgabe. Wechsle die Ausgabe auf dieses Gerät, um dort einen Ton abzuspielen.</string>
+    <string name="finder_sound_output_button">Tonausgabe wechseln</string>
 </resources>

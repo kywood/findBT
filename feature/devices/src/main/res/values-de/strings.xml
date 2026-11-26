@@ -7,6 +7,8 @@
     <string name="devices_last_seen_now">Gerade eben gesehen</string>
     <string name="devices_last_seen_minutes">Zuletzt gesehen: vor %1$d Min.</string>
     <string name="devices_not_seen">Gekoppelt · noch nicht gesehen</string>
+    <string name="devices_connected">Mit diesem Handy verbunden</string>
+    <string name="devices_connected_no_distance">Mit diesem Handy verbunden · keine Entfernung, solange verbunden</string>
     <string name="devices_more_for">Mehr zu %1$s</string>
     <string name="devices_hide">Aus Liste ausblenden</string>
     <string name="devices_empty_title">Keine gekoppelten Geräte</string>
@@ -26,4 +28,25 @@
     <string name="devices_saved_edit">Name oder Typ ändern</string>
     <string name="devices_saved_remove">Aus Gespeicherten entfernen</string>
     <string name="devices_saved_not_seen">Gespeichert · noch nicht gesehen</string>
+    <!-- Last seen (#162) -->
+    <string name="devices_last_detected">Zuletzt gesehen · %1$s</string>
+    <string name="devices_last_detected_map">Zuletzt gesehen · %1$s · Karte ansehen</string>
+    <string name="last_seen_menu">Zuletzt gesehen</string>
+    <string name="last_seen_place">Wo dieses Telefon sein Signal zuletzt empfangen hat</string>
+    <string name="last_seen_open_map">In Karten öffnen</string>
+    <string name="last_seen_note">Hier hat dieses Telefon es zuletzt erkannt, nicht wo das Gerät jetzt ist. Der Standort bleibt auf diesem Telefon.</string>
+    <string name="last_seen_no_permission">Der Ort wurde nicht gespeichert, weil der Standortzugriff aus ist</string>
+    <string name="last_seen_no_fix">Der Ort konnte in dem Moment nicht gelesen werden</string>
+    <string name="last_seen_turn_on">Ortsaufzeichnung einschalten</string>
+    <string name="last_seen_find">Suche starten</string>
+    <string name="last_seen_no_map_app">Keine Karten-App gefunden</string>
+    <!-- Protection mode and left-behind alerts (#163) -->
+    <string name="devices_protection_menu">Schutzmodus</string>
+    <string name="devices_protection_off_title">Schutzmodus ist aus</string>
+    <string name="devices_protection_off_body">Hinweise bei zurückgelassenen Geräten und die Tracker-Erkennung sind pausiert</string>
+    <string name="devices_protection_turn_on">Einschalten</string>
+    <string name="devices_left_behind_title">%1$s · Vielleicht zurückgelassen</string>
+    <string name="devices_left_behind_body">Zuletzt erkannt: %1$s</string>
+    <string name="devices_left_behind_view">Letzten Ort ansehen</string>
+    <string name="devices_left_behind_mute">1 Stunde stumm</string>
 </resources>

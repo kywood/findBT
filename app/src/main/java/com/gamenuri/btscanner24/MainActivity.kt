@@ -2,6 +2,7 @@ package com.gamenuri.btscanner24
 
 import android.content.Context
 import android.content.ContextWrapper
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.content.res.Resources
@@ -23,7 +24,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
@@ -38,8 +43,12 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.gamenuri.btscanner24.core.ads.NearoAds
 import com.gamenuri.btscanner24.core.ble.BleScanner
+import com.gamenuri.btscanner24.core.data.DataDependenciesProvider
 import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
+import com.gamenuri.btscanner24.core.model.DistanceUnit
+import com.gamenuri.btscanner24.core.ui.LocalDistanceUnit
 import com.gamenuri.btscanner24.demo.DemoMode
+import com.gamenuri.btscanner24.feature.devices.LocalProtectionNudge
 import com.gamenuri.btscanner24.feature.finder.FINDER_EXIT_HOLD_MS
 import com.gamenuri.btscanner24.feature.finder.FindEntryCover
 import com.gamenuri.btscanner24.feature.finder.FinderScreen
@@ -50,15 +59,35 @@ import com.gamenuri.btscanner24.feature.onboarding.OnboardingActions
 import com.gamenuri.btscanner24.feature.onboarding.OnboardingContent
 import com.gamenuri.btscanner24.feature.onboarding.OnboardingPage
 import com.gamenuri.btscanner24.feature.onboarding.OnboardingScreen
+import com.gamenuri.btscanner24.feature.protection.Protection
+import com.gamenuri.btscanner24.feature.protection.ProtectionScreen
+import com.gamenuri.btscanner24.feature.protection.TrackerScreen
+import com.gamenuri.btscanner24.feature.scan.LocalNearbyMap
+import com.gamenuri.btscanner24.feature.scan.NearbyMapOptions
 import com.gamenuri.btscanner24.feature.settings.AppInfo
 import com.gamenuri.btscanner24.feature.settings.LicensesScreen
+import com.gamenuri.btscanner24.feature.settings.PlaceRecording
 import com.gamenuri.btscanner24.feature.settings.PrivacyOptions
 import com.gamenuri.btscanner24.feature.settings.RewardedOffer
 import com.gamenuri.btscanner24.feature.settings.SettingsScreen
 import java.util.Locale
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
+
+/** What a tapped protection notification asks the app to show (#163). */
+private data class ProtectionRequest(val open: String, val address: String?)
 
 class MainActivity : ComponentActivity() {
+    private val protectionRequest = MutableStateFlow<ProtectionRequest?>(null)
+
+    private fun readProtectionRequest(intent: Intent?) {
+        if (intent == null) return
+        val open = intent.getStringExtra(Protection.EXTRA_OPEN) ?: return
+        protectionRequest.value = ProtectionRequest(open, intent.getStringExtra(Protection.EXTRA_ADDRESS))
+        // Read once: turning the phone must not open it again.
+        intent.removeExtra(Protection.EXTRA_OPEN)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
@@ -67,6 +96,12 @@ class MainActivity : ComponentActivity() {
         val demo = DemoMode.request(intent)
         val app = application as BtScannerApp
         if (demo != null) app.demo = demo
+        if (demo == null) {
+            // Protection the user left on, whose service Android stopped, runs again from here (#163).
+            Protection.resumeIfOn(this)
+            readProtectionRequest(intent)
+            addOnNewIntentListener { readProtectionRequest(it) }
+        }
         val showOnboarding = demo == null && needsOnboarding(app)
         setContent {
             // Locale outside the theme, so locale-dependent typography (#75) follows demo languages too.
@@ -74,9 +109,19 @@ class MainActivity : ComponentActivity() {
                 NearoTheme {
                     val findState = demo?.findState
                     val onboardingPage = demo?.onboardingPage
+                    // Feet in the US, UK, Liberia and Myanmar until the user picks a unit in Settings (#83).
+                    val pickedUnit by app.appState.distanceUnit.collectAsStateWithLifecycle()
+                    val region = LocalConfiguration.current.locales[0].country
                     CompositionLocalProvider(
+                        LocalDistanceUnit provides (pickedUnit ?: DistanceUnit.forRegion(region)),
                         LocalArFindScene provides (demo?.arScene != false),
+                        LocalProtectionNudge provides (demo == null),
                         LocalFindScenePose provides (demo?.findState == null || demo.followPose),
+                        // `--es demo map` opens the Nearby tab on its 3D map, with the design's fixed view.
+                        LocalNearbyMap provides NearbyMapOptions(
+                            startOnMap = demo?.screen == "map",
+                            followPose = demo == null || demo.followPose,
+                        ),
                     ) {
                         when {
                             findState != null -> DemoMode.FindScreen(findState, onClose = ::finish)
@@ -90,6 +135,8 @@ class MainActivity : ComponentActivity() {
                                 startOnMyDevices = demo?.startOnMyDevices == true,
                                 openPaywall = demo?.openPaywall == true,
                                 onOnboardingDone = app.appState::setOnboardingDone,
+                                onDistanceUnit = app.appState::setDistanceUnit,
+                                protectionRequest = protectionRequest,
                             )
                         }
                     }
@@ -122,7 +169,14 @@ private fun DemoOnboarding(name: String) {
 }
 
 @Composable
-private fun AppNavHost(start: String, startOnMyDevices: Boolean, openPaywall: Boolean, onOnboardingDone: () -> Unit) {
+private fun AppNavHost(
+    start: String,
+    startOnMyDevices: Boolean,
+    openPaywall: Boolean,
+    onOnboardingDone: () -> Unit,
+    onDistanceUnit: (DistanceUnit) -> Unit,
+    protectionRequest: MutableStateFlow<ProtectionRequest?>,
+) {
     val navController = rememberNavController()
     // Where the last touch came down, 0..1 across the screen: the find screen's water starts there (#107).
     val tapX = remember { FloatArray(1) { 0.5f } }
@@ -134,6 +188,31 @@ private fun AppNavHost(start: String, startOnMyDevices: Boolean, openPaywall: Bo
     }
     // The find screen's water starts in the tap itself, over Home, before the navigation is done (#107).
     val findEntry = rememberFindEntryWater()
+    // "View" on the find screen's saved bar goes back to Home on the My devices tab (#152).
+    var myDevicesRequests by remember { mutableIntStateOf(0) }
+    // A tapped protection notification (#163, #79): the last-seen card on My devices, an unknown tracker's
+    // details, or the protection screen.
+    val asked by protectionRequest.collectAsStateWithLifecycle()
+    var lastSeenRequest by remember { mutableStateOf<String?>(null) }
+    var turnOnProtection by remember { mutableStateOf(false) }
+    LaunchedEffect(asked) {
+        val request = asked ?: return@LaunchedEffect
+        protectionRequest.value = null
+        val address = request.address
+        when {
+            request.open == Protection.OPEN_LAST_SEEN -> {
+                lastSeenRequest = address
+                myDevicesRequests++
+                navController.popBackStack(Routes.HOME, inclusive = false)
+            }
+            request.open == Protection.OPEN_TRACKER && address != null ->
+                navController.navigate(Routes.tracker(address)) { launchSingleTop = true }
+            else -> {
+                turnOnProtection = request.open == Protection.OPEN_TURN_ON
+                navController.navigate(Routes.PROTECTION) { launchSingleTop = true }
+            }
+        }
+    }
     val activity = LocalActivity.current
     val ads = remember(activity) { activity?.let { NearoAds.from(it) } }
     val rewardedReady by (ads?.rewardedReady ?: NoRewardedAd).collectAsStateWithLifecycle()
@@ -162,18 +241,39 @@ private fun AppNavHost(start: String, startOnMyDevices: Boolean, openPaywall: Bo
                         navController.navigate(Routes.finder(address)) { launchSingleTop = true }
                     },
                     onOpenSettings = { navController.navigate(Routes.SETTINGS) },
+                    onOpenProtection = {
+                        turnOnProtection = false
+                        navController.navigate(Routes.PROTECTION) { launchSingleTop = true }
+                    },
+                    lastSeenRequest = lastSeenRequest,
+                    onLastSeenRequestHandled = { lastSeenRequest = null },
                     startOnMyDevices = startOnMyDevices,
+                    myDevicesRequests = myDevicesRequests,
                     rewarded = ads?.let { nearoAds ->
                         RewardedAd(rewardedReady) { activity?.let { nearoAds.showRewarded(it) { } } }
                     },
                 )
             }
             composable(Routes.SETTINGS) {
+                val lastSeen = (LocalContext.current.applicationContext as DataDependenciesProvider).lastSeen
+                val recordsPlace by lastSeen.recordsPlace.collectAsStateWithLifecycle(initialValue = false)
+                val scope = rememberCoroutineScope()
                 SettingsScreen(
                     appInfo = buildAppInfo,
                     onBack = { if (!navController.popBackStack()) navController.navigate(Routes.HOME) },
                     onLicenses = { navController.navigate(Routes.LICENSES) },
+                    onDistanceUnit = onDistanceUnit,
                     openPaywall = openPaywall,
+                    placeRecording = PlaceRecording(
+                        isOn = recordsPlace,
+                        onTurnOn = { scope.launch { lastSeen.setRecordsPlace(true) } },
+                        onTurnOff = { deletePlaces ->
+                            scope.launch {
+                                lastSeen.setRecordsPlace(false)
+                                if (deletePlaces) lastSeen.forgetPlaces()
+                            }
+                        },
+                    ),
                     privacyOptions = ads?.let { nearoAds ->
                         PrivacyOptions(nearoAds.isPrivacyOptionsRequired) {
                             activity?.let(nearoAds::showPrivacyOptions)
@@ -183,6 +283,23 @@ private fun AppNavHost(start: String, startOnMyDevices: Boolean, openPaywall: Bo
                         RewardedOffer(rewardedReady) { onDayPass ->
                             activity?.let { nearoAds.showRewarded(it, onDayPass) }
                         }
+                    },
+                )
+            }
+            composable(Routes.PROTECTION) {
+                ProtectionScreen(
+                    onBack = { navController.popBackStack() },
+                    turnOnNow = turnOnProtection,
+                    onOpenTracker = { navController.navigate(Routes.tracker(it)) { launchSingleTop = true } },
+                )
+            }
+            composable(Routes.TRACKER) { entry ->
+                TrackerScreen(
+                    address = entry.arguments?.getString(Routes.ADDRESS_ARG).orEmpty(),
+                    onBack = { if (!navController.popBackStack()) navController.navigate(Routes.HOME) },
+                    onFind = { address ->
+                        findEntry.start(tapX[0])
+                        navController.navigate(Routes.finder(address)) { launchSingleTop = true }
                     },
                 )
             }
@@ -197,8 +314,20 @@ private fun AppNavHost(start: String, startOnMyDevices: Boolean, openPaywall: Bo
                 popExitTransition = { hold(FINDER_EXIT_HOLD_MS) },
             ) { entry ->
                 val entryTapX = remember { tapX[0] }
+                val address = entry.arguments?.getString(Routes.ADDRESS_ARG).orEmpty()
+                val save = rememberFinderSave(
+                    address = address,
+                    rewarded = ads?.let { nearoAds ->
+                        RewardedAd(rewardedReady) { activity?.let { nearoAds.showRewarded(it) { } } }
+                    },
+                    onView = {
+                        myDevicesRequests++
+                        navController.popBackStack()
+                    },
+                )
                 FinderScreen(
-                    address = entry.arguments?.getString(Routes.ADDRESS_ARG).orEmpty(),
+                    address = address,
+                    save = save,
                     onClose = { navController.popBackStack() },
                     // Full-screen ad only here, after a finished find, and only when the rules allow (#81 ③).
                     onFoundDone = { if (ads != null && activity != null) ads.onFoundDone(activity) },
@@ -269,8 +398,13 @@ private object Routes {
     const val HOME = "home"
     const val SETTINGS = "settings"
     const val LICENSES = "licenses"
+    const val PROTECTION = "protection"
     const val ADDRESS_ARG = "address"
     const val FINDER = "finder/{$ADDRESS_ARG}"
 
+    const val TRACKER = "tracker/{$ADDRESS_ARG}"
+
     fun finder(address: String) = "finder/${Uri.encode(address)}"
+
+    fun tracker(address: String) = "tracker/${Uri.encode(address)}"
 }

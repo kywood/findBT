@@ -5,18 +5,26 @@ import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.ScanCallback
+import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
 import android.content.Context
 import android.content.pm.PackageManager
 import android.location.LocationManager
 import android.os.Build
+import android.os.ParcelUuid
 import android.os.SystemClock
 import androidx.core.content.ContextCompat
 import androidx.core.location.LocationManagerCompat
+import com.gamenuri.btscanner24.core.model.TrackerSignal
+import com.gamenuri.btscanner24.core.model.TrackerSignals
+import java.util.Locale
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+
+/** One device a filtered scan listens for: by its address, by the name it advertises, or both. */
+data class WatchTarget(val address: String?, val name: String?)
 
 /**
  * Wraps the platform BLE scanner as a cold [Flow]. Collecting starts a scan,
@@ -29,7 +37,10 @@ open class BleScanner(context: Context) {
     private val adapter: BluetoothAdapter? =
         appContext.getSystemService(BluetoothManager::class.java)?.adapter
 
-    /** Start timestamps (elapsedRealtime) used to stay under the platform's 5-starts-per-30s limit. */
+    /**
+     * Start timestamps (elapsedRealtime) used to stay under the platform's 5-starts-per-30s limit.
+     * Scans start from more than one thread, so every access is synchronized on the list itself.
+     */
     private val recentStarts = ArrayDeque<Long>()
 
     open val isSupported: Boolean
@@ -53,16 +64,52 @@ open class BleScanner(context: Context) {
     }
 
     /** Milliseconds to wait before a new scan start is allowed, or 0 if it can start now. */
-    open fun startCooldownMillis(now: Long = SystemClock.elapsedRealtime()): Long {
+    open fun startCooldownMillis(now: Long = SystemClock.elapsedRealtime()): Long = synchronized(recentStarts) {
         while (recentStarts.isNotEmpty() && now - recentStarts.first() > START_WINDOW_MS) {
             recentStarts.removeFirst()
         }
-        if (recentStarts.size < MAX_STARTS_PER_WINDOW) return 0
-        return START_WINDOW_MS - (now - recentStarts.first()) + 500
+        if (recentStarts.size < MAX_STARTS_PER_WINDOW) {
+            0
+        } else {
+            START_WINDOW_MS - (now - recentStarts.first()) + 500
+        }
+    }
+
+    open fun scan(): Flow<ScanEvent> = results(filters = null, mode = ScanSettings.SCAN_MODE_LOW_LATENCY)
+
+    /**
+     * A low-power scan that only reports [targets] (#163) and, with [trackers], the tracker formats
+     * of [TrackerSignals] (#79). Unlike [scan] it keeps delivering with the screen off, which Android
+     * allows for filtered scans only. Nothing to listen for, no scan: the flow just stays open.
+     */
+    open fun watch(targets: Collection<WatchTarget>, trackers: Boolean = false): Flow<ScanEvent> {
+        val own = targets.flatMap { target ->
+            listOfNotNull(
+                target.address?.takeIf(BluetoothAdapter::checkBluetoothAddress)
+                    ?.let { ScanFilter.Builder().setDeviceAddress(it).build() },
+                target.name?.takeIf { it.isNotBlank() }?.let { ScanFilter.Builder().setDeviceName(it).build() },
+            )
+        }
+        val filters = if (trackers) own + TrackerSignals.all.map(::filterFor) else own
+        if (filters.isEmpty()) return callbackFlow { awaitClose { } }
+        return results(filters, ScanSettings.SCAN_MODE_LOW_POWER)
+    }
+
+    private fun filterFor(signal: TrackerSignal): ScanFilter {
+        val builder = ScanFilter.Builder()
+        val companyId = signal.companyId
+        val serviceData = signal.serviceData16
+        val service = signal.serviceUuid16
+        when {
+            companyId != null -> builder.setManufacturerData(companyId, signal.prefix, signal.mask)
+            serviceData != null -> builder.setServiceData(parcelUuid16(serviceData), signal.prefix, signal.mask)
+            service != null -> builder.setServiceUuid(parcelUuid16(service))
+        }
+        return builder.build()
     }
 
     @SuppressLint("MissingPermission") // checked by hasScanPermission()
-    open fun scan(): Flow<ScanEvent> = callbackFlow {
+    private fun results(filters: List<ScanFilter>?, mode: Int): Flow<ScanEvent> = callbackFlow {
         val failure = when {
             !isSupported -> ScanFailure.NOT_SUPPORTED
             !hasScanPermission() -> ScanFailure.PERMISSION_MISSING
@@ -98,12 +145,12 @@ open class BleScanner(context: Context) {
         }
 
         val settings = ScanSettings.Builder()
-            .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+            .setScanMode(mode)
             .build()
 
         try {
-            recentStarts.addLast(SystemClock.elapsedRealtime())
-            scanner.startScan(null, settings, callback)
+            synchronized(recentStarts) { recentStarts.addLast(SystemClock.elapsedRealtime()) }
+            scanner.startScan(filters, settings, callback)
         } catch (e: SecurityException) {
             trySend(ScanEvent.Failed(ScanFailure.PERMISSION_MISSING))
             close()
@@ -123,6 +170,21 @@ open class BleScanner(context: Context) {
     }
 
     companion object {
+        /** A 16-bit Bluetooth SIG UUID in its full form. */
+        fun parcelUuid16(uuid16: Int): ParcelUuid =
+            ParcelUuid.fromString(String.format(Locale.US, "0000%04x-0000-1000-8000-00805f9b34fb", uuid16))
+
+        /** Whether [result] is one of the tracker formats unknown-tracker detection listens for (#79). */
+        fun isTracker(result: ScanResult): Boolean {
+            val record = result.scanRecord ?: return false
+            return TrackerSignals.matches(
+                makerData = { record.getManufacturerSpecificData(it) },
+                serviceData = { record.getServiceData(parcelUuid16(it)) },
+                serviceUuids16 = TrackerSignals.all.mapNotNull { it.serviceUuid16 }
+                    .filter { record.serviceUuids?.contains(parcelUuid16(it)) == true },
+            )
+        }
+
         private const val START_WINDOW_MS = 30_000L
         private const val MAX_STARTS_PER_WINDOW = 5
 

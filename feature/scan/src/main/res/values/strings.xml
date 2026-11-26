@@ -30,6 +30,9 @@
     <string name="filter_distance_within_5">Within 5 m</string>
     <string name="filter_distance_5_10">5–10 m</string>
     <string name="filter_distance_over_10">10 m+</string>
+    <string name="filter_distance_within_15_ft">Within 15 ft</string>
+    <string name="filter_distance_15_30_ft">15–30 ft</string>
+    <string name="filter_distance_over_30_ft">30 ft+</string>
     <string name="filter_signal">Signal</string>
     <string name="filter_maker">Maker</string>
     <string name="filter_maker_count">%1$s %2$d</string>
@@ -76,4 +79,21 @@
     <string name="filter_active_description">Filter, %1$d applied</string>
     <string name="home_reorder_chip">↑ New order · Sort</string>
     <string name="home_reorder_chip_description">List order changed. Tap to sort.</string>
+    <!-- Device map (#86) -->
+    <string name="map_arranged_by_distance">Arranged by distance</string>
+    <string name="map_direction_measured">Direction measured</string>
+    <string name="map_scanning">Scanning</string>
+    <string name="map_empty_title">No devices nearby</string>
+    <string name="map_empty_body">Turn on a Bluetooth device and bring it closer</string>
+    <string name="map_find">Find</string>
+    <string name="map_pin_label">%1$s · %2$s</string>
+    <string name="map_step_near">1 m</string>
+    <string name="map_step_mid">5 m</string>
+    <string name="map_step_far">10 m+</string>
+    <string name="map_step_near_ft">3 ft</string>
+    <string name="map_step_mid_ft">15 ft</string>
+    <string name="map_step_far_ft">30 ft+</string>
+    <string name="map_unavailable">This phone cannot draw the 3D map. The list below shows the same devices.</string>
+    <string name="map_view_list">List</string>
+    <string name="map_view_map">Map</string>
 </resources>

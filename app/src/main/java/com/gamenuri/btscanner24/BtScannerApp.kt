@@ -5,21 +5,36 @@ import com.gamenuri.btscanner24.core.ads.AdUnits
 import com.gamenuri.btscanner24.core.ads.InterstitialPolicy
 import com.gamenuri.btscanner24.core.ads.NearoAds
 import com.gamenuri.btscanner24.core.billing.DayPassPremiumStore
+import com.gamenuri.btscanner24.core.billing.NoSalePremiumStore
 import com.gamenuri.btscanner24.core.billing.PlayPremiumStore
 import com.gamenuri.btscanner24.core.billing.PremiumStore
 import com.gamenuri.btscanner24.core.ble.BleDependencies
 import com.gamenuri.btscanner24.core.ble.BleScanner
 import com.gamenuri.btscanner24.core.ble.BondedDevices
 import com.gamenuri.btscanner24.core.ble.CompanyDirectory
+import com.gamenuri.btscanner24.core.ble.ConnectedDevices
 import com.gamenuri.btscanner24.core.ble.DeviceRepository
+import com.gamenuri.btscanner24.core.ble.MediaFindTone
 import com.gamenuri.btscanner24.core.data.AppStateRepository
 import com.gamenuri.btscanner24.core.data.DataDependenciesProvider
 import com.gamenuri.btscanner24.core.data.HiddenDevicesRepository
+import com.gamenuri.btscanner24.core.data.LastSeenRecorder
+import com.gamenuri.btscanner24.core.data.LastSeenRepository
 import com.gamenuri.btscanner24.core.data.ListPreferencesRepository
+import com.gamenuri.btscanner24.core.data.ProtectionRepository
 import com.gamenuri.btscanner24.core.data.SavedDevicesRepository
+import com.gamenuri.btscanner24.core.model.LastSeen
+import com.gamenuri.btscanner24.core.sensors.PhoneLocation
 import com.gamenuri.btscanner24.demo.DemoMode
 import com.gamenuri.btscanner24.demo.ScanCensus
 import kotlin.concurrent.thread
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 
 class BtScannerApp :
     Application(),
@@ -40,7 +55,12 @@ class BtScannerApp :
             scanner = BleScanner(this),
             repository = DeviceRepository(companies),
             bondedDevices = BondedDevices(this),
-        ).also { ScanCensus.start(it.repository) }
+            connectedDevices = ConnectedDevices(this),
+            mediaFindTone = if (BuildConfig.EARBUD_TONE) MediaFindTone(this) else null,
+        ).also {
+            ScanCensus.start(it.repository)
+            startLastSeenRecorder(it)
+        }
     }
 
     override fun onCreate() {
@@ -59,6 +79,41 @@ class BtScannerApp :
     override val savedDevices: SavedDevicesRepository
         get() = if (demo != null) demoSavedDevices else userSavedDevices
 
+    private val userLastSeen by lazy { LastSeenRepository(this) }
+    private val demoLastSeen by lazy { LastSeenRepository(this, demo = true) }
+
+    override val lastSeen: LastSeenRepository
+        get() = if (demo != null) demoLastSeen else userLastSeen
+
+    override val protection: ProtectionRepository by lazy { ProtectionRepository(this) }
+
+    private var lastSeenRecorder: Job? = null
+
+    /**
+     * Starts writing down where the user's own devices were last heard (#162), with the real Bluetooth
+     * objects, so never in a demo launch. That is when a screen first needs them, or when Android
+     * brings the protection service back without a screen (#163). It only listens to scans that run
+     * anyway: the screens' own, and the protection service's while the user has that on.
+     */
+    private fun startLastSeenRecorder(ble: BleDependencies) {
+        if (lastSeenRecorder != null) return
+        val location = PhoneLocation(this)
+        val bonded = ble.bondedDevices
+        val store = userLastSeen
+        val recorder = LastSeenRecorder(
+            seen = ble.repository.devices.map { it.values },
+            paired = { if (bonded.isReadable) bonded.list() else null },
+            saved = userSavedDevices.saved,
+            store = store,
+            // Only once the user turned place recording on (#178), and never closer than about 100 m.
+            locate = {
+                val fix = if (store.recordsPlace.first()) location.current() else null
+                fix?.let { LastSeen.Place.coarse(it.latitude, it.longitude, it.accuracyMeters) }
+            },
+        )
+        lastSeenRecorder = CoroutineScope(SupervisorJob() + Dispatchers.Default).launch { recorder.run() }
+    }
+
     val appState: AppStateRepository by lazy { AppStateRepository(this) }
 
     // Connects to Google Play only when a screen first asks (Settings, paywall), not at start-up (#34).
@@ -66,6 +121,8 @@ class BtScannerApp :
     override val premium: PremiumStore by lazy {
         val demoStore = DemoMode.premium()
         when {
+            // 2.0 sells nothing (#205): only the rewarded ad's 24 h without ads, demo shots included.
+            !BuildConfig.PREMIUM_PURCHASE -> DayPassPremiumStore(this, NoSalePremiumStore())
             demoStore == null -> DayPassPremiumStore(this, PlayPremiumStore(this))
             // Demo with test ads: the rewarded ad's day pass works there too.
             demo?.showAds == true -> DayPassPremiumStore(this, demoStore)
@@ -86,12 +143,14 @@ class BtScannerApp :
         )
     }
 
-    private fun adUnits(): AdUnits {
-        val test = AdUnits.TEST
-        return AdUnits(
-            banner = BuildConfig.ADMOB_BANNER.ifBlank { test.banner },
-            interstitial = BuildConfig.ADMOB_INTERSTITIAL.ifBlank { test.interstitial },
-            rewarded = BuildConfig.ADMOB_REWARDED.ifBlank { test.rewarded },
-        )
-    }
+    /**
+     * As the build was given them: real units in a release, which does not build without them (#35),
+     * and Google's test units in debug and benchmark builds. No fallback here, so a test ID can never
+     * reach a release through this code.
+     */
+    private fun adUnits(): AdUnits = AdUnits(
+        banner = BuildConfig.ADMOB_BANNER,
+        interstitial = BuildConfig.ADMOB_INTERSTITIAL,
+        rewarded = BuildConfig.ADMOB_REWARDED,
+    )
 }

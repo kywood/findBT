@@ -24,7 +24,7 @@ import kotlin.math.sqrt
  * The scene is heading-relative: −Z is where the phone points, +X its right, +Y up. All easing
  * happens here on the GL thread, so the UI thread only sets targets in [SceneState].
  */
-internal class SceneRenderer(private val mesh: FloatArray, private val state: SceneState) {
+internal class SceneRenderer(private val mesh: FloatArray, private val state: SceneState) : GlScene {
     private val puck = DiscMesh.build(PUCK_RADIUS, PUCK_THICKNESS, PUCK_BEVEL)
     private val medal = DiscMesh.build(MEDAL_RADIUS, MEDAL_THICKNESS, MEDAL_BEVEL)
     private val ball = BallMesh.build(BALL_RADIUS)
@@ -117,7 +117,7 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
     private val ballModel = FloatArray(16)
     private val pedestalModel = FloatArray(16)
 
-    fun onSurfaceCreated() {
+    override fun onSurfaceCreated() {
         arrowProgram = program(ARROW_VERTEX, ARROW_FRAGMENT)
         flatProgram = program(FLAT_VERTEX, FLAT_FRAGMENT)
         modelProgram = program(MODEL_VERTEX, MODEL_FRAGMENT)
@@ -166,13 +166,13 @@ internal class SceneRenderer(private val mesh: FloatArray, private val state: Sc
         GLES20.glBlendFunc(GLES20.GL_ONE, GLES20.GL_ONE_MINUS_SRC_ALPHA)
     }
 
-    fun onSurfaceChanged(width: Int, height: Int) {
+    override fun onSurfaceChanged(width: Int, height: Int) {
         GLES20.glViewport(0, 0, width, height)
         viewportWidth = width.coerceAtLeast(1).toFloat()
         viewportHeight = height.coerceAtLeast(1).toFloat()
     }
 
-    fun draw(deltaSeconds: Float) {
+    override fun draw(deltaSeconds: Float) {
         syncModel()
         val yaw = advance(deltaSeconds.coerceIn(0f, MAX_STEP_SECONDS))
         camera()

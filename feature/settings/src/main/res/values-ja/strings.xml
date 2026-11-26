@@ -15,7 +15,17 @@
     <string name="settings_restore_ok">プレミアムを復元しました</string>
     <string name="settings_restore_none">復元できる購入はありません</string>
     <string name="settings_restore_failed">Google Play に接続できませんでした。しばらくしてからもう一度お試しください。</string>
+    <string name="settings_section_display">表示</string>
+    <string name="settings_distance_unit">距離の単位</string>
+    <string name="settings_distance_unit_meters">メートル</string>
+    <string name="settings_distance_unit_feet">フィート</string>
     <string name="settings_section_privacy">プライバシー</string>
+    <string name="settings_place_recording">最後の場所を記録</string>
+    <string name="settings_place_recording_body">デバイスを最後に検出したおおよその場所を、このスマートフォンにだけ保存します</string>
+    <string name="settings_place_off_title">保存した場所も削除しますか?</string>
+    <string name="settings_place_off_body">どちらを選んでも記録はオフになります。最後に検出した時刻は残ります。</string>
+    <string name="settings_place_off_delete">場所を削除</string>
+    <string name="settings_place_off_keep">場所を残す</string>
     <string name="settings_privacy_options">プライバシー設定</string>
     <string name="settings_privacy_options_body">広告の同意</string>
     <string name="settings_privacy_policy">プライバシーポリシー</string>
@@ -24,4 +34,11 @@
     <string name="settings_licenses">オープンソースライセンス</string>
     <string name="settings_version">バージョン</string>
     <string name="settings_opens_outside">アプリの外で開きます</string>
+    <!-- 2.0 sells nothing (#205): the rewarded ad gives 24 hours without ads. -->
+    <string name="settings_ad_free_title">24時間広告なし</string>
+    <string name="settings_ad_free_body">広告を1本（約30秒）最後まで見ると、24時間広告が表示されません。</string>
+    <string name="settings_ad_free_watch">広告を見る</string>
+    <string name="settings_ad_free_on_title">24時間広告なし</string>
+    <string name="settings_ad_free_on">%1$sまで広告なし</string>
+    <string name="settings_ad_free_used">今日はもう使いました。明日また見られます。</string>
 </resources>
