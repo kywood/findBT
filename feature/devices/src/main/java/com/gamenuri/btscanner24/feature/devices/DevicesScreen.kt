@@ -574,8 +574,9 @@ private fun subtitle(item: MyDeviceItem, now: Long): String {
                 ?: item.paired.category.label()
         }
         // Not here now, but heard before, in this session or an earlier one (#162).
+        // Not heard this session at all counts too; Long.MIN_VALUE minus the slack used to wrap round.
         record != null &&
-            record.seenAt >= (sighting?.lastSeen ?: Long.MIN_VALUE) - RECORD_SLACK_MS &&
+            (sighting == null || record.seenAt >= sighting.lastSeen - RECORD_SLACK_MS) &&
             now - record.seenAt >= RECORD_SHOWN_AFTER_MS -> stringResource(
             if (record.place != null) R.string.devices_last_detected_map else R.string.devices_last_detected,
             lastSeenTime(LocalContext.current, record.seenAt, now),
