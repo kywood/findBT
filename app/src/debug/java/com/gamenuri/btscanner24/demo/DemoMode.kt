@@ -41,11 +41,18 @@ internal object DemoMode {
     fun request(intent: Intent): DemoRequest? {
         val screen = intent.getStringExtra(EXTRA_SCREEN) ?: return null
         active = true
+        val locale = intent.getStringExtra(EXTRA_LOCALE)
+        // Korean names for the KO store set (#14); the scan list may already hold the English ones.
+        val korean = locale?.startsWith("ko") == true
+        if (korean != DemoData.korean) {
+            DemoData.korean = korean
+            demoRepository?.replaceAll(DemoData.devices(System.currentTimeMillis()))
+        }
         premiumBought = screen == "settings_premium"
         return DemoRequest(
             screen = screen,
             findState = intent.getStringExtra(EXTRA_FIND),
-            locale = intent.getStringExtra(EXTRA_LOCALE),
+            locale = locale,
             onboardingPage = intent.getStringExtra(EXTRA_ONBOARDING),
             arScene = intent.getBooleanExtra(EXTRA_AR, true),
             showAds = intent.getBooleanExtra(EXTRA_ADS, false),
@@ -56,6 +63,7 @@ internal object DemoMode {
     fun dependencies(app: Application): BleDependencies {
         val repository = DeviceRepository(CompanyDirectory(app))
         repository.replaceAll(DemoData.devices(System.currentTimeMillis()))
+        demoRepository = repository
         return BleDependencies(
             scanner = DemoScanner(app),
             repository = repository,
@@ -88,7 +96,7 @@ internal object DemoMode {
         )
         if (state == "save_sheet") {
             SaveDeviceSheet(
-                initialName = "Keys Tag",
+                initialName = DemoData.local("Keys Tag"),
                 initialCategory = DeviceCategory.TRACKER,
                 onSave = { _, _ -> },
                 onDismiss = {},
@@ -102,6 +110,9 @@ internal object DemoMode {
 
     /** Set by MainActivity when a demo intent arrives. */
     var active: Boolean = false
+
+    /** The demo's device list, refilled when the demo's language changes the names. */
+    private var demoRepository: DeviceRepository? = null
 
     private var premiumBought = false
 
