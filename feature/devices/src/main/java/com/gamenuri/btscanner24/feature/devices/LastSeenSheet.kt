@@ -5,6 +5,11 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.icu.text.RelativeDateTimeFormatter
+import android.icu.text.RelativeDateTimeFormatter.AbsoluteUnit
+import android.icu.text.RelativeDateTimeFormatter.Direction
+import android.icu.text.RelativeDateTimeFormatter.RelativeUnit
+import android.icu.util.ULocale
 import android.net.Uri
 import android.text.format.DateUtils
 import android.widget.Toast
@@ -33,6 +38,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.gamenuri.btscanner24.core.model.LastSeen
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import java.util.Locale
 
 /**
@@ -129,14 +138,27 @@ internal fun LastSeenSheet(
 /** Whether the user turned place recording on, and how they do. */
 internal class PlaceRecording(val isOn: Boolean = false, val onTurnOn: () -> Unit = {})
 
-/** "3 min. ago", "Yesterday, 6:12 PM": the system's own wording in the app's language. */
-internal fun lastSeenTime(context: Context, seenAt: Long, now: Long): String =
-    if (now - seenAt < DateUtils.DAY_IN_MILLIS) {
-        DateUtils.getRelativeTimeSpanString(seenAt, now, DateUtils.MINUTE_IN_MILLIS).toString()
-    } else {
-        DateUtils.getRelativeDateTimeString(context, seenAt, DateUtils.DAY_IN_MILLIS, DateUtils.WEEK_IN_MILLIS, 0)
-            .toString()
+/**
+ * "2 hours ago", "Nov 24, 6:12 PM", in the app's language. DateUtils' relative wording follows the
+ * phone's language instead, so an app set to English on a Korean phone read "2시간 전" (#162).
+ */
+internal fun lastSeenTime(context: Context, seenAt: Long, now: Long): String {
+    val locale = context.resources.configuration.locales[0]
+    val ago = (now - seenAt).coerceAtLeast(0L)
+    if (ago >= DateUtils.DAY_IN_MILLIS) {
+        val time = Instant.ofEpochMilli(seenAt).atZone(ZoneId.systemDefault())
+        val format = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT)
+        return format.withLocale(locale).format(time)
     }
+    val words = RelativeDateTimeFormatter.getInstance(ULocale.forLocale(locale))
+    val hours = ago / DateUtils.HOUR_IN_MILLIS
+    val minutes = ago / DateUtils.MINUTE_IN_MILLIS
+    return when {
+        hours > 0 -> words.format(hours.toDouble(), Direction.LAST, RelativeUnit.HOURS)
+        minutes > 0 -> words.format(minutes.toDouble(), Direction.LAST, RelativeUnit.MINUTES)
+        else -> words.format(Direction.PLAIN, AbsoluteUnit.NOW)
+    }
+}
 
 private fun Context.hasLocationAccess(): Boolean =
     listOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION).any {
