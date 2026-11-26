@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Above the one banner (#204): says it is an ad, not a row of the list. -->
+    <string name="ad_label">광고</string>
+</resources>

@@ -123,8 +123,9 @@ fun HomeScreen(
         snackbarHost = { SnackbarHost(snackbar) },
         bottomBar = {
             Column(Modifier.background(barColor)) {
-                // Anchored banner right above the tabs; no height until an ad may show (#81 ①).
-                AdBanner()
+                // The one banner, right above the tabs; no height until an ad may show (#81 ①). Never
+                // over the 3D map (#204 option A). Option B, no banner at all, is removing this line.
+                if (!onBlue) AdBanner()
                 NavigationBar(containerColor = barColor) {
                     HomeTab.entries.forEach { item ->
                         NavigationBarItem(
