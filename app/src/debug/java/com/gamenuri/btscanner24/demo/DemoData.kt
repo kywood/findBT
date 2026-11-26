@@ -4,9 +4,11 @@ import com.gamenuri.btscanner24.core.ble.proximity.ProximityBand
 import com.gamenuri.btscanner24.core.ble.proximity.ProximityTrend
 import com.gamenuri.btscanner24.core.model.BleDevice
 import com.gamenuri.btscanner24.core.model.DeviceCategory
+import com.gamenuri.btscanner24.core.model.LastSeen
 import com.gamenuri.btscanner24.core.model.DeviceLabel
 import com.gamenuri.btscanner24.core.model.NameSource
 import com.gamenuri.btscanner24.core.model.PairedDevice
+import com.gamenuri.btscanner24.core.model.SavedDevice
 import com.gamenuri.btscanner24.feature.finder.AdvancedInfo
 import com.gamenuri.btscanner24.feature.finder.ArrowConfidence
 import com.gamenuri.btscanner24.feature.finder.FinderStage
@@ -34,6 +36,7 @@ internal object DemoData {
         "My Car" to "내 차",
         "Work Laptop" to "업무용 노트북",
         "Gym Band" to "운동 밴드",
+        "Wallet Tag" to "지갑 태그",
     )
 
     /** [name] in the demo's language. */
@@ -57,6 +60,21 @@ internal object DemoData {
         Fake("Bathroom Scale", DeviceCategory.HEALTH, 11.0),
         Fake(null, DeviceCategory.SENSOR, 13.0),
     )
+
+    /** A saved device that is not around: My devices shows when it was last seen (#162). */
+    fun savedAway(now: Long): SavedDevice = SavedDevice(
+        address = SAVED_AWAY_ADDRESS,
+        name = local("Wallet Tag"),
+        category = DeviceCategory.TRACKER,
+        advertisedName = null,
+        savedAt = now - 3 * DAY_MS,
+    )
+
+    /** Heard two hours ago, with no place: the demo never shows a real location. */
+    fun savedAwaySeen(now: Long): LastSeen = LastSeen(SAVED_AWAY_ADDRESS, now - 2 * HOUR_MS)
+
+    private const val SAVED_AWAY_ADDRESS = "DE:00:00:00:00:E1"
+    private const val HOUR_MS = 60 * 60 * 1_000L
 
     private fun address(index: Int) = "DE:00:00:00:00:%02X".format(index + 1)
 
