@@ -45,7 +45,7 @@ object TrackerAlertCodec {
 class TrackerWatch {
     private class Track(var lastHeardAt: Long) {
         var firstMovingAt: Long? = null
-        var lastMovingAt: Long = Long.MIN_VALUE
+        var lastMovingAt: Long? = null
         val trips = HashSet<Int>()
         var alerted = false
     }
@@ -100,7 +100,7 @@ class TrackerWatch {
             when {
                 track.alerted || address in known || first == null -> null
                 track.trips.size < MIN_TRIPS -> null
-                track.lastMovingAt - first < MIN_SPAN_MS -> null
+                (track.lastMovingAt ?: first) - first < MIN_SPAN_MS -> null
                 now - track.lastHeardAt > HERE_MS -> null
                 else -> TrackerAlert(address, first, track.lastHeardAt).also { track.alerted = true }
             }

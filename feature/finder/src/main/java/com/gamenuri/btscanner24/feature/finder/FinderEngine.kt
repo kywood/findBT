@@ -43,7 +43,7 @@ internal class FinderEngine(
     private var veryCloseSinceMs: Long? = null
     private var shownDistance: Double? = null
     private var listDistance: Double? = null
-    private var shownAtMs: Long = Long.MIN_VALUE
+    private var shownAtMs: Long? = null
     private var waitingSinceMs: Long = startMs
 
     /** @return true when the sighting belonged to the target. */
@@ -143,7 +143,8 @@ internal class FinderEngine(
     /** The number changes at most once a second so it can be read while walking (design v3). */
     private fun shownDistance(nowMs: Long, latest: Double?): Double? {
         if (latest == null) return shownDistance
-        if (shownDistance == null || nowMs - shownAtMs >= DISTANCE_REFRESH_MS) {
+        val shownAt = shownAtMs
+        if (shownDistance == null || shownAt == null || nowMs - shownAt >= DISTANCE_REFRESH_MS) {
             shownDistance = latest
             shownAtMs = nowMs
         }

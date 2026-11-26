@@ -2,6 +2,7 @@ package com.gamenuri.btscanner24.feature.devices
 
 import com.gamenuri.btscanner24.core.model.BleDevice
 import com.gamenuri.btscanner24.core.model.DeviceCategory
+import com.gamenuri.btscanner24.core.model.LastSeen
 import com.gamenuri.btscanner24.core.model.PairedDevice
 import com.gamenuri.btscanner24.core.model.SavedDevice
 import org.junit.Assert.assertEquals
@@ -138,5 +139,21 @@ class MyDevicesTest {
             connected = setOf(buds.address),
         ) { 2.0 }
         assertEquals(2.0, state.nearby.single().distanceMeters!!, 0.0)
+    }
+
+    @Test
+    fun `last seen shows for a device not heard in this run`() {
+        val hour = 60 * 60_000L
+        val record = LastSeen(buds.address, seenAt = 10 * hour)
+        assertTrue(MyDevices.showsLastSeen(record, heardAt = null, now = 12 * hour))
+    }
+
+    @Test
+    fun `last seen waits an hour and gives way to a newer sighting`() {
+        val hour = 60 * 60_000L
+        val record = LastSeen(buds.address, seenAt = 10 * hour)
+        assertFalse(MyDevices.showsLastSeen(record, heardAt = null, now = 10 * hour + 59 * 60_000L))
+        assertFalse(MyDevices.showsLastSeen(record, heardAt = 11 * hour, now = 12 * hour))
+        assertTrue(MyDevices.showsLastSeen(record, heardAt = 10 * hour + 60_000L, now = 12 * hour))
     }
 }

@@ -574,10 +574,7 @@ private fun subtitle(item: MyDeviceItem, now: Long): String {
                 ?: item.paired.category.label()
         }
         // Not here now, but heard before, in this session or an earlier one (#162).
-        // Not heard this session at all counts too; Long.MIN_VALUE minus the slack used to wrap round.
-        record != null &&
-            (sighting == null || record.seenAt >= sighting.lastSeen - RECORD_SLACK_MS) &&
-            now - record.seenAt >= RECORD_SHOWN_AFTER_MS -> stringResource(
+        record != null && MyDevices.showsLastSeen(record, sighting?.lastSeen, now) -> stringResource(
             if (record.place != null) R.string.devices_last_detected_map else R.string.devices_last_detected,
             lastSeenTime(LocalContext.current, record.seenAt, now),
         )
@@ -593,12 +590,6 @@ private fun subtitle(item: MyDeviceItem, now: Long): String {
         }
     }
 }
-
-/** The kept record is written at most once a minute, so it may trail the live sighting by that much. */
-private const val RECORD_SLACK_MS = 2 * 60_000L
-
-/** Up to here "Last seen: n min" from the live scan reads better than a date. */
-private const val RECORD_SHOWN_AFTER_MS = 60 * 60_000L
 
 @Composable
 private fun signalLabel(level: SignalLevel): String = stringResource(
