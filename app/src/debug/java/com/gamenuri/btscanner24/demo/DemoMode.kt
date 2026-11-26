@@ -17,6 +17,8 @@ import com.gamenuri.btscanner24.core.ble.ConnectedDevices
 import com.gamenuri.btscanner24.core.ble.DeviceRepository
 import com.gamenuri.btscanner24.core.ble.ScanEvent
 import com.gamenuri.btscanner24.core.ble.WatchTarget
+import com.gamenuri.btscanner24.core.data.LastSeenRepository
+import com.gamenuri.btscanner24.core.data.SavedDevicesRepository
 import com.gamenuri.btscanner24.core.model.DeviceCategory
 import com.gamenuri.btscanner24.core.model.PairedDevice
 import com.gamenuri.btscanner24.core.ui.save.SaveDeviceSheet
@@ -24,12 +26,15 @@ import com.gamenuri.btscanner24.feature.finder.FinderActions
 import com.gamenuri.btscanner24.feature.finder.FinderContent
 import com.gamenuri.btscanner24.feature.finder.FinderSave
 import com.gamenuri.btscanner24.feature.finder.FoundContent
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.launch
 
 /**
  * Debug-only demo mode (#47): fixed devices with generic names, so store and design screenshots
@@ -47,6 +52,7 @@ internal object DemoMode {
         if (korean != DemoData.korean) {
             DemoData.korean = korean
             demoRepository?.replaceAll(DemoData.devices(System.currentTimeMillis()))
+            demoApp?.let(::seedSaved)
         }
         premiumBought = screen == "settings_premium"
         return DemoRequest(
@@ -64,6 +70,8 @@ internal object DemoMode {
         val repository = DeviceRepository(CompanyDirectory(app))
         repository.replaceAll(DemoData.devices(System.currentTimeMillis()))
         demoRepository = repository
+        demoApp = app
+        seedSaved(app)
         return BleDependencies(
             scanner = DemoScanner(app),
             repository = repository,
@@ -113,6 +121,19 @@ internal object DemoMode {
 
     /** The demo's device list, refilled when the demo's language changes the names. */
     private var demoRepository: DeviceRepository? = null
+    private var demoApp: Application? = null
+
+    /**
+     * Puts one saved device that is not around into the demo's own saved list and last-seen file
+     * (never the user's), so My devices shows "last seen" in store shots (#14).
+     */
+    private fun seedSaved(app: Application) {
+        val now = System.currentTimeMillis()
+        CoroutineScope(Dispatchers.IO).launch {
+            SavedDevicesRepository(app, demo = true).save(DemoData.savedAway(now))
+            LastSeenRepository(app, demo = true).record(listOf(DemoData.savedAwaySeen(now)))
+        }
+    }
 
     private var premiumBought = false
 
