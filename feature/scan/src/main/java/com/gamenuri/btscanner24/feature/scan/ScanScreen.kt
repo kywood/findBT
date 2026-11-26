@@ -5,48 +5,90 @@ import android.content.Intent
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.Badge
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleStartEffect
@@ -54,25 +96,46 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.gamenuri.btscanner24.core.ble.BleScanner
 import com.gamenuri.btscanner24.core.ble.ScanFailure
+import com.gamenuri.btscanner24.core.designsystem.component.IllustratedMessage
 import com.gamenuri.btscanner24.core.designsystem.component.StatusBanner
+import com.gamenuri.btscanner24.core.designsystem.component.WaterMotion
+import com.gamenuri.btscanner24.core.designsystem.component.water
+import com.gamenuri.btscanner24.core.designsystem.icon.NearoIcons
 import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
 import com.gamenuri.btscanner24.core.model.BleDevice
-import com.gamenuri.btscanner24.core.model.CategoryGroup
+import com.gamenuri.btscanner24.core.model.DeviceFilter
 import com.gamenuri.btscanner24.core.model.DeviceSort
+import com.gamenuri.btscanner24.core.model.SaveLimit
 import com.gamenuri.btscanner24.core.ui.DeviceCard
-import com.gamenuri.btscanner24.core.ui.label
+import com.gamenuri.btscanner24.core.ui.R as UiR
 import com.gamenuri.btscanner24.core.ui.permission.rememberBlePermissionState
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.launch
 
 /** Entry point: owns the ViewModel, permissions and system intents. Everything visual is in [ScanContent]. */
 @Composable
 fun ScanScreen(
     title: String,
     onDeviceClick: (BleDevice) -> Unit = {},
+    modifier: Modifier = Modifier,
+    onOpenSettings: () -> Unit = {},
+    /** "Save to My devices" from a row's ⋮ menu (#108); null hides the menu. */
+    onSaveDevice: ((BleDevice) -> Unit)? = null,
+    /** Addresses already saved: their rows offer no save. */
+    savedAddresses: Set<String> = emptySet(),
+    /** Told whenever the blue 3D map takes over from the dark list or gives way to it (#173). */
+    onMapShown: (Boolean) -> Unit = {},
     viewModel: ScanViewModel = viewModel(factory = ScanViewModel.Factory),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    // A demo launch may open on the map whatever was chosen before; the first tap on the switch ends that.
+    val mapOptions = LocalNearbyMap.current
+    var forcedMap by rememberSaveable { mutableStateOf(mapOptions.startOnMap) }
 
-    // Stop scanning whenever the screen is not visible; resume when it comes back.
+    // Scans by itself while this tab is visible; stops on other tabs and in the background (#62).
     LifecycleStartEffect(viewModel) {
         viewModel.onScreenStarted()
         onStopOrDispose { viewModel.onScreenStopped() }
@@ -91,21 +154,20 @@ fun ScanScreen(
     ) { viewModel.startScan() }
 
     ScanContent(
+        modifier = modifier,
         title = title,
         state = state,
+        showMap = forcedMap || state.preferences.showMap,
+        followPose = mapOptions.followPose,
+        onMapShown = onMapShown,
         permissionBanner = when {
-            !permission.showRationale -> null
+            permission.isGranted -> null
             permission.isPermanentlyDenied -> PermissionBanner.OPEN_SETTINGS
             else -> PermissionBanner.ASK_AGAIN
         },
         actions = ScanActions(
-            onScanClick = {
-                when {
-                    state.isScanning -> viewModel.stopScan()
-                    !permission.isGranted -> permission.request()
-                    else -> viewModel.startScan()
-                }
-            },
+            onPause = viewModel::pause,
+            onResume = { if (permission.isGranted) viewModel.resume() else permission.request() },
             onPermissionAction = permission::request,
             onEnableBluetooth = {
                 viewModel.dismissError()
@@ -120,20 +182,40 @@ fun ScanScreen(
             onReset = viewModel::reset,
             onQueryChange = viewModel::setQuery,
             onSortChange = viewModel::setSort,
-            onToggleNamedOnly = viewModel::toggleNamedOnly,
-            onToggleHideGone = viewModel::toggleHideGone,
-            onToggleGroup = viewModel::toggleGroup,
+            onShowMap = {
+                forcedMap = false
+                viewModel.setShowMap(it)
+            },
+            onApplyFilter = viewModel::applyFilter,
+            onShowOther = viewModel::showOther,
+            onHideOther = viewModel::hideOther,
+            countFor = viewModel::resultCount,
             onRefreshOrder = viewModel::refreshOrder,
+            onAutoRefreshOrder = viewModel::autoRefreshOrder,
             onDeviceClick = onDeviceClick,
+            onOpenSettings = onOpenSettings,
+            onSaveDevice = onSaveDevice,
+            savedAddresses = savedAddresses,
         ),
     )
 }
 
 enum class PermissionBanner { ASK_AGAIN, OPEN_SETTINGS }
 
+/** How the Nearby tab's 3D map (#86) starts and moves; `:app` changes it for demo screenshots only. */
+data class NearbyMapOptions(
+    /** Open on the map even when the list was chosen last. */
+    val startOnMap: Boolean = false,
+    /** The map's view follows how the phone is held and turned. */
+    val followPose: Boolean = true,
+)
+
+val LocalNearbyMap = staticCompositionLocalOf { NearbyMapOptions() }
+
 /** All user events of the scan screen, so [ScanContent] stays stateless and previewable. */
 data class ScanActions(
-    val onScanClick: () -> Unit = {},
+    val onPause: () -> Unit = {},
+    val onResume: () -> Unit = {},
     val onPermissionAction: () -> Unit = {},
     val onEnableBluetooth: () -> Unit = {},
     val onEnableLocation: () -> Unit = {},
@@ -142,14 +224,38 @@ data class ScanActions(
     val onReset: () -> Unit = {},
     val onQueryChange: (String) -> Unit = {},
     val onSortChange: (DeviceSort) -> Unit = {},
-    val onToggleNamedOnly: () -> Unit = {},
-    val onToggleHideGone: () -> Unit = {},
-    val onToggleGroup: (CategoryGroup) -> Unit = {},
+    /** The "List | Map" switch in the top bar (#86). */
+    val onShowMap: (Boolean) -> Unit = {},
+    /** The filter screen's "Show N devices" (#85). */
+    val onApplyFilter: (DeviceFilter) -> Unit = {},
+    /** "N other devices hidden · Show" at the end of the list (#82). */
+    val onShowOther: () -> Unit = {},
+    /** "Close" on the other devices' header (#142). */
+    val onHideOther: () -> Unit = {},
+    /** Live result count for an edited filter. */
+    val countFor: (DeviceFilter) -> Int = { 0 },
     val onRefreshOrder: () -> Unit = {},
+    /** The untapped re-sort (timer, back at the top): personal rows only (#143). */
+    val onAutoRefreshOrder: () -> Unit = {},
     /** Opens find mode for the device. */
     val onDeviceClick: (BleDevice) -> Unit = {},
+    val onOpenSettings: () -> Unit = {},
+    /** Saves the device to My devices (#108); null when saving is not wired (previews, demo). */
+    val onSaveDevice: ((BleDevice) -> Unit)? = null,
+    val savedAddresses: Set<String> = emptySet(),
 )
 
+/**
+ * Nearby tab (design home-header-v4): top bar with search, pause/resume and more; one 40 dp control
+ * row (status, sort, filter); then the list. Filters live in a bottom sheet. With [showMap] the same
+ * devices stand on the 3D map instead (#86), on the find screens' blue; whenever something needs
+ * saying first (a permission, the radio off, a failed scan) the list with its banners is shown.
+ *
+ * Between the dark list and the blue map the screen changes the way every browse-to-3D change does
+ * (#172): the map rises over the list as water and drains off it again. The map page lies on top of
+ * the list page and is drawn only under the waterline; whichever page is fully covered or fully
+ * gone is not composed at all.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScanContent(
@@ -158,58 +264,417 @@ fun ScanContent(
     permissionBanner: PermissionBanner?,
     actions: ScanActions,
     modifier: Modifier = Modifier,
+    showMap: Boolean = false,
+    followPose: Boolean = true,
+    onMapShown: (Boolean) -> Unit = {},
 ) {
     var searchOpen by rememberSaveable { mutableStateOf(false) }
+    var filtersOpen by rememberSaveable { mutableStateOf(false) }
+    val listState = rememberLazyListState()
+    val scope = rememberCoroutineScope()
+    val onSortNow: () -> Unit = {
+        actions.onRefreshOrder()
+        scope.launch { listState.animateScrollToItem(0) }
+    }
+    ReorderAutoSort(state.reorderAvailable, listState, actions.onAutoRefreshOrder)
 
-    Scaffold(
-        modifier = modifier,
-        topBar = {
-            TopAppBar(
-                title = {
+    val error = (state.status as? ScanStatus.Error)?.reason
+    val mapShown = showMap && permissionBanner == null && error == null
+    val find = NearoTheme.colors.findFar
+    val context = LocalContext.current
+    val mapWater = remember { WaterMotion(full = mapShown) }
+    LaunchedEffect(mapShown) {
+        onMapShown(mapShown)
+        val reduceMotion = context.animationsOff()
+        when {
+            mapShown && !mapWater.isFull -> mapWater.rise(kickAt = VIEW_SWITCH_X, reduceMotion = reduceMotion)
+            !mapShown && !mapWater.isEmpty -> mapWater.drain(reduceMotion = reduceMotion)
+        }
+    }
+    val topBar: @Composable (onBlue: Boolean) -> Unit = { onBlue ->
+        ScanTopBar(
+            title = title,
+            state = state,
+            actions = actions,
+            searchOpen = searchOpen,
+            onSearchOpenChange = { searchOpen = it },
+            showMap = showMap,
+            onBlue = onBlue,
+        )
+    }
+    Box(modifier) {
+        // Under the map until the water has covered it, and again from the moment it starts to drain.
+        if (!mapWater.isFull) {
+            Scaffold(
+                containerColor = MaterialTheme.colorScheme.background,
+                topBar = { topBar(false) },
+            ) { innerPadding ->
+                ListPage(
+                    state = state,
+                    permissionBanner = permissionBanner,
+                    error = error,
+                    actions = actions,
+                    listState = listState,
+                    onSortNow = onSortNow,
+                    onOpenFilters = { filtersOpen = true },
+                    modifier = Modifier.fillMaxSize().padding(innerPadding),
+                )
+            }
+        }
+        if (mapShown || !mapWater.isEmpty) {
+            // The blue itself is the cover: the 3D scene needs a few frames before it has anything to show.
+            Scaffold(
+                modifier = Modifier.water(mapWater, cover = SolidColor(find.background)),
+                containerColor = find.background,
+                topBar = { topBar(true) },
+            ) { innerPadding ->
+                DeviceMap(state, actions, Modifier.fillMaxSize().padding(innerPadding), followPose)
+            }
+        }
+    }
+
+    if (filtersOpen) {
+        FilterDialog(
+            current = state.preferences.filter,
+            census = state.census,
+            countFor = actions.countFor,
+            onApply = {
+                actions.onApplyFilter(it)
+                filtersOpen = false
+            },
+            onClose = { filtersOpen = false },
+        )
+    }
+}
+
+/** Where the list/map switch sits across the top bar, 0..1: the water is nudged from under the tap. */
+private const val VIEW_SWITCH_X = 0.8f
+
+/** The Nearby tab as a list: the control row, then the devices or what is in the way of seeing them. */
+@Composable
+private fun ListPage(
+    state: ScanUiState,
+    permissionBanner: PermissionBanner?,
+    error: ScanFailure?,
+    actions: ScanActions,
+    listState: LazyListState,
+    onSortNow: () -> Unit,
+    onOpenFilters: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier) {
+        ControlRow(state, actions, onSortNow, onOpenFilters = onOpenFilters)
+
+        // Nothing to show and the radio (or Location on Android 11) is off: a full empty state (#30).
+        val radioOff = error == ScanFailure.BLUETOOTH_OFF || error == ScanFailure.LOCATION_OFF
+        if (error != null && radioOff && state.items.isEmpty()) {
+            RadioOffState(error, actions, Modifier.fillMaxWidth().weight(1f))
+        } else {
+            DeviceList(
+                state = state,
+                permissionBanner = permissionBanner,
+                error = error,
+                actions = actions,
+                listState = listState,
+                modifier = Modifier.fillMaxWidth().weight(1f),
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ScanTopBar(
+    title: String,
+    state: ScanUiState,
+    actions: ScanActions,
+    searchOpen: Boolean,
+    onSearchOpenChange: (Boolean) -> Unit,
+    showMap: Boolean = false,
+    /** The map is showing: the bar takes the find screens' blue with white content. */
+    onBlue: Boolean = false,
+) {
+    val find = NearoTheme.colors.findFar
+    TopAppBar(
+        colors = if (onBlue) {
+            TopAppBarDefaults.topAppBarColors(
+                containerColor = find.background,
+                titleContentColor = find.content,
+                actionIconContentColor = find.content,
+            )
+        } else {
+            TopAppBarDefaults.topAppBarColors()
+        },
+        title = {
+            if (searchOpen) {
+                TextField(
+                    value = state.query,
+                    onValueChange = actions.onQueryChange,
+                    placeholder = { Text(stringResource(R.string.search_hint)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            } else {
+                Text(title)
+            }
+        },
+        actions = {
+            if (!searchOpen) ViewSwitch(showMap = showMap, onBlue = onBlue, onShowMap = actions.onShowMap)
+            // The map has no search field of its own; a search typed on the list still applies to it.
+            if (!onBlue) {
+                IconButton(
+                    onClick = {
+                        if (searchOpen) actions.onQueryChange("")
+                        onSearchOpenChange(!searchOpen)
+                    },
+                ) {
+                    val searchLabel =
+                        stringResource(if (searchOpen) R.string.action_close_search else R.string.action_search)
                     if (searchOpen) {
-                        TextField(
-                            value = state.query,
-                            onValueChange = actions.onQueryChange,
-                            placeholder = { Text(stringResource(R.string.search_hint)) },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth(),
-                        )
+                        Icon(Icons.Default.Close, contentDescription = searchLabel)
                     } else {
-                        Text(title)
+                        Icon(painterResource(UiR.drawable.ic_search), contentDescription = searchLabel)
                     }
-                },
-                actions = {
-                    IconButton(
-                        onClick = {
-                            if (searchOpen) actions.onQueryChange("")
-                            searchOpen = !searchOpen
-                        },
-                    ) {
-                        Icon(
-                            imageVector = if (searchOpen) Icons.Default.Close else Icons.Default.Search,
-                            contentDescription = stringResource(
-                                if (searchOpen) R.string.action_close_search else R.string.action_search,
-                            ),
-                        )
-                    }
-                    IconButton(onClick = actions.onReset) {
-                        Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.action_reset))
-                    }
+                }
+            }
+            if (!searchOpen) {
+                val scanning = state.isScanning
+                IconButton(onClick = if (scanning) actions.onPause else actions.onResume) {
+                    Icon(
+                        painter = painterResource(if (scanning) UiR.drawable.ic_pause else UiR.drawable.ic_play),
+                        contentDescription = stringResource(
+                            if (scanning) R.string.action_pause_scan else R.string.action_resume_scan,
+                        ),
+                    )
+                }
+                MoreMenu(actions)
+            }
+        },
+    )
+}
+
+/** "List | Map" (design bt-map-3d, entry A): two segments in one pill, the chosen one filled. */
+@Composable
+private fun ViewSwitch(showMap: Boolean, onBlue: Boolean, onShowMap: (Boolean) -> Unit) {
+    val scheme = MaterialTheme.colorScheme
+    val find = NearoTheme.colors.findFar
+    val track = if (onBlue) find.content.copy(alpha = SWITCH_TRACK_ALPHA) else scheme.surfaceContainerHighest
+    val chosen = if (onBlue) find.content else scheme.primary
+    val onChosen = if (onBlue) find.background else scheme.onPrimary
+    val other = if (onBlue) find.content else scheme.onSurfaceVariant
+    Row(
+        modifier = Modifier
+            .padding(end = 4.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(track)
+            .padding(3.dp),
+    ) {
+        for (map in listOf(false, true)) {
+            val selected = map == showMap
+            Text(
+                text = stringResource(if (map) R.string.map_view_map else R.string.map_view_list),
+                style = MaterialTheme.typography.labelLarge,
+                color = if (selected) onChosen else other,
+                maxLines = 1,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(9.dp))
+                    .background(if (selected) chosen else Color.Transparent)
+                    .selectable(selected = selected, role = Role.Tab, onClick = { onShowMap(map) })
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
+            )
+        }
+    }
+}
+
+private const val SWITCH_TRACK_ALPHA = 0.16f
+
+@Composable
+private fun MoreMenu(actions: ScanActions) {
+    var expanded by remember { mutableStateOf(false) }
+    Box {
+        IconButton(onClick = { expanded = true }) {
+            Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.action_more))
+        }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.action_clear_list)) },
+                onClick = {
+                    expanded = false
+                    actions.onReset()
                 },
             )
-        },
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = 16.dp, vertical = 4.dp),
-        ) {
-            Button(onClick = actions.onScanClick, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(if (state.isScanning) R.string.action_stop_scan else R.string.action_start_scan))
-            }
+            DropdownMenuItem(
+                text = { Text(stringResource(UiR.string.menu_settings)) },
+                onClick = {
+                    expanded = false
+                    actions.onOpenSettings()
+                },
+            )
+        }
+    }
+}
 
-            permissionBanner?.let { banner ->
+/** Status dot and text on the left, sort and filter on the right; 40 dp tall. */
+@Composable
+private fun ControlRow(state: ScanUiState, actions: ScanActions, onSortNow: () -> Unit, onOpenFilters: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(40.dp)
+            .padding(start = 16.dp, end = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        // A new order is offered in place of the status, so the list never moves for it (#87).
+        Crossfade(
+            targetState = state.reorderAvailable,
+            modifier = Modifier.weight(1f),
+            animationSpec = tween(CHIP_FADE_MS),
+            label = "statusOrReorder",
+        ) { reorder ->
+            Box(contentAlignment = Alignment.CenterStart) {
+                if (reorder) ReorderChip(onClick = onSortNow) else StatusText(state)
+            }
+        }
+        SortMenu(selected = state.preferences.sort, onSelect = actions.onSortChange)
+        FilterButton(count = state.activeFilterCount, onClick = onOpenFilters)
+    }
+}
+
+@Composable
+private fun StatusText(state: ScanUiState) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        StatusDot(scanning = state.isScanning)
+        Spacer(Modifier.width(8.dp))
+        // "N nearby" counts personal devices, plus other devices once they are listed (#82, #100).
+        val withOther = state.preferences.filter.showOther || state.items.any { it.isOther }
+        val shown = state.items.size
+        val total = state.census.personal + if (withOther) state.census.other else 0
+        // "N / M" only when something hides devices; showing other devices only adds rows.
+        val filtered = state.activeFilterCount > 0 || state.query.isNotBlank()
+        Text(
+            text = when {
+                filtered && state.isPaused ->
+                    stringResource(R.string.scan_status_paused_filtered, shown, total)
+                filtered -> stringResource(R.string.scan_status_filtered, shown, total)
+                state.isPaused -> stringResource(R.string.scan_status_paused, total)
+                else -> stringResource(R.string.scan_status_nearby, total)
+            },
+            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+@Composable
+private fun ReorderChip(onClick: () -> Unit) {
+    val description = stringResource(R.string.home_reorder_chip_description)
+    AssistChip(
+        onClick = onClick,
+        label = { Text(stringResource(R.string.home_reorder_chip), maxLines = 1, overflow = TextOverflow.Ellipsis) },
+        modifier = Modifier.height(28.dp).semantics { contentDescription = description },
+        colors = AssistChipDefaults.assistChipColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+            labelColor = MaterialTheme.colorScheme.onSecondaryContainer,
+        ),
+        border = null,
+    )
+}
+
+/**
+ * Without a tap the new order is applied after [REORDER_AUTO_MS], or as soon as the user scrolls back to
+ * the top of the list, where rows moving is no surprise (#87).
+ */
+@Composable
+private fun ReorderAutoSort(available: Boolean, listState: LazyListState, onSort: () -> Unit) {
+    val currentOnSort by rememberUpdatedState(onSort)
+    LaunchedEffect(available) {
+        if (!available) return@LaunchedEffect
+        launch {
+            delay(REORDER_AUTO_MS)
+            currentOnSort()
+        }
+        snapshotFlow { listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0 }
+            .distinctUntilChanged()
+            .drop(1)
+            .filter { it }
+            .collect { currentOnSort() }
+    }
+}
+
+/** Green and pulsing while scanning, grey when paused or stopped. */
+@Composable
+private fun StatusDot(scanning: Boolean) {
+    val color = if (scanning) NearoTheme.colors.signalStrong else MaterialTheme.colorScheme.outline
+    val alpha = if (scanning) {
+        val pulse = rememberInfiniteTransition(label = "scanPulse")
+        pulse.animateFloat(
+            initialValue = 1f,
+            targetValue = 0.35f,
+            animationSpec = infiniteRepeatable(tween(PULSE_MS), RepeatMode.Reverse),
+            label = "scanPulseAlpha",
+        ).value
+    } else {
+        1f
+    }
+    Box(
+        Modifier
+            .size(8.dp)
+            .alpha(alpha)
+            .background(color, CircleShape),
+    )
+}
+
+@Composable
+private fun FilterButton(count: Int, onClick: () -> Unit) {
+    val description = if (count > 0) {
+        stringResource(R.string.filter_active_description, count)
+    } else {
+        stringResource(R.string.filter_title)
+    }
+    if (count > 0) {
+        // The count sits inside the button in primary colours; red would read as an error (#89).
+        Box(Modifier.size(FILTER_BUTTON)) {
+            FilledTonalIconButton(onClick = onClick, modifier = Modifier.fillMaxSize()) {
+                Icon(painterResource(UiR.drawable.ic_filter), contentDescription = description)
+            }
+            Badge(
+                modifier = Modifier.align(Alignment.TopEnd).padding(top = 2.dp, end = 2.dp).size(15.dp),
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+            ) {
+                Text(count.toString(), style = MaterialTheme.typography.labelSmall)
+            }
+        }
+    } else {
+        IconButton(onClick = onClick, modifier = Modifier.size(40.dp)) {
+            Icon(painterResource(UiR.drawable.ic_filter), contentDescription = description)
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun DeviceList(
+    state: ScanUiState,
+    permissionBanner: PermissionBanner?,
+    error: ScanFailure?,
+    actions: ScanActions,
+    listState: LazyListState,
+    modifier: Modifier = Modifier,
+) {
+    var otherInfoOpen by rememberSaveable { mutableStateOf(false) }
+    if (otherInfoOpen) OtherInfoSheet(onDismiss = { otherInfoOpen = false })
+    LazyColumn(
+        modifier = modifier,
+        state = listState,
+        contentPadding = PaddingValues(bottom = 16.dp),
+    ) {
+        // Permission and error banners stay the first list item (design home-header-v4 §6).
+        permissionBanner?.let { banner ->
+            item(key = "permission") {
                 StatusBanner(
                     message = stringResource(
                         when (banner) {
@@ -224,80 +689,213 @@ fun ScanContent(
                         },
                     ),
                     onAction = actions.onPermissionAction,
+                    modifier = Modifier.padding(horizontal = 16.dp),
                 )
             }
-
-            (state.status as? ScanStatus.Error)?.let { error ->
-                ScanErrorBanner(reason = error.reason, actions = actions)
-            }
-
-            Spacer(modifier = Modifier.height(6.dp))
-            ListControls(state = state, actions = actions)
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
+        }
+        error?.let { reason ->
+            item(key = "error") { ScanErrorBanner(reason, actions, Modifier.padding(horizontal = 16.dp)) }
+        }
+        val personal = state.items.filter { !it.isOther }
+        val other = state.items.filter { it.isOther }
+        if (state.items.isEmpty() && state.isScanning && state.hiddenOtherCount == 0) {
+            item(key = "searching") {
                 Text(
-                    text = pluralStringResource(R.plurals.devices_found, state.items.size, state.items.size),
-                    style = MaterialTheme.typography.labelMedium,
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(vertical = 4.dp),
+                    text = stringResource(R.string.scan_searching),
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 48.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
                 )
-                if (state.reorderAvailable) {
-                    FilledTonalButton(onClick = actions.onRefreshOrder) {
-                        Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = null)
-                        Text(stringResource(R.string.action_refresh_order), modifier = Modifier.padding(start = 6.dp))
-                    }
-                }
             }
-
-            LazyColumn(
-                contentPadding = PaddingValues(bottom = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                // Stable keys keep each card attached to its device; rows only move on a full sort.
-                items(state.items, key = { it.device.address }) { item ->
-                    DeviceCard(
-                        device = item.device,
-                        isNew = item.isNew,
-                        isGone = item.isGone,
-                        distanceMeters = item.distanceMeters,
-                        onClick = { actions.onDeviceClick(item.device) },
-                        modifier = Modifier.animateItem(),
-                    )
-                }
+        }
+        if (personal.isEmpty() && (other.isNotEmpty() || state.hiddenOtherCount > 0)) {
+            item(key = "empty-personal") {
+                Text(
+                    text = stringResource(R.string.nearby_empty_personal),
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp, horizontal = 16.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                )
             }
+        }
+        // Stable keys keep each row attached to its device; rows only move on a full sort.
+        items(personal, key = { it.device.address }) { item -> DeviceRow(item, actions, Modifier.animateItem()) }
+        if (state.hiddenOtherCount > 0) {
+            item(key = "other-hidden") {
+                HiddenOtherRow(state.hiddenOtherCount, actions.onShowOther, onInfo = { otherInfoOpen = true })
+            }
+        }
+        if (other.isNotEmpty()) {
+            // A clear break between the user's own kind of devices and everything else (#142): a gap, a
+            // header that stays in view while its section scrolls, and a quieter surface under its rows.
+            item(key = "other-gap") { Spacer(Modifier.height(OTHER_SECTION_GAP)) }
+            stickyHeader(key = "other-header") {
+                OtherHeader(
+                    count = other.size,
+                    sort = state.preferences.sort,
+                    onClose = actions.onHideOther,
+                    onInfo = { otherInfoOpen = true },
+                )
+            }
+            items(other, key = { it.device.address }) { item ->
+                DeviceRow(
+                    item,
+                    actions,
+                    Modifier.animateItem().background(MaterialTheme.colorScheme.surfaceContainerLow),
+                    compact = true,
+                )
+            }
+            item(key = "other-close") { OtherFooter(actions.onHideOther) }
         }
     }
 }
 
 @Composable
-private fun ListControls(state: ScanUiState, actions: ScanActions) {
-    val prefs = state.preferences
-    FlowRow(
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-        verticalArrangement = Arrangement.Center,
-        modifier = Modifier.fillMaxWidth(),
+private fun DeviceRow(item: DeviceListItem, actions: ScanActions, modifier: Modifier, compact: Boolean = false) {
+    DeviceCard(
+        device = item.device,
+        label = item.label,
+        showSuffix = item.showSuffix,
+        isPaired = item.isPaired,
+        isNew = item.isNew,
+        isGone = item.isGone,
+        distanceMeters = item.distanceMeters,
+        onClick = { actions.onDeviceClick(item.device) },
+        modifier = modifier,
+        compact = compact,
+        // Paired devices are in My devices already; unnamed ones cannot be recognised again.
+        onSave = actions.onSaveDevice
+            ?.takeIf { !item.isPaired && item.device.address !in actions.savedAddresses }
+            ?.takeIf { SaveLimit.canBeSaved(item.device) }
+            ?.let { save -> { save(item.device) } },
+    )
+}
+
+/** "23 other devices hidden · Show": one centred line, the whole row is the 48 dp touch target (#82). */
+@Composable
+private fun HiddenOtherRow(count: Int, onShow: () -> Unit, onInfo: () -> Unit) {
+    val show = stringResource(R.string.nearby_other_show)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .clickable(role = Role.Button, onClick = onShow)
+            .padding(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        SortMenu(selected = prefs.sort, onSelect = actions.onSortChange)
-        FilterChip(
-            selected = prefs.namedOnly,
-            onClick = actions.onToggleNamedOnly,
-            label = { ChipLabel(stringResource(R.string.filter_named_only)) },
+        Text(
+            text = pluralStringResource(R.plurals.nearby_other_hidden, count, count),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        FilterChip(
-            selected = prefs.hideGone,
-            onClick = actions.onToggleHideGone,
-            label = { ChipLabel(stringResource(R.string.filter_hide_gone)) },
+        Spacer(Modifier.width(4.dp))
+        Text(
+            text = show,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.Bold,
         )
-        CategoryGroup.entries.forEach { group ->
-            FilterChip(
-                selected = group in prefs.groups,
-                onClick = { actions.onToggleGroup(group) },
-                label = { ChipLabel(group.label()) },
-            )
+        OtherInfoButton(onInfo)
+    }
+}
+
+/** ⓘ beside "other devices": opens the short explanation of what they are (#142). */
+@Composable
+private fun OtherInfoButton(onClick: () -> Unit) {
+    IconButton(onClick = onClick) {
+        Icon(
+            Icons.Outlined.Info,
+            contentDescription = stringResource(R.string.nearby_other_info),
+            modifier = Modifier.size(18.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+/** What "other devices" are, why they start hidden, and what to do if one of them is yours (#142). */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun OtherInfoSheet(onDismiss: () -> Unit) {
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text(stringResource(R.string.other_info_title), style = MaterialTheme.typography.titleLarge)
+            Text(stringResource(R.string.other_info_what), style = MaterialTheme.typography.bodyMedium)
+            Text(stringResource(R.string.other_info_why), style = MaterialTheme.typography.bodyMedium)
+            Text(stringResource(R.string.other_info_mine), style = MaterialTheme.typography.bodyMedium)
+            Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.other_info_ok))
+            }
+        }
+    }
+}
+
+/**
+ * "Other devices · 23" with the order they are in, ⓘ, and a "Close" button at the end, which hides
+ * the section again (#142). It carries the section's upper edge: a strong line on a quieter surface.
+ */
+@Composable
+private fun OtherHeader(count: Int, sort: DeviceSort, onClose: () -> Unit, onInfo: () -> Unit) {
+    Column(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceContainer)) {
+        HorizontalDivider(thickness = 2.dp, color = MaterialTheme.colorScheme.outline)
+        Row(
+            modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(start = 16.dp, end = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            // The text column takes all the width the close button leaves, so the order line fits (#142).
+            Column(Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = stringResource(R.string.nearby_other_section, count),
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
+                    OtherInfoButton(onInfo)
+                }
+                Text(
+                    // Sorted like this when last sorted; devices heard since then wait at the bottom (#143).
+                    text = stringResource(R.string.nearby_other_order, stringResource(sort.labelRes())),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            Spacer(Modifier.width(8.dp))
+            FilledTonalButton(
+                onClick = onClose,
+                modifier = Modifier.heightIn(min = 40.dp),
+                contentPadding = PaddingValues(start = 12.dp, end = 16.dp),
+            ) {
+                Icon(Icons.Filled.Close, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(6.dp))
+                Text(stringResource(R.string.nearby_other_close))
+            }
+        }
+    }
+}
+
+/** The section's lower edge: the same close again, so a long section need not be scrolled back up. */
+@Composable
+private fun OtherFooter(onClose: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surfaceContainerLow)
+            .padding(vertical = 8.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        FilledTonalButton(onClick = onClose, modifier = Modifier.heightIn(min = 40.dp)) {
+            Icon(Icons.Filled.Close, contentDescription = null, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(6.dp))
+            Text(stringResource(R.string.nearby_other_close_section))
         }
     }
 }
@@ -306,9 +904,18 @@ private fun ListControls(state: ScanUiState, actions: ScanActions) {
 private fun SortMenu(selected: DeviceSort, onSelect: (DeviceSort) -> Unit) {
     var expanded by rememberSaveable { mutableStateOf(false) }
     Box {
-        TextButton(onClick = { expanded = true }) {
-            Text(stringResource(selected.labelRes()), style = MaterialTheme.typography.labelLarge)
-            Icon(Icons.Default.ArrowDropDown, contentDescription = stringResource(R.string.sort_menu))
+        TextButton(
+            onClick = { expanded = true },
+            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurface),
+        ) {
+            Icon(
+                painterResource(UiR.drawable.ic_sort),
+                contentDescription = stringResource(R.string.sort_menu),
+                modifier = Modifier.size(18.dp),
+            )
+            Spacer(Modifier.width(4.dp))
+            Text(stringResource(selected.labelRes()), style = MaterialTheme.typography.labelLarge, maxLines = 1)
+            Icon(Icons.Default.ArrowDropDown, contentDescription = null, modifier = Modifier.size(18.dp))
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             DeviceSort.entries.forEach { sort ->
@@ -330,8 +937,33 @@ private fun DeviceSort.labelRes(): Int = when (this) {
     DeviceSort.RECENT -> R.string.sort_recent
 }
 
+private const val PULSE_MS = 1_000
+private const val CHIP_FADE_MS = 150
+private val FILTER_BUTTON = 34.dp
+private const val REORDER_AUTO_MS = 8_000L
+private val OTHER_SECTION_GAP = 20.dp
+
 @Composable
-private fun ScanErrorBanner(reason: ScanFailure, actions: ScanActions) {
+private fun RadioOffState(reason: ScanFailure, actions: ScanActions, modifier: Modifier = Modifier) {
+    val bluetooth = reason == ScanFailure.BLUETOOTH_OFF
+    Box(modifier = modifier, contentAlignment = Alignment.Center) {
+        IllustratedMessage(
+            icon = if (bluetooth) NearoIcons.BluetoothOff else NearoIcons.PinSignal,
+            title = stringResource(
+                if (bluetooth) R.string.empty_bluetooth_off_title else R.string.empty_location_off_title,
+            ),
+            body = stringResource(if (bluetooth) R.string.empty_bluetooth_off_body else R.string.error_location_off),
+        ) {
+            Spacer(Modifier.height(8.dp))
+            Button(onClick = if (bluetooth) actions.onEnableBluetooth else actions.onEnableLocation) {
+                Text(stringResource(R.string.action_turn_on))
+            }
+        }
+    }
+}
+
+@Composable
+private fun ScanErrorBanner(reason: ScanFailure, actions: ScanActions, modifier: Modifier = Modifier) {
     val (message, actionLabel, onAction) = when (reason) {
         ScanFailure.BLUETOOTH_OFF ->
             Triple(R.string.error_bluetooth_off, R.string.action_turn_on, actions.onEnableBluetooth)
@@ -346,12 +978,12 @@ private fun ScanErrorBanner(reason: ScanFailure, actions: ScanActions) {
         ScanFailure.INTERNAL ->
             Triple(R.string.error_scan_failed, R.string.action_retry, actions.onRetry)
     }
-    StatusBanner(message = stringResource(message), actionLabel = stringResource(actionLabel), onAction = onAction)
-}
-
-@Composable
-private fun ChipLabel(text: String) {
-    Text(text, style = MaterialTheme.typography.labelSmall)
+    StatusBanner(
+        message = stringResource(message),
+        actionLabel = stringResource(actionLabel),
+        onAction = onAction,
+        modifier = modifier,
+    )
 }
 
 @Preview(name = "Light", showBackground = true)
@@ -378,6 +1010,9 @@ private fun ScanContentPreview() {
                     DeviceListItem(device("C", "Tile Mate", -80), isNew = true, isGone = false),
                 ),
                 reorderAvailable = true,
+                totalCount = 3,
+                census = ScanCensus(personal = 3, other = 23),
+                hiddenOtherCount = 23,
             ),
             permissionBanner = null,
             actions = ScanActions(),

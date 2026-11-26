@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="action_retry">Erneut versuchen</string>
+    <string name="action_ok">OK</string>
+    <string name="action_allow">Erlauben</string>
+    <string name="action_turn_on">Einschalten</string>
+    <string name="action_open_settings">Einstellungen</string>
+    <string name="search_hint">Nach Name oder Hersteller suchen</string>
+    <string name="permission_rationale">Für die Suche nach Geräten in der Nähe ist die Bluetooth-Berechtigung nötig.</string>
+    <string name="permission_denied_settings">Die Bluetooth-Berechtigung ist aus. Schalte sie in den Einstellungen ein, um zu scannen.</string>
+    <string name="error_bluetooth_off">Bluetooth ist aus.</string>
+    <string name="error_not_supported">Dieses Gerät unterstützt kein Bluetooth Low Energy.</string>
+    <string name="error_too_frequent">Der Scan wurde zu oft neu gestartet. Warte ein paar Sekunden und versuche es erneut.</string>
+    <string name="error_location_off">Der Standort ist aus. Auf dieser Android-Version braucht der Bluetooth-Scan den Standort.</string>
+    <string name="error_scan_failed">Der Scan konnte nicht gestartet werden.</string>
+    <string name="action_search">Suchen</string>
+    <string name="action_close_search">Suche schließen</string>
+    <string name="sort_menu">Sortieren</string>
+    <string name="sort_nearest">Am nächsten</string>
+    <string name="sort_name">Name</string>
+    <string name="sort_recent">Zuletzt gefunden</string>
+    <string name="filter_hide_gone">Verschwundene ausblenden</string>
+    <string name="filter_show_other">Andere Geräte anzeigen</string>
+    <!-- Filter screen and other devices (#85, #82) -->
+    <string name="filter_close">Schließen</string>
+    <string name="filter_section_show">Anzeigen</string>
+    <string name="filter_show_other_body">Signale ohne Namen oder schwer erkennbarer Art · %1$d</string>
+    <string name="filter_show_unnamed">Geräte ohne Namen anzeigen</string>
+    <string name="filter_distance">Entfernung</string>
+    <string name="filter_distance_within_5">Bis 5 m</string>
+    <string name="filter_distance_5_10">5–10 m</string>
+    <string name="filter_distance_over_10">Über 10 m</string>
+    <string name="filter_distance_within_15_ft">Bis 15 ft</string>
+    <string name="filter_distance_15_30_ft">15–30 ft</string>
+    <string name="filter_distance_over_30_ft">Über 30 ft</string>
+    <string name="filter_signal">Signal</string>
+    <string name="filter_maker">Hersteller</string>
+    <string name="filter_maker_count">%1$s %2$d</string>
+    <string name="filter_maker_more">+ %1$d weitere</string>
+    <string name="filter_no_results">Keine Ergebnisse</string>
+    <string name="nearby_other_show">Anzeigen</string>
+    <string name="nearby_other_section">Andere Geräte · %1$d</string>
+    <!-- Other devices: close and explanation (#142) -->
+    <string name="nearby_other_close">Schließen</string>
+    <string name="nearby_other_close_section">Andere Geräte schließen</string>
+    <string name="nearby_other_order">%1$s · neue unten</string>
+    <string name="nearby_other_info">Über andere Geräte</string>
+    <string name="other_info_title">Andere Geräte</string>
+    <string name="other_info_what">Bluetooth-Signale in der Nähe ohne Namen oder von schwer erkennbarer Art. Das können Geräte von Nachbarn, Haushaltsgeräte, Fernseher oder Beacons sein.</string>
+    <string name="other_info_why">Sie sind zunächst ausgeblendet, weil es meist viele sind und die meisten nicht dir gehören.</string>
+    <string name="other_info_mine">Wenn eines davon dir gehört, tippe darauf, um die Suche zu starten. Achte darauf, ob die Entfernung beim Näherkommen sinkt. Wenn du sicher bist, gib ihm einen Namen und speichere es unter Meine Geräte.</string>
+    <string name="other_info_ok">OK</string>
+    <string name="nearby_empty_personal">Keine eigenen Geräte in der Nähe</string>
+    <plurals name="filter_show_results">
+        <item quantity="one">%1$d Gerät anzeigen</item>
+        <item quantity="other">%1$d Geräte anzeigen</item>
+    </plurals>
+    <plurals name="nearby_other_hidden">
+        <item quantity="one">%1$d anderes Gerät ausgeblendet ·</item>
+        <item quantity="other">%1$d andere Geräte ausgeblendet ·</item>
+    </plurals>
+    <string name="empty_bluetooth_off_title">Bluetooth ist aus</string>
+    <string name="empty_bluetooth_off_body">Schalte Bluetooth ein, um Geräte in deiner Nähe zu finden.</string>
+    <string name="empty_location_off_title">Standort ist aus</string>
+    <string name="scan_status_nearby">%1$d in der Nähe</string>
+    <string name="scan_status_paused">Pausiert · %1$d</string>
+    <string name="scan_status_filtered">%1$d von %2$d</string>
+    <string name="scan_status_paused_filtered">Pausiert · %1$d von %2$d</string>
+    <string name="scan_searching">Suche nach Geräten in der Nähe…</string>
+    <string name="action_pause_scan">Scan pausieren</string>
+    <string name="action_resume_scan">Scan fortsetzen</string>
+    <string name="action_more">Weitere Optionen</string>
+    <string name="action_clear_list">Liste leeren</string>
+    <string name="filter_title">Filter</string>
+    <string name="filter_types">Gerätetyp</string>
+    <string name="filter_reset">Zurücksetzen</string>
+    <string name="filter_active_description">Filter, %1$d aktiv</string>
+    <string name="home_reorder_chip">↑ Neu sortieren</string>
+    <string name="home_reorder_chip_description">Die Reihenfolge der Liste hat sich geändert. Zum Sortieren tippen.</string>
+    <!-- Device map (#86) -->
+    <string name="map_arranged_by_distance">Nach Entfernung geordnet</string>
+    <string name="map_direction_measured">Richtung gemessen</string>
+    <string name="map_scanning">Suche läuft</string>
+    <string name="map_empty_title">Keine Geräte in der Nähe</string>
+    <string name="map_empty_body">Schalte ein Bluetooth-Gerät ein und bring es näher</string>
+    <string name="map_find">Suchen</string>
+    <string name="map_pin_label">%1$s · %2$s</string>
+    <string name="map_step_near">1 m</string>
+    <string name="map_step_mid">5 m</string>
+    <string name="map_step_far">10 m+</string>
+    <string name="map_step_near_ft">3 ft</string>
+    <string name="map_step_mid_ft">15 ft</string>
+    <string name="map_step_far_ft">30 ft+</string>
+    <string name="map_unavailable">Dieses Telefon kann die 3D-Karte nicht anzeigen. Die Liste unten zeigt dieselben Geräte.</string>
+    <string name="map_view_list">Liste</string>
+    <string name="map_view_map">Karte</string>
+</resources>

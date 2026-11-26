@@ -1,7 +1,6 @@
 package com.gamenuri.btscanner24.core.ui
 
 import androidx.annotation.DrawableRes
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
@@ -9,13 +8,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.gamenuri.btscanner24.core.model.DeviceCategory
 
-/** Nearo's own device icon set (design/v3/icons). */
+/** Nearo's own line icon set (design/v3/icons-v2, #109). */
 @DrawableRes
 fun DeviceCategory.iconRes(): Int = when (this) {
     DeviceCategory.EARBUDS, DeviceCategory.HEARING_AID -> R.drawable.ic_device_earbuds
@@ -31,26 +29,27 @@ fun DeviceCategory.iconRes(): Int = when (this) {
     DeviceCategory.MOUSE -> R.drawable.ic_device_mouse
     DeviceCategory.GAMEPAD -> R.drawable.ic_device_gamepad
     DeviceCategory.TV -> R.drawable.ic_device_tv
+    DeviceCategory.CAR -> R.drawable.ic_device_car
     DeviceCategory.HEALTH -> R.drawable.ic_device_health
     DeviceCategory.SENSOR -> R.drawable.ic_device_beacon
     DeviceCategory.UNKNOWN -> R.drawable.ic_device_unknown
 }
 
-/** Icon on a rounded tile (token shape deviceIcon = 12 dp). Decorative: the row text names the type. */
+/**
+ * Line icon centred in a [size] slot with no container (#109): 28 dp in the default 38 dp slot.
+ * Decorative: the row text names the type.
+ */
 @Composable
-fun DeviceIcon(category: DeviceCategory, modifier: Modifier = Modifier, size: Dp = 40.dp) {
-    Box(
-        modifier = modifier
-            .size(size)
-            .clip(MaterialTheme.shapes.medium)
-            .background(MaterialTheme.colorScheme.primaryContainer),
-        contentAlignment = Alignment.Center,
-    ) {
+fun DeviceIcon(category: DeviceCategory, modifier: Modifier = Modifier, size: Dp = 38.dp, muted: Boolean = false) {
+    val colors = MaterialTheme.colorScheme
+    Box(modifier = modifier.size(size), contentAlignment = Alignment.Center) {
         Icon(
             painter = painterResource(category.iconRes()),
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onPrimaryContainer,
-            modifier = Modifier.size(size * 0.55f),
+            tint = if (muted) colors.onSurfaceVariant else colors.primary,
+            modifier = Modifier.size(size * ICON_IN_SLOT),
         )
     }
 }
+
+private const val ICON_IN_SLOT = 28f / 38f

@@ -1,6 +1,70 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    // Open-source licenses screen (#56): writes res/raw/aboutlibraries.json from the real dependencies.
+    alias(libs.plugins.aboutlibraries.android)
+}
+
+// Values kept out of git (#56, #31, #35). Missing keys fall back to empty, and the screens hide the row.
+val localProperties = Properties().apply {
+    rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+}
+
+// The earbud find tone (#153, #189): null when local.properties does not set it.
+val earbudTone: String? = localProperties.getProperty("nearo.feature.earbudTone")
+
+// Release signing (#35): the keystore path and passwords come from local.properties or environment
+// variables only, never from git. Without them the release build is simply left unsigned.
+fun secret(property: String, environment: String): String? =
+    localProperties.getProperty(property)?.takeIf { it.isNotBlank() }
+        ?: System.getenv(environment)?.takeIf { it.isNotBlank() }
+
+val signingStoreFile = secret("nearo.signing.storeFile", "NEARO_SIGNING_STORE_FILE")
+val signingStorePassword = secret("nearo.signing.storePassword", "NEARO_SIGNING_STORE_PASSWORD")
+val signingKeyAlias = secret("nearo.signing.keyAlias", "NEARO_SIGNING_KEY_ALIAS")
+val signingKeyPassword = secret("nearo.signing.keyPassword", "NEARO_SIGNING_KEY_PASSWORD")
+val hasReleaseSigning =
+    listOf(signingStoreFile, signingStorePassword, signingKeyAlias, signingKeyPassword).all { it != null }
+
+// A release must never ship Google's test ads or go out unsigned (#35): building or bundling it stops
+// with the list of what is missing. Debug and benchmark builds keep the test IDs.
+val admobTestPublisher = "ca-app-pub-3940256099942544"
+
+// Google's public sample IDs: always fill, never pay, safe to tap. Only the debug and benchmark
+// build types fall back to them; release code and the release manifest have no fallback at all.
+val admobTestAppId = "$admobTestPublisher~3347511713"
+val admobTestUnits = mapOf(
+    "banner" to "$admobTestPublisher/9214589741",
+    "interstitial" to "$admobTestPublisher/1033173712",
+    "rewarded" to "$admobTestPublisher/5224354917",
+)
+
+fun admob(key: String): String = localProperties.getProperty("nearo.admob.$key", "").trim()
+val missingForRelease = listOf("appId", "banner", "interstitial", "rewarded")
+    .map { "nearo.admob.$it" }
+    .filter { key ->
+        val value = localProperties.getProperty(key)
+        value.isNullOrBlank() || value.startsWith(admobTestPublisher) || value.contains("XXXX")
+    } + if (hasReleaseSigning) {
+    emptyList()
+} else {
+    listOf("nearo.signing.* (storeFile, storePassword, keyAlias, keyPassword)")
+}
+
+gradle.taskGraph.whenReady {
+    val buildsRelease = allTasks.any { task ->
+        task.project == project &&
+            task.name.endsWith("Release") &&
+            (task.name.startsWith("assemble") || task.name.startsWith("bundle") || task.name.startsWith("package"))
+    }
+    if (buildsRelease && missingForRelease.isNotEmpty()) {
+        throw GradleException(
+            "Release build stopped. Missing in local.properties: " + missingForRelease.joinToString(", ") +
+                ". See docs/RELEASE.md.",
+        )
+    }
 }
 
 android {
@@ -19,6 +83,38 @@ android {
         versionName = "2.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // AdMob (#31): what local.properties has, and nothing when it has nothing. The release build
+        // stops above without real IDs (#35); debug and benchmark put Google's test IDs in below.
+        manifestPlaceholders["admobAppId"] = admob("appId")
+        for (unit in admobTestUnits.keys) {
+            buildConfigField("String", "ADMOB_${unit.uppercase()}", "\"${admob(unit)}\"")
+        }
+
+        // The find tone through connected earbuds (#153). Off in release until the user has tested it
+        // on real earbuds (#189); `nearo.feature.earbudTone=true` in local.properties turns it on.
+        buildConfigField("boolean", "EARBUD_TONE", (earbudTone ?: "false").toBoolean().toString())
+        // In-app purchase of Premium (#205): off in 2.0, no merchant account yet. Only the rewarded ad's
+        // 24 h without ads stays. `nearo.feature.premiumPurchase=true` in local.properties turns it on.
+        buildConfigField(
+            "boolean",
+            "PREMIUM_PURCHASE",
+            localProperties.getProperty("nearo.feature.premiumPurchase", "false").toBoolean().toString(),
+        )
+        buildConfigField("String", "SUPPORT_EMAIL", "\"${localProperties.getProperty("nearo.supportEmail", "")}\"")
+        // GitHub Pages copy of docs/privacy (#57).
+        buildConfigField("String", "PRIVACY_POLICY_URL", "\"https://kywood.github.io/findBT/privacy/\"")
+    }
+
+    signingConfigs {
+        if (hasReleaseSigning) {
+            create("release") {
+                storeFile = file(signingStoreFile!!)
+                storePassword = signingStorePassword
+                keyAlias = signingKeyAlias
+                keyPassword = signingKeyPassword
+            }
+        }
     }
 
     buildTypes {
@@ -26,14 +122,51 @@ android {
             // Installs next to the Play Store build on test phones; release applicationId is unchanged.
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
+            // On in debug so the user can try it on the test phone; `=false` turns it off.
+            buildConfigField("boolean", "EARBUD_TONE", (earbudTone ?: "true").toBoolean().toString())
+            manifestPlaceholders["admobAppId"] = admob("appId").ifBlank { admobTestAppId }
+            for ((unit, testId) in admobTestUnits) {
+                buildConfigField("String", "ADMOB_${unit.uppercase()}", "\"${admob(unit).ifBlank { testId }}\"")
+            }
         }
         release {
-            isMinifyEnabled = false
+            // R8 drops the unused part of material-icons-extended and friends; a much smaller dex
+            // is the biggest cold-start win (#34).
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+            // The existing upload key (the package stays com.gamenuri.btscanner24); null = unsigned.
+            signingConfig = signingConfigs.findByName("release")
         }
+        // Release code, debug signing, profileable: for measuring start-up on test phones (#34).
+        create("benchmark") {
+            initWith(getByName("release"))
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += listOf("release")
+            isProfileable = true
+            applicationIdSuffix = ".benchmark"
+            versionNameSuffix = "-benchmark"
+            // Not a release: measured on test phones with test ads, like debug.
+            manifestPlaceholders["admobAppId"] = admob("appId").ifBlank { admobTestAppId }
+            for ((unit, testId) in admobTestUnits) {
+                buildConfigField("String", "ADMOB_${unit.uppercase()}", "\"${admob(unit).ifBlank { testId }}\"")
+            }
+        }
+    }
+    sourceSets {
+        // The benchmark build runs the debug demo (release code, R8), so motion is recorded and measured
+        // as users get it, with demo devices only (#101).
+        getByName("benchmark") {
+            // AGP 9 built-in Kotlin compiles from the kotlin source set, not java.
+            kotlin.directories.add("src/debug/java")
+        }
+    }
+    androidResources {
+        // Per-app language picker on Android 13+ (#29); locales come from the values-* folders.
+        generateLocaleConfig = true
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -41,15 +174,24 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
 dependencies {
+    implementation(projects.core.ads)
     implementation(projects.core.ble)
+    implementation(projects.core.billing)
     implementation(projects.core.data)
     implementation(projects.core.designsystem)
+    implementation(projects.core.sensors)
+    implementation(projects.core.ui)
+    implementation(projects.feature.devices)
     implementation(projects.feature.finder)
+    implementation(projects.feature.onboarding)
+    implementation(projects.feature.protection)
     implementation(projects.feature.scan)
+    implementation(projects.feature.settings)
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
@@ -58,7 +200,10 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.core.splashscreen)
+    implementation(libs.androidx.profileinstaller)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.navigation.compose)
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))

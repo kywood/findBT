@@ -1,19 +1,22 @@
-<?xml version="1.0" encoding="utf-8"?><!--
-   Sample data extraction rules file; uncomment and customize as necessary.
-   See https://developer.android.com/about/versions/12/backup-restore#xml-changes
-   for details.
--->
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 12 and newer. The user's saved and hidden devices (names, addresses) and where their
+     devices were last seen never leave the phone, not in a backup either (#162, #178, #19).
+     Protection mode (#163) is not carried to another phone either: it has to be turned on there. -->
 <data-extraction-rules>
     <cloud-backup>
-        <!-- TODO: Use <include> and <exclude> to control what is backed up.
-        <include .../>
-        <exclude .../>
-        -->
+        <exclude domain="file" path="datastore/last_seen.preferences_pb" />
+        <exclude domain="file" path="datastore/last_seen_demo.preferences_pb" />
+        <exclude domain="file" path="datastore/saved_devices.preferences_pb" />
+        <exclude domain="file" path="datastore/saved_devices_demo.preferences_pb" />
+        <exclude domain="file" path="datastore/hidden_devices.preferences_pb" />
+        <exclude domain="file" path="datastore/protection.preferences_pb" />
     </cloud-backup>
-    <!--
     <device-transfer>
-        <include .../>
-        <exclude .../>
+        <exclude domain="file" path="datastore/last_seen.preferences_pb" />
+        <exclude domain="file" path="datastore/last_seen_demo.preferences_pb" />
+        <exclude domain="file" path="datastore/saved_devices.preferences_pb" />
+        <exclude domain="file" path="datastore/saved_devices_demo.preferences_pb" />
+        <exclude domain="file" path="datastore/hidden_devices.preferences_pb" />
+        <exclude domain="file" path="datastore/protection.preferences_pb" />
     </device-transfer>
-    -->
 </data-extraction-rules>

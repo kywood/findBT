@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="onboarding_intro_title">Encuentra auriculares, relojes y rastreadores perdidos</string>
+    <string name="onboarding_intro_body">Camina hacia donde apunta la flecha. Nearo te avisa cuando te acercas.</string>
+    <string name="onboarding_get_started">Empezar</string>
+    <string name="onboarding_permission_title">Permite \"Dispositivos cercanos\"</string>
+    <string name="onboarding_permission_body">Es necesario para ver los dispositivos Bluetooth a tu alrededor.</string>
+    <string name="onboarding_permission_title_legacy">Permite el acceso a la ubicación</string>
+    <string name="onboarding_permission_body_legacy">Android 11 y versiones anteriores piden la ubicación para mostrar dispositivos Bluetooth. Nearo no usa tu ubicación.</string>
+    <string name="onboarding_check_location">Nunca rastreamos tu ubicación</string>
+    <string name="onboarding_check_local">Los resultados del escaneo no salen de tu teléfono</string>
+    <string name="onboarding_check_stops">La búsqueda se detiene al salir de la app</string>
+    <string name="onboarding_continue">Continuar</string>
+    <string name="onboarding_denied_title">Se necesita un permiso</string>
+    <string name="onboarding_denied_body">Sin \"Dispositivos cercanos\", Nearo no puede ver ningún dispositivo Bluetooth. Puedes activarlo en Ajustes.</string>
+    <string name="onboarding_denied_body_legacy">Sin permiso de ubicación, Nearo no puede ver dispositivos Bluetooth en esta versión de Android. Puedes activarlo en Ajustes.</string>
+    <string name="onboarding_open_settings">Abrir Ajustes</string>
+    <string name="onboarding_try_again">Intentar de nuevo</string>
+    <string name="onboarding_hero_device">Mis auriculares</string>
+    <string name="onboarding_hero_distance_label">Cerca · distancia aproximada</string>
+</resources>

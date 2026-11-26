@@ -11,51 +11,149 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
-import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.gamenuri.btscanner24.core.designsystem.component.FLOOR_TILT_DEGREES
+import com.gamenuri.btscanner24.core.designsystem.component.drawFloorArrow
+import com.gamenuri.btscanner24.core.designsystem.component.drawRoundedArrow
+import com.gamenuri.btscanner24.core.designsystem.component.nearoArrowPath
+import com.gamenuri.btscanner24.core.designsystem.theme.NearoTheme
+import com.gamenuri.btscanner24.core.sensors.PoseSensor
+import com.gamenuri.btscanner24.core.ui.arrow3d.DeviceModel
+import com.gamenuri.btscanner24.core.ui.arrow3d.FindScene3d
+import com.gamenuri.btscanner24.core.ui.arrow3d.FindSceneSpec
+import com.gamenuri.btscanner24.core.ui.arrow3d.PoseFeed
 import kotlin.math.abs
 
 /**
- * The round area in the middle of the find screen: spinning needle while sweeping, a 3D arrow lying
- * on the floor once a direction is known, rings when the device is right here.
+ * The round area in the middle of the find screen: the 3D arrow scene (#76) turning by itself while
+ * sweeping and pointing once a direction is known, rings when the device is right here.
  *
- * The 3D look is two nested layers, no 3D engine: the inner layer turns the arrow in the floor
- * plane (rotationZ), the outer layer tilts that floor away from the viewer (rotationX 58°).
+ * Where OpenGL is not usable the Canvas drawings stand in: two nested layers, the inner one turns
+ * the arrow in the floor plane (rotationZ), the outer one tilts that floor (rotationX 58°).
  */
 @Composable
-internal fun DirectionDial(state: FinderUiState, modifier: Modifier = Modifier) {
-    Box(modifier = modifier.size(280.dp), contentAlignment = Alignment.Center) {
+internal fun DirectionDial(state: FinderUiState, modifier: Modifier = Modifier, sceneBehind: Boolean = false) {
+    // Up to 280 dp, square, shrinking with the space the screen gives it.
+    Box(
+        modifier = modifier
+            .sizeIn(maxWidth = 280.dp, maxHeight = 280.dp)
+            .aspectRatio(1f, matchHeightConstraintsFirst = true),
+        contentAlignment = Alignment.Center,
+    ) {
         val arrow = state.arrowDegrees
         when {
+            // The 3D scene (#76) is a layer behind the whole screen; this place only keeps it free.
+            sceneBehind && state.showsScene() -> Unit
+            // Below: only where the 3D scene cannot run.
             state.stage == FinderStage.RIGHT_HERE -> RightHereRings()
+            state.isSpinning() -> SpinningNeedle(state.sweepProgress)
             arrow != null -> FloorArrow(arrow, state.confidence, locked = state.stage == FinderStage.LOCKED)
-            state.stage == FinderStage.SPIN ||
-                state.stage == FinderStage.SPIN_AGAIN ||
-                state.stage == FinderStage.WAITING -> SpinningNeedle(state.sweepProgress)
             else -> HeatRing(state.heat)
         }
     }
+}
+
+private fun FinderUiState.isSpinning(): Boolean = stage == FinderStage.SPIN || stage == FinderStage.SPIN_AGAIN
+
+/**
+ * No signal to point at: the 3D floor stays, without an arrow. This includes waiting for the first
+ * sighting, so a device that has not been heard yet never gets a direction (#195).
+ */
+private fun FinderUiState.hasNoSignal(): Boolean =
+    stage == FinderStage.WAITING || stage == FinderStage.NOT_FOUND || stage == FinderStage.SIGNAL_LOST
+
+/**
+ * Stages the 3D scene draws: looking for a direction, pointing, "right here", and no signal (the
+ * empty floor). Only a phone without a compass keeps the flat heat ring.
+ */
+internal fun FinderUiState.showsScene(): Boolean =
+    stage == FinderStage.RIGHT_HERE || arrowDegrees != null || isSpinning() || hasNoSignal()
+
+/**
+ * The 3D, AR-style arrow scene (#76) for everything below. On by default; debug builds can show
+ * the Canvas fallback with the `--ez demo_ar false` launch extra.
+ */
+val LocalArFindScene = staticCompositionLocalOf { true }
+
+/** Where the far floor fades out, as shares of the scene layer's height; negative: no such edge. */
+internal class SceneFades(val top: Float, val bottom: Float)
+
+/** The 3D scene's camera follows how the phone is held; off for demo screenshots. */
+val LocalFindScenePose = staticCompositionLocalOf { true }
+
+/**
+ * The real 3D arrow on its floor, across the screen; the camera follows how the phone is held.
+ * [centerY] is where the middle of the floor sits in this layer (0 = top); outside [fades] the
+ * far floor is faded out so it lies neither under the state text nor under the distance.
+ */
+@Composable
+internal fun ArrowScene(state: FinderUiState, centerY: Float, fades: SceneFades, onUnavailable: () -> Unit) {
+    val context = LocalContext.current
+    val poseFeed = remember(context) {
+        val sensor = PoseSensor(context.applicationContext)
+        PoseFeed { onPose ->
+            sensor.start { pose ->
+                onPose(
+                    pose.headingDegrees.toFloat(),
+                    pose.elevationDegrees.toFloat(),
+                    pose.rollDegrees.toFloat(),
+                )
+            }
+        }
+    }
+    val reduceMotion = remember(context) { context.animationsOff() }
+    val color = LocalContentColor.current
+    FindScene3d(
+        spec = FindSceneSpec(
+            relativeDegrees = state.arrowDegrees ?: 0f,
+            worldBearingDegrees = state.bearingDegrees,
+            // While turning, the sweep is all there is: no sharp arrow at an early guess (#198).
+            spinning = state.isSpinning(),
+            rightHere = state.stage == FinderStage.RIGHT_HERE,
+            noArrow = state.hasNoSignal(),
+            fullBleed = true,
+            centerY = centerY,
+            topFade = fades.top,
+            bottomFade = fades.bottom,
+            // The device marker needs a direction worth pointing at, like the sector.
+            model = DeviceModel.of(state.category),
+            showTarget = state.arrowDegrees != null && state.confidence != ArrowConfidence.NONE && !state.hasNoSignal(),
+            accentColor = NearoTheme.colors.found.rings,
+            progress = state.sweepProgress,
+            // Turning to find a direction is never a confident direction (#198).
+            wide = state.confidence != ArrowConfidence.HIGH || state.isSpinning(),
+            locked = state.stage == FinderStage.LOCKED,
+            arrowColor = color,
+            floorColor = color,
+            reduceMotion = reduceMotion,
+        ),
+        modifier = Modifier.fillMaxSize(),
+        // Demo captures use the design's camera, however the phone happens to lie on the desk.
+        poseFeed = if (LocalFindScenePose.current) poseFeed else null,
+        onUnavailable = onUnavailable,
+    )
 }
 
 @Composable
@@ -74,11 +172,16 @@ private fun FloorArrow(degrees: Float, confidence: ArrowConfidence, locked: Bool
     val wide = confidence != ArrowConfidence.HIGH
     val widthScale by animateFloatAsState(if (wide) 1.4f else 1f, label = "arrowWidth")
     val arrowAlpha by animateFloatAsState(if (wide) 0.75f else 1f, label = "arrowAlpha")
-    val sectorHalf by animateFloatAsState(if (wide) 45f else 25f, label = "sector")
+    val sectorHalf by animateFloatAsState(
+        targetValue = when {
+            locked -> 12f
+            wide -> 35f
+            else -> 20f
+        },
+        label = "sector",
+    )
 
-    val color = MaterialTheme.colorScheme.primary
-    val shade = lerp(color, Color.Black, 0.35f)
-    val highlight = lerp(color, Color.White, 0.25f)
+    val color = LocalContentColor.current
 
     Box(
         modifier = Modifier
@@ -96,78 +199,72 @@ private fun FloorArrow(degrees: Float, confidence: ArrowConfidence, locked: Bool
                     alpha = arrowAlpha
                 },
         ) {
+            // The same floor as the 3D scene: ring R, a fainter ring at 0.62 R, the sector inside R.
+            val ring = size.minDimension * FALLBACK_RING
+            drawCircle(color.copy(alpha = 0.35f), radius = ring, style = Stroke(2.dp.toPx()))
+            drawCircle(color.copy(alpha = 0.18f), radius = ring * 0.62f, style = Stroke(1.dp.toPx()))
             // "Somewhere this way": the sector widens as confidence drops.
             drawArc(
                 color = color.copy(alpha = 0.16f),
                 startAngle = -90f - sectorHalf,
                 sweepAngle = sectorHalf * 2,
                 useCenter = true,
+                topLeft = Offset(center.x - ring, center.y - ring),
+                size = Size(ring * 2, ring * 2),
             )
-            drawOval(
-                color = Color.Black.copy(alpha = 0.12f),
-                topLeft = Offset(size.width * 0.3f, size.height * 0.47f),
-                size = Size(size.width * 0.4f, size.height * 0.12f),
-            )
-            scale(scaleX = widthScale, scaleY = 1f, pivot = center) {
-                val path = arrowPath()
-                // Darker copy slightly below gives the arrow some thickness.
-                translate(top = size.minDimension * 0.025f) {
-                    drawRounded(path, Brush.linearGradient(listOf(shade, shade)))
-                }
-                drawRounded(
-                    path,
-                    Brush.verticalGradient(listOf(highlight, color), startY = 0f, endY = size.height),
-                )
-            }
+            scale(scaleX = widthScale, scaleY = 1f, pivot = center) { drawFloorArrow(color) }
         }
     }
 }
 
 @Composable
 private fun SpinningNeedle(progress: Float) {
-    val transition = rememberInfiniteTransition(label = "spin")
-    val rotation by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(tween(durationMillis = 2_400, easing = LinearEasing)),
-        label = "needle",
-    )
-    val color = MaterialTheme.colorScheme.primary
-    val track = MaterialTheme.colorScheme.surfaceVariant
+    // Holds still while water moves over the screen (#106).
+    val rotation = if (LocalFindMotionPaused.current) {
+        remember { mutableFloatStateOf(0f) }
+    } else {
+        rememberInfiniteTransition(label = "spin").animateFloat(
+            initialValue = 0f,
+            targetValue = 360f,
+            animationSpec = infiniteRepeatable(tween(durationMillis = 2_400, easing = LinearEasing)),
+            label = "needle",
+        )
+    }
+    val color = LocalContentColor.current
+    val track = LocalContentColor.current.copy(alpha = 0.25f)
     Canvas(modifier = Modifier.fillMaxSize()) {
         progressRing(track, color, progress)
-        val path = arrowPath(scale = 0.75f)
-        // Three fading ghosts behind the needle read as motion.
-        for (ghost in GHOSTS downTo 0) {
-            rotate(rotation - ghost * GHOST_SPACING_DEGREES) {
-                val ghostAlpha = if (ghost == 0) 1f else 0.12f * (GHOSTS + 1 - ghost)
-                drawRounded(path, Brush.linearGradient(listOf(color, color)), alpha = ghostAlpha)
-            }
+        // One arrow, no ghost trail (#106); the angle is read here, so only drawing is redone.
+        rotate(rotation.value) {
+            drawRoundedArrow(nearoArrowPath(scale = 0.75f), Brush.linearGradient(listOf(color, color)))
         }
     }
 }
 
 @Composable
 private fun HeatRing(heat: Float) {
-    val color = MaterialTheme.colorScheme.tertiary
-    val track = MaterialTheme.colorScheme.surfaceVariant
+    val color = LocalContentColor.current
+    val track = LocalContentColor.current.copy(alpha = 0.25f)
     Canvas(modifier = Modifier.fillMaxSize()) { progressRing(track, color, heat) }
 }
 
 @Composable
 private fun RightHereRings() {
-    val transition = rememberInfiniteTransition(label = "rings")
-    val pulse by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(durationMillis = 1_600, easing = LinearEasing)),
-        label = "pulse",
-    )
-    val color = MaterialTheme.colorScheme.primary
+    val pulse = if (LocalFindMotionPaused.current) {
+        remember { mutableFloatStateOf(0f) }
+    } else {
+        rememberInfiniteTransition(label = "rings").animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(tween(durationMillis = 1_600, easing = LinearEasing)),
+            label = "pulse",
+        )
+    }
+    val color = LocalContentColor.current
     Canvas(modifier = Modifier.fillMaxSize()) {
         val maxRadius = size.minDimension / 2
         for (ring in 0 until RINGS) {
-            val t = (pulse + ring.toFloat() / RINGS) % 1f
+            val t = (pulse.value + ring.toFloat() / RINGS) % 1f
             drawCircle(color.copy(alpha = 0.5f * (1f - t)), radius = maxRadius * t, style = Stroke(3.dp.toPx()))
         }
         drawCircle(color, radius = maxRadius * 0.12f)
@@ -190,29 +287,6 @@ private fun DrawScope.progressRing(track: Color, color: Color, progress: Float) 
     )
 }
 
-/** Nearo's own round-ended arrow, pointing up from the centre. */
-private fun DrawScope.arrowPath(scale: Float = 1f): Path {
-    val s = size.minDimension * scale
-    val cx = center.x
-    val cy = center.y
-    return Path().apply {
-        moveTo(cx, cy - 0.40f * s)
-        lineTo(cx + 0.20f * s, cy - 0.08f * s)
-        lineTo(cx + 0.07f * s, cy - 0.11f * s)
-        lineTo(cx + 0.07f * s, cy + 0.28f * s)
-        lineTo(cx - 0.07f * s, cy + 0.28f * s)
-        lineTo(cx - 0.07f * s, cy - 0.11f * s)
-        lineTo(cx - 0.20f * s, cy - 0.08f * s)
-        close()
-    }
-}
-
-private fun DrawScope.drawRounded(path: Path, brush: Brush, alpha: Float = 1f) {
-    drawPath(path, brush, alpha = alpha)
-    // A round-joined stroke of the same paint rounds the corners.
-    drawPath(path, brush, alpha = alpha, style = Stroke(width = 6.dp.toPx(), join = StrokeJoin.Round))
-}
-
 /**
  * Keeps the angle continuous so the arrow turns the short way across north (350° → 10° is +20°,
  * not −340°), and ignores changes under 5° to stop jitter.
@@ -225,8 +299,6 @@ private fun rememberContinuousAngle(degrees: Float): Float {
     return holder[0]
 }
 
-private const val FLOOR_TILT_DEGREES = 58f
 private const val MIN_TURN_DEGREES = 5f
-private const val GHOSTS = 3
-private const val GHOST_SPACING_DEGREES = 12f
+private const val FALLBACK_RING = 0.385f
 private const val RINGS = 3

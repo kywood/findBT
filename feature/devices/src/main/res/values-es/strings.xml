@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="devices_title">Mis dispositivos</string>
+    <string name="devices_section_nearby">Cerca ahora</string>
+    <string name="devices_section_not_nearby">Fuera de alcance</string>
+    <string name="devices_others">Otros dispositivos vinculados (%1$d)</string>
+    <string name="devices_last_seen_now">Visto ahora mismo</string>
+    <string name="devices_last_seen_minutes">Visto por última vez: hace %1$d min</string>
+    <string name="devices_not_seen">Vinculado · aún no visto</string>
+    <string name="devices_connected">Conectado a este teléfono</string>
+    <string name="devices_connected_no_distance">Conectado a este teléfono · sin distancia mientras está conectado</string>
+    <string name="devices_more_for">Más opciones de %1$s</string>
+    <string name="devices_hide">Ocultar de la lista</string>
+    <string name="devices_empty_title">No hay dispositivos vinculados</string>
+    <string name="devices_empty_body">Los dispositivos vinculados a este teléfono aparecen aquí automáticamente.</string>
+    <string name="devices_open_bluetooth_settings">Vincular en ajustes de Bluetooth</string>
+    <string name="devices_permission_body">Permite \"Dispositivos cercanos\" para ver los dispositivos vinculados a este teléfono.</string>
+    <string name="devices_permission_action">Permitir</string>
+    <string name="devices_scan_bluetooth_off">Bluetooth está desactivado, así que no se puede comprobar qué hay cerca.</string>
+    <string name="devices_scan_location_off">La ubicación está desactivada. En esta versión de Android, la búsqueda por Bluetooth necesita la ubicación activada.</string>
+    <string name="devices_scan_failed">No se pudo iniciar la búsqueda, así que no se puede comprobar qué hay cerca.</string>
+    <string name="devices_scan_retry">Reintentar</string>
+    <string name="devices_add_tracker">Añadir un rastreador</string>
+    <string name="devices_section_saved">Dispositivos guardados</string>
+    <string name="devices_saved_count_free">%1$d · %2$d gratis</string>
+    <string name="devices_saved_hint">Guarda desde la lista Cerca o la pantalla de búsqueda</string>
+    <string name="devices_saved_mark">Guardado</string>
+    <string name="devices_saved_edit">Cambiar nombre o tipo</string>
+    <string name="devices_saved_remove">Quitar de guardados</string>
+    <string name="devices_saved_not_seen">Guardado · aún no detectado</string>
+    <!-- Last seen (#162) -->
+    <string name="devices_last_detected">Visto por última vez · %1$s</string>
+    <string name="devices_last_detected_map">Visto por última vez · %1$s · Ver mapa</string>
+    <string name="last_seen_menu">Visto por última vez</string>
+    <string name="last_seen_place">Donde este teléfono captó su señal por última vez</string>
+    <string name="last_seen_open_map">Abrir en Mapas</string>
+    <string name="last_seen_note">Es donde este teléfono lo detectó por última vez, no donde está ahora el dispositivo. La ubicación se queda en este teléfono.</string>
+    <string name="last_seen_no_permission">No se registró el lugar porque el acceso a la ubicación está desactivado</string>
+    <string name="last_seen_no_fix">No se pudo leer el lugar en ese momento</string>
+    <string name="last_seen_turn_on">Activar el registro del lugar</string>
+    <string name="last_seen_find">Empezar a buscar</string>
+    <string name="last_seen_no_map_app">No se encontró ninguna app de mapas</string>
+    <!-- Protection mode and left-behind alerts (#163) -->
+    <string name="devices_protection_menu">Modo de protección</string>
+    <string name="devices_protection_off_title">El modo de protección está desactivado</string>
+    <string name="devices_protection_off_body">Los avisos de olvido y la detección de rastreadores están en pausa</string>
+    <string name="devices_protection_turn_on">Activar</string>
+    <string name="devices_left_behind_title">%1$s · Puede haberse quedado atrás</string>
+    <string name="devices_left_behind_body">Última detección: %1$s</string>
+    <string name="devices_left_behind_view">Ver último lugar</string>
+    <string name="devices_left_behind_mute">Silenciar 1 hora</string>
+</resources>

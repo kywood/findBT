@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="onboarding_intro_title">Finde verlorene Ohrhörer, Uhren und Tracker</string>
+    <string name="onboarding_intro_body">Geh in Pfeilrichtung. Nearo sagt dir, wenn du näher kommst.</string>
+    <string name="onboarding_get_started">Los geht\'s</string>
+    <string name="onboarding_permission_title">\"Geräte in der Nähe\" erlauben</string>
+    <string name="onboarding_permission_body">Nötig, um Bluetooth-Geräte in deiner Nähe zu sehen.</string>
+    <string name="onboarding_permission_title_legacy">Standortzugriff erlauben</string>
+    <string name="onboarding_permission_body_legacy">Android 11 und älter fragen nach dem Standort, um Bluetooth-Geräte anzuzeigen. Nearo nutzt deinen Standort nicht.</string>
+    <string name="onboarding_check_location">Wir verfolgen nie deinen Standort</string>
+    <string name="onboarding_check_local">Scan-Ergebnisse bleiben auf deinem Handy</string>
+    <string name="onboarding_check_stops">Der Scan stoppt, wenn du die App verlässt</string>
+    <string name="onboarding_continue">Weiter</string>
+    <string name="onboarding_denied_title">Berechtigung nötig</string>
+    <string name="onboarding_denied_body">Ohne \"Geräte in der Nähe\" kann Nearo keine Bluetooth-Geräte sehen. Du kannst es in den Einstellungen einschalten.</string>
+    <string name="onboarding_denied_body_legacy">Ohne Standortberechtigung kann Nearo auf dieser Android-Version keine Bluetooth-Geräte sehen. Du kannst sie in den Einstellungen einschalten.</string>
+    <string name="onboarding_open_settings">Einstellungen öffnen</string>
+    <string name="onboarding_try_again">Erneut versuchen</string>
+    <string name="onboarding_hero_device">Meine Earbuds</string>
+    <string name="onboarding_hero_distance_label">Nah · ungefähre Entfernung</string>
+</resources>

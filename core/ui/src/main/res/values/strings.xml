@@ -1,10 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="device_unnamed">Unnamed device</string>
     <string name="signal_strong">Strong</string>
     <string name="signal_medium">Medium</string>
     <string name="signal_weak">Weak</string>
-    <string name="manufacturer_unknown">Unknown maker</string>
     <string name="category_earbuds">Earbuds</string>
     <string name="category_headphones">Headphones</string>
     <string name="category_hearing_aid">Hearing aid</string>
@@ -19,10 +17,17 @@
     <string name="category_mouse">Mouse</string>
     <string name="category_gamepad">Game controller</string>
     <string name="category_tv">TV</string>
+    <string name="category_car">Car</string>
     <string name="category_health">Health device</string>
     <string name="category_sensor">Sensor</string>
     <string name="category_unknown">Other device</string>
     <string name="category_group_earbuds">Earbuds</string>
+    <string name="category_group_headphones">Headphones</string>
+    <string name="category_group_band">Bands</string>
+    <string name="category_group_phone">Phones</string>
+    <string name="category_group_tablet">Tablets</string>
+    <string name="category_group_speaker">Speakers</string>
+    <string name="category_group_laptop">Laptops</string>
     <string name="category_group_watch">Watches</string>
     <string name="category_group_tracker">Trackers</string>
     <string name="category_group_other">Other</string>
@@ -30,4 +35,63 @@
     <string name="device_gone">Just now</string>
     <string name="device_maker_type">%1$s · %2$s</string>
     <string name="device_distance">~%1$s m</string>
+    <!-- Device naming (#46): suffix is the last 4 hex digits of the address. Distances (#21): coarse beyond 5 m. -->
+    <string name="device_name_with_suffix">%1$s · %2$s</string>
+    <string name="device_generic_maker_type">%1$s %2$s</string>
+    <string name="device_generic_apple_find_my">Apple device</string>
+    <string name="device_generic_maker">%1$s device</string>
+    <string name="device_generic">Bluetooth device</string>
+    <string name="badge_paired">Mine</string>
+    <string name="device_no_name_suffix">No name · …%1$s</string>
+    <string name="device_distance_within_1">within 1 m</string>
+    <string name="device_distance_5_to_10">~5–10 m</string>
+    <string name="device_distance_over_10">10 m+</string>
+    <string name="device_distance_ft">~%1$s ft</string>
+    <string name="device_distance_within_3_ft">within 3 ft</string>
+    <string name="device_distance_15_to_30_ft">~15–30 ft</string>
+    <string name="device_distance_over_30_ft">30 ft+</string>
+    <!-- Paywall (#32, design screens-rest-v3 §3) -->
+    <string name="paywall_glyph_devices" translatable="false">∞</string>
+    <string name="paywall_glyph_ads" translatable="false">⊘</string>
+    <string name="paywall_glyph_support" translatable="false">★</string>
+    <string name="paywall_restore">Restore</string>
+    <string name="paywall_close">Close</string>
+    <string name="paywall_title">Nearo Premium</string>
+    <string name="paywall_benefit_devices">Save unlimited devices</string>
+    <string name="paywall_benefit_ads">No ads, ever</string>
+    <string name="paywall_benefit_support">Support future features</string>
+    <string name="paywall_price">Lifetime · %1$s</string>
+    <string name="paywall_loading">Loading price…</string>
+    <string name="paywall_once">Pay once. No subscription.</string>
+    <string name="paywall_buy">Get Premium</string>
+    <string name="paywall_price_note">Price shown in your local currency by Google Play.</string>
+    <string name="paywall_pending">Payment pending. Premium turns on when it\'s complete.</string>
+    <string name="menu_settings">Settings</string>
+    <string name="menu_more_options">More options</string>
+    <string name="paywall_or">or</string>
+    <string name="paywall_reward">Watch an ad for 24h Premium</string>
+    <string name="paywall_reward_note">Watch one ad (about 30 s) to the end for 24 hours of Premium</string>
+    <string name="save_title">Save to My devices</string>
+    <string name="save_name_label">Name</string>
+    <string name="save_type_label">Type</string>
+    <string name="save_local_note">Name and type stay on this phone</string>
+    <string name="save_cancel">Cancel</string>
+    <string name="save_confirm">Save</string>
+    <string name="save_done">Saved to My devices</string>
+    <string name="save_view">View</string>
+    <string name="save_locked_title">1 saved device is free</string>
+    <string name="save_locked_body">With Premium, save as many as you like and remove ads.</string>
+    <string name="save_locked_ad_used">Already used today</string>
+    <string name="save_locked_later">Not now</string>
+    <string name="device_more_for">More for %1$s</string>
+    <!-- Help when a device is not detected (#154). -->
+    <string name="help_not_detected_link">Device not showing up?</string>
+    <string name="help_not_detected_short">Help</string>
+    <string name="help_not_detected_title">When a device doesn\'t show up</string>
+    <string name="help_not_detected_case">Earbuds inside a closed case send no signal. Open the lid or take them out.</string>
+    <string name="help_not_detected_battery">A device that is switched off or has an empty battery sends no signal.</string>
+    <string name="help_not_detected_range">Bluetooth reaches about 10 m (30 ft) indoors, and less through walls. Start where you last used it and walk around slowly.</string>
+    <string name="help_not_detected_one_bud">Lost only one earbud? Put the one you still have in its case and close the lid, so only the lost one is picked up.</string>
+    <string name="help_not_detected_settings">Check that Bluetooth and Location are turned on in this phone\'s settings.</string>
+    <string name="help_not_detected_ok">Got it</string>
 </resources>

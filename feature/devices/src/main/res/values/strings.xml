@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="devices_title">My devices</string>
+    <string name="devices_section_nearby">Nearby now</string>
+    <string name="devices_section_not_nearby">Not nearby</string>
+    <string name="devices_others">Other paired devices (%1$d)</string>
+    <string name="devices_last_seen_now">Seen just now</string>
+    <string name="devices_last_seen_minutes">Last seen: %1$d min</string>
+    <string name="devices_not_seen">Paired · not seen yet</string>
+    <string name="devices_connected">Connected to this phone</string>
+    <string name="devices_connected_no_distance">Connected to this phone · no distance while connected</string>
+    <string name="devices_more_for">More for %1$s</string>
+    <string name="devices_hide">Hide from list</string>
+    <string name="devices_empty_title">No paired devices</string>
+    <string name="devices_empty_body">Devices paired with this phone appear here automatically.</string>
+    <string name="devices_open_bluetooth_settings">Pair in Bluetooth settings</string>
+    <string name="devices_permission_body">Allow Nearby devices to see the devices paired with this phone.</string>
+    <string name="devices_permission_action">Allow</string>
+    <string name="devices_scan_bluetooth_off">Bluetooth is off, so nearby devices can\'t be checked.</string>
+    <string name="devices_scan_location_off">Location is off. On this Android version Bluetooth scanning needs Location turned on.</string>
+    <string name="devices_scan_failed">Scanning could not start, so nearby devices can\'t be checked.</string>
+    <string name="devices_scan_retry">Try again</string>
+    <string name="devices_add_tracker">Add a tracker</string>
+    <string name="devices_section_saved">Saved devices</string>
+    <string name="devices_saved_count_free">%1$d · %2$d free</string>
+    <string name="devices_saved_hint">Save from the Nearby list or the find screen</string>
+    <string name="devices_saved_mark">Saved</string>
+    <string name="devices_saved_edit">Change name or type</string>
+    <string name="devices_saved_remove">Remove from saved</string>
+    <string name="devices_saved_not_seen">Saved · not seen yet</string>
+    <!-- Last seen (#162) -->
+    <string name="devices_last_detected">Last seen · %1$s</string>
+    <string name="devices_last_detected_map">Last seen · %1$s · View map</string>
+    <string name="last_seen_menu">Last seen</string>
+    <string name="last_seen_place">Where this phone last picked up its signal</string>
+    <string name="last_seen_open_map">Open in Maps</string>
+    <string name="last_seen_note">This is where this phone last detected it, not where the device is now. The location stays on this phone.</string>
+    <string name="last_seen_no_permission">Place not recorded because location access is off</string>
+    <string name="last_seen_no_fix">The place could not be read at that moment</string>
+    <string name="last_seen_turn_on">Turn on place recording</string>
+    <string name="last_seen_find">Start finding</string>
+    <string name="last_seen_no_map_app">No maps app found</string>
+    <!-- Protection mode and left-behind alerts (#163) -->
+    <string name="devices_protection_menu">Protection mode</string>
+    <string name="devices_protection_off_title">Protection mode is off</string>
+    <string name="devices_protection_off_body">Left-behind alerts and tracker detection are paused</string>
+    <string name="devices_protection_turn_on">Turn on</string>
+    <string name="devices_left_behind_title">%1$s · May be left behind</string>
+    <string name="devices_left_behind_body">Last detected %1$s</string>
+    <string name="devices_left_behind_view">View last seen</string>
+    <string name="devices_left_behind_mute">Mute for 1 hour</string>
+</resources>

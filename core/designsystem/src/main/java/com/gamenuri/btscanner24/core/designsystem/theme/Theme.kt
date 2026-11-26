@@ -7,6 +7,7 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.ui.platform.LocalConfiguration
 
 private val LightColors = lightColorScheme(
     primary = LightPrimary,
@@ -61,7 +62,7 @@ fun NearoTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable 
     CompositionLocalProvider(LocalNearoColors provides if (darkTheme) DarkNearoColors else LightNearoColors) {
         MaterialTheme(
             colorScheme = if (darkTheme) DarkColors else LightColors,
-            typography = NearoTypography,
+            typography = nearoTypography(LocalConfiguration.current.locales[0].language),
             shapes = NearoShapes,
             content = content,
         )

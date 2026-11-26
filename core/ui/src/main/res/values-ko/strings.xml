@@ -1,10 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="device_unnamed">이름 없는 기기</string>
     <string name="signal_strong">강함</string>
     <string name="signal_medium">보통</string>
     <string name="signal_weak">약함</string>
-    <string name="manufacturer_unknown">제조사 알 수 없음</string>
     <string name="category_earbuds">이어폰</string>
     <string name="category_headphones">헤드폰</string>
     <string name="category_hearing_aid">보청기</string>
@@ -19,10 +17,17 @@
     <string name="category_mouse">마우스</string>
     <string name="category_gamepad">게임 컨트롤러</string>
     <string name="category_tv">TV</string>
+    <string name="category_car">자동차</string>
     <string name="category_health">건강 기기</string>
     <string name="category_sensor">센서</string>
     <string name="category_unknown">기타 기기</string>
     <string name="category_group_earbuds">이어폰</string>
+    <string name="category_group_headphones">헤드폰</string>
+    <string name="category_group_band">밴드</string>
+    <string name="category_group_phone">휴대폰</string>
+    <string name="category_group_tablet">태블릿</string>
+    <string name="category_group_speaker">스피커</string>
+    <string name="category_group_laptop">노트북</string>
     <string name="category_group_watch">워치</string>
     <string name="category_group_tracker">트래커</string>
     <string name="category_group_other">기타</string>
@@ -30,4 +35,60 @@
     <string name="device_gone">방금 전</string>
     <string name="device_maker_type">%1$s · %2$s</string>
     <string name="device_distance">약 %1$sm</string>
+    <!-- Device naming (#46): suffix is the last 4 hex digits of the address. Distances (#21): coarse beyond 5 m. -->
+    <string name="device_name_with_suffix">%1$s · %2$s</string>
+    <string name="device_generic_maker_type">%1$s %2$s</string>
+    <string name="device_generic_apple_find_my">Apple 기기</string>
+    <string name="device_generic_maker">%1$s 기기</string>
+    <string name="device_generic">블루투스 기기</string>
+    <string name="badge_paired">내 기기</string>
+    <string name="device_no_name_suffix">이름 없음 · …%1$s</string>
+    <string name="device_distance_within_1">1m 이내</string>
+    <string name="device_distance_5_to_10">약 5~10m</string>
+    <string name="device_distance_over_10">10m 이상</string>
+    <string name="device_distance_ft">약 %1$sft</string>
+    <string name="device_distance_within_3_ft">3ft 이내</string>
+    <string name="device_distance_15_to_30_ft">약 15~30ft</string>
+    <string name="device_distance_over_30_ft">30ft 이상</string>
+    <!-- Paywall (#32, design screens-rest-v3 §3) -->
+    <string name="paywall_restore">복원</string>
+    <string name="paywall_close">닫기</string>
+    <string name="paywall_title">Nearo 프리미엄</string>
+    <string name="paywall_benefit_devices">기기 무제한 저장</string>
+    <string name="paywall_benefit_ads">광고 없음</string>
+    <string name="paywall_benefit_support">앞으로 나올 기능 지원</string>
+    <string name="paywall_price">평생 이용권 · %1$s</string>
+    <string name="paywall_loading">가격 불러오는 중…</string>
+    <string name="paywall_once">한 번만 결제, 구독 아님</string>
+    <string name="paywall_buy">프리미엄 열기</string>
+    <string name="paywall_price_note">가격은 Google Play가 현지 통화로 보여 줘요.</string>
+    <string name="paywall_pending">결제 대기 중이에요. 결제가 끝나면 프리미엄이 켜져요.</string>
+    <string name="menu_settings">설정</string>
+    <string name="menu_more_options">더보기</string>
+    <string name="paywall_or">또는</string>
+    <string name="paywall_reward">광고 보고 24시간 무료로 쓰기</string>
+    <string name="paywall_reward_note">광고 1개(약 30초)를 끝까지 보면 24시간 동안 프리미엄</string>
+    <string name="save_title">내 기기에 저장</string>
+    <string name="save_name_label">이름</string>
+    <string name="save_type_label">종류</string>
+    <string name="save_local_note">이름과 종류는 이 폰에만 저장돼요</string>
+    <string name="save_cancel">취소</string>
+    <string name="save_confirm">저장</string>
+    <string name="save_done">내 기기에 저장했어요</string>
+    <string name="save_view">보기</string>
+    <string name="save_locked_title">저장한 기기는 1개까지 무료예요</string>
+    <string name="save_locked_body">프리미엄이면 원하는 만큼 저장하고, 광고 없이 쓸 수 있어요.</string>
+    <string name="save_locked_ad_used">오늘은 이미 사용했어요</string>
+    <string name="save_locked_later">나중에</string>
+    <string name="device_more_for">%1$s 더보기</string>
+    <!-- Help when a device is not detected (#154). -->
+    <string name="help_not_detected_link">기기가 안 보이나요?</string>
+    <string name="help_not_detected_short">도움말</string>
+    <string name="help_not_detected_title">기기가 안 잡힐 때</string>
+    <string name="help_not_detected_case">이어폰이 닫힌 케이스 안에 있으면 신호가 나오지 않아요. 뚜껑을 열거나 꺼내 주세요.</string>
+    <string name="help_not_detected_battery">꺼져 있거나 배터리가 다 된 기기는 신호가 나오지 않아요.</string>
+    <string name="help_not_detected_range">블루투스는 실내에서 약 10m까지 닿고, 벽이 있으면 더 짧아져요. 마지막으로 쓴 곳부터 천천히 걸어 보세요.</string>
+    <string name="help_not_detected_one_bud">한쪽만 잃어버렸나요? 가지고 있는 쪽을 케이스에 넣고 뚜껑을 닫으면 잃어버린 쪽만 잡혀요.</string>
+    <string name="help_not_detected_settings">휴대폰 설정에서 블루투스와 위치가 켜져 있는지 확인해 주세요.</string>
+    <string name="help_not_detected_ok">확인</string>
 </resources>

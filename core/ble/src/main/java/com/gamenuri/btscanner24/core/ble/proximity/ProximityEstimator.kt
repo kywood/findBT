@@ -27,6 +27,8 @@ data class ProximityConfig(
     val processNoise: Double = 0.6,
     /** Kalman measurement noise: typical RSSI variance indoors (dB²). */
     val measurementNoise: Double = 9.0,
+    /** Heavier smoothing beyond [nearMeters], where small RSSI changes swing the distance by metres. */
+    val farMeasurementNoise: Double = 25.0,
     val medianWindow: Int = 5,
     val outlierDb: Int = 15,
     /** RSSI at 1 m when the device does not advertise TX power. */
@@ -75,7 +77,7 @@ class ProximityEstimator(private val config: ProximityConfig = ProximityConfig()
         recentRaw.addLast(rssi)
         if (recentRaw.size > config.medianWindow) recentRaw.removeFirst()
 
-        val smoothed = if (accepted) kalman(rssi.toDouble()) else estimate ?: rssi.toDouble()
+        val smoothed = if (accepted) kalman(rssi.toDouble(), txPower) else estimate ?: rssi.toDouble()
 
         history.addLast(timeMs to smoothed)
         while (history.isNotEmpty() && timeMs - history.first().first > 2 * config.trendWindowMs) history.removeFirst()
@@ -93,10 +95,12 @@ class ProximityEstimator(private val config: ProximityConfig = ProximityConfig()
         )
     }
 
-    private fun kalman(measurement: Double): Double {
+    private fun kalman(measurement: Double, txPower: Int?): Double {
         val previous = estimate ?: return measurement.also { estimate = it }
         val predictedCovariance = errorCovariance + config.processNoise
-        val gain = predictedCovariance / (predictedCovariance + config.measurementNoise)
+        val far = distanceFor(previous, txPower) > config.nearMeters
+        val noise = if (far) config.farMeasurementNoise else config.measurementNoise
+        val gain = predictedCovariance / (predictedCovariance + noise)
         val next = previous + gain * (measurement - previous)
         errorCovariance = (1 - gain) * predictedCovariance
         estimate = next

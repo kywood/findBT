@@ -4,6 +4,8 @@ import com.gamenuri.btscanner24.core.model.BleDevice
 import com.gamenuri.btscanner24.core.sensors.MotionSample
 import kotlin.math.cos
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -42,6 +44,23 @@ class FinderEngineTest {
     fun `starts waiting for a signal`() {
         val engine = FinderEngine(buds, startMs = 0, hasCompass = true)
         assertEquals(FinderStage.WAITING, engine.state(0, vibrationOn = true).stage)
+    }
+
+    @Test
+    fun `no signal for ten seconds is said plainly instead of waiting forever`() {
+        val engine = FinderEngine(buds, startMs = 0, hasCompass = true)
+        assertEquals(FinderStage.WAITING, engine.state(10_000, vibrationOn = true).stage)
+        assertEquals(FinderStage.NOT_FOUND, engine.state(10_001, vibrationOn = true).stage)
+    }
+
+    @Test
+    fun `trying again waits afresh, and a signal ends the not-found state`() {
+        val engine = FinderEngine(buds, startMs = 0, hasCompass = true)
+        engine.restartWaiting(20_000)
+        assertEquals(FinderStage.WAITING, engine.state(25_000, vibrationOn = true).stage)
+        assertEquals(FinderStage.NOT_FOUND, engine.state(31_000, vibrationOn = true).stage)
+        engine.onSighting(sighting(-70, 31_500), 31_500)
+        assertEquals(FinderStage.SPIN, engine.state(31_500, vibrationOn = true).stage)
     }
 
     @Test
@@ -115,5 +134,55 @@ class FinderEngineTest {
             engine.onSighting(sighting(-35, now), now)
         }
         assertEquals(FinderStage.RIGHT_HERE, engine.state(now, true).stage)
+    }
+
+    @Test
+    fun `within 1 m on screen for two seconds is right here`() {
+        val engine = FinderEngine(buds, startMs = 0, hasCompass = true)
+        var now = 0L
+        repeat(25) {
+            now += 100
+            engine.onSighting(sighting(-70, now).copy(distanceMeters = 0.8), now)
+        }
+        assertEquals(FinderStage.RIGHT_HERE, engine.state(now, true).stage)
+    }
+
+    @Test
+    fun `further than 1 m on screen is not right here`() {
+        val engine = FinderEngine(buds, startMs = 0, hasCompass = true)
+        var now = 0L
+        repeat(40) {
+            now += 100
+            engine.onSighting(sighting(-70, now).copy(distanceMeters = 2.5), now)
+        }
+        assertNotEquals(FinderStage.RIGHT_HERE, engine.state(now, true).stage)
+    }
+
+    @Test
+    fun `confirm hint appears only after 15 s very close`() {
+        val engine = FinderEngine(buds, startMs = 0, hasCompass = true)
+        // -60 dBm is about 1.1 m with the default 1 m power: very close, not right here.
+        var now = 0L
+        while (now <= 5_000) {
+            engine.onSighting(sighting(-60, now), now)
+            now += 200
+        }
+        assertFalse(engine.state(now, true).showConfirmHint)
+        while (now <= 16_000) {
+            engine.onSighting(sighting(-60, now), now)
+            now += 200
+        }
+        assertTrue(engine.state(now, true).showConfirmHint)
+    }
+
+    @Test
+    fun `confirm hint never shows when far`() {
+        val engine = FinderEngine(buds, startMs = 0, hasCompass = true)
+        var now = 0L
+        while (now <= 20_000) {
+            engine.onSighting(sighting(-85, now), now)
+            now += 200
+        }
+        assertFalse(engine.state(now, true).showConfirmHint)
     }
 }

@@ -1,12 +1,18 @@
 package com.gamenuri.btscanner24.feature.finder
 
+import com.gamenuri.btscanner24.core.ble.ScanFailure
 import com.gamenuri.btscanner24.core.ble.proximity.ProximityBand
 import com.gamenuri.btscanner24.core.ble.proximity.ProximityTrend
+import com.gamenuri.btscanner24.core.model.DeviceCategory
+import com.gamenuri.btscanner24.core.model.DeviceLabel
 
 /** What the find screen is asking the user to do. Mirrors the states in design find-screen v3.3. */
 enum class FinderStage {
     /** No advertisement from the target yet. */
     WAITING,
+
+    /** Still none after a while: say so and offer to try again or go back, instead of waiting forever (#117). */
+    NOT_FOUND,
 
     /** Turn a full circle; the needle spins and the ring shows progress. */
     SPIN,
@@ -36,10 +42,17 @@ enum class FinderStage {
 enum class ArrowConfidence { HIGH, MEDIUM, NONE }
 
 data class FinderUiState(
-    val deviceName: String = "",
+    val deviceLabel: DeviceLabel = DeviceLabel.Generic(maker = null, category = DeviceCategory.UNKNOWN, suffix = ""),
+    /** What kind of device it is, for its 3D model in the find scene (#133). */
+    val category: DeviceCategory = DeviceCategory.UNKNOWN,
     val stage: FinderStage = FinderStage.WAITING,
     /** Arrow angle relative to the top of the phone, clockwise. Null hides the arrow. */
     val arrowDegrees: Float? = null,
+    /**
+     * The same direction in the heading's own frame (0..360), for the world-anchored 3D arrow (#76),
+     * which subtracts the live heading itself at sensor rate. Null when [arrowDegrees] is null.
+     */
+    val bearingDegrees: Float? = null,
     val confidence: ArrowConfidence = ArrowConfidence.NONE,
     val sweepProgress: Float = 0f,
     val distanceMeters: Double? = null,
@@ -47,9 +60,51 @@ data class FinderUiState(
     val heat: Float = 0f,
     val trend: ProximityTrend = ProximityTrend.STEADY,
     val secondsSinceSeen: Int = 0,
+    /** Very close for a while without reaching "right here": suggest confirming by touch (design review #55). */
+    val showConfirmHint: Boolean = false,
     val vibrationOn: Boolean = true,
+    /** "Play sound" button (#28); hidden while [SoundState.UNAVAILABLE]. */
+    val sound: SoundState = SoundState.UNAVAILABLE,
     val advanced: AdvancedInfo = AdvancedInfo(),
+    /**
+     * The scan itself cannot run (Bluetooth or Location off, permission missing): the screen says that
+     * instead of "no signal", in the [FinderStage.NOT_FOUND] layout with its retry.
+     */
+    val scanFailure: ScanFailure? = null,
+    /** The user's own device is connected to this phone (#119), so "no signal" does not mean it is far. */
+    val isConnected: Boolean = false,
+    /**
+     * "Play sound" plays a loud tone through the connected target itself (#153): offered even without
+     * a signal, and the screen asks whether the earbuds are in someone's ears first.
+     */
+    val soundViaPhone: Boolean = false,
+    /**
+     * Connected for audio, but the phone's media goes to another output: the screen explains it and
+     * opens the system's output picker instead of hiding the sound button (#153).
+     */
+    val soundNeedsOutput: Boolean = false,
 )
+
+/** Immediate Alert (0x1802) "Play sound" state (#28). */
+enum class SoundState {
+    /** Not checked yet, not supported, or no BLUETOOTH_CONNECT permission: no button. */
+    UNAVAILABLE,
+
+    /** The device can ring. */
+    READY,
+
+    /** Connecting and sending "High Alert". */
+    CONNECTING,
+
+    /** Ringing; the button stops it. */
+    PLAYING,
+
+    /** The last attempt failed (out of range, busy); the button retries. */
+    FAILED,
+
+    /** A tap showed the device has no Immediate Alert service: a short note instead of the button. */
+    NOT_SUPPORTED,
+}
 
 /** Raw numbers for the Advanced section and for the prototype measurements. */
 data class AdvancedInfo(

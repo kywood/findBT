@@ -5,8 +5,7 @@ enum class DeviceSort { NEAREST, NAME, RECENT }
 /** Device list sort and filter choices, remembered across app launches. */
 data class ListPreferences(
     val sort: DeviceSort = DeviceSort.NEAREST,
-    val namedOnly: Boolean = true,
-    /** Empty means every group is shown. */
-    val groups: Set<CategoryGroup> = emptySet(),
-    val hideGone: Boolean = false,
+    val filter: DeviceFilter = DeviceFilter(),
+    /** The Nearby tab shows the 3D map instead of the list (#86). */
+    val showMap: Boolean = false,
 )

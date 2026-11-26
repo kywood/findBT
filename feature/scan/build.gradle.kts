@@ -28,6 +28,7 @@ android {
 dependencies {
     implementation(projects.core.ble)
     implementation(projects.core.data)
+    implementation(projects.core.sensors)
     implementation(projects.core.ui)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)

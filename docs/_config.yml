@@ -1,0 +1,8 @@
+# GitHub Pages (#57): only the privacy policy is published, at /findBT/privacy/.
+title: Nearo
+markdown: kramdown
+exclude:
+  - CONVENTION.md
+  - GIT_CONVENTION.md
+  - RELEASE.md
+  - screenshots

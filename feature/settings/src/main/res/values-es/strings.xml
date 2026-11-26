@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_title">Ajustes</string>
+    <string name="settings_back">Atrás</string>
+    <string name="settings_premium_title">Nearo Premium</string>
+    <string name="settings_premium_body">Sin anuncios · más rastreadores · pago único</string>
+    <string name="settings_premium_buy">Obtener Premium · %1$s</string>
+    <string name="settings_premium_buy_no_price">Obtener Premium</string>
+    <string name="settings_premium_active">Premium activo</string>
+    <string name="settings_premium_active_body">¡Gracias! Los anuncios están desactivados.</string>
+    <string name="settings_day_pass_title">Premium durante 24 horas</string>
+    <string name="settings_day_pass_until">Hasta el %1$s</string>
+    <string name="settings_day_pass_on">Premium activado 24 horas · hasta el %1$s</string>
+    <string name="settings_restore">Restaurar compra</string>
+    <string name="settings_restore_ok">Premium restaurado</string>
+    <string name="settings_restore_none">No hay compras para restaurar</string>
+    <string name="settings_restore_failed">No se pudo conectar con Google Play. Inténtalo más tarde.</string>
+    <string name="settings_section_display">Pantalla</string>
+    <string name="settings_distance_unit">Unidad de distancia</string>
+    <string name="settings_distance_unit_meters">Metros</string>
+    <string name="settings_distance_unit_feet">Pies</string>
+    <string name="settings_section_privacy">Privacidad</string>
+    <string name="settings_place_recording">Registrar la última ubicación</string>
+    <string name="settings_place_recording_body">Guarda el lugar aproximado donde se detectó un dispositivo por última vez, solo en este teléfono</string>
+    <string name="settings_place_off_title">¿Borrar también los lugares guardados?</string>
+    <string name="settings_place_off_body">El registro se desactiva en ambos casos. La hora de la última detección se conserva.</string>
+    <string name="settings_place_off_delete">Borrar lugares</string>
+    <string name="settings_place_off_keep">Conservar lugares</string>
+    <string name="settings_privacy_options">Opciones de privacidad</string>
+    <string name="settings_privacy_options_body">Consentimiento de anuncios</string>
+    <string name="settings_privacy_policy">Política de privacidad</string>
+    <string name="settings_section_about">Información</string>
+    <string name="settings_contact">Contáctanos</string>
+    <string name="settings_licenses">Licencias de código abierto</string>
+    <string name="settings_version">Versión</string>
+    <string name="settings_opens_outside">Se abre fuera de la app</string>
+    <!-- 2.0 sells nothing (#205): the rewarded ad gives 24 hours without ads. -->
+    <string name="settings_ad_free_title">24 horas sin anuncios</string>
+    <string name="settings_ad_free_body">Mira un anuncio (unos 30 s) hasta el final y no verás anuncios durante 24 horas.</string>
+    <string name="settings_ad_free_watch">Ver un anuncio</string>
+    <string name="settings_ad_free_on_title">24 horas sin anuncios</string>
+    <string name="settings_ad_free_on">Sin anuncios hasta %1$s</string>
+    <string name="settings_ad_free_used">Ya lo usaste hoy. Mañana puedes ver otro.</string>
+</resources>

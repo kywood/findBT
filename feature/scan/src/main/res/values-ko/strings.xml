@@ -1,18 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="action_start_scan">스캔 시작</string>
-    <string name="action_stop_scan">스캔 중지</string>
-    <string name="action_reset">초기화</string>
     <string name="action_retry">다시 시도</string>
     <string name="action_ok">확인</string>
     <string name="action_allow">허용</string>
     <string name="action_turn_on">켜기</string>
     <string name="action_open_settings">설정</string>
     <string name="search_hint">이름 또는 제조사로 검색</string>
-    <string name="filter_named_only">이름 있는 기기만</string>
-    <plurals name="devices_found">
-        <item quantity="other">기기 %d개 발견</item>
-    </plurals>
     <string name="permission_rationale">주변 기기를 찾으려면 블루투스 권한이 필요합니다.</string>
     <string name="permission_denied_settings">블루투스 권한이 꺼져 있습니다. 설정에서 켜 주세요.</string>
     <string name="error_bluetooth_off">블루투스가 꺼져 있습니다.</string>
@@ -22,10 +15,83 @@
     <string name="error_scan_failed">스캔을 시작하지 못했습니다.</string>
     <string name="action_search">검색</string>
     <string name="action_close_search">검색 닫기</string>
-    <string name="action_refresh_order">순서 새로고침</string>
     <string name="sort_menu">정렬</string>
     <string name="sort_nearest">가까운 순</string>
     <string name="sort_name">이름순</string>
     <string name="sort_recent">최근 발견순</string>
     <string name="filter_hide_gone">사라진 기기 숨기기</string>
+    <string name="filter_show_other">기타 장치 표시</string>
+    <!-- Filter screen and other devices (#85, #82) -->
+    <string name="filter_close">닫기</string>
+    <string name="filter_section_show">표시</string>
+    <string name="filter_show_other_body">이름이 없거나 종류를 구분하기 어려운 신호 %1$d개</string>
+    <string name="filter_show_unnamed">이름 없는 기기 표시</string>
+    <string name="filter_distance">거리</string>
+    <string name="filter_distance_within_5">5m 이내</string>
+    <string name="filter_distance_5_10">5~10m</string>
+    <string name="filter_distance_over_10">10m 이상</string>
+    <string name="filter_distance_within_15_ft">15ft 이내</string>
+    <string name="filter_distance_15_30_ft">15~30ft</string>
+    <string name="filter_distance_over_30_ft">30ft 이상</string>
+    <string name="filter_signal">신호 세기</string>
+    <string name="filter_maker">제조사</string>
+    <string name="filter_maker_count">%1$s %2$d</string>
+    <string name="filter_maker_more">+ %1$d개 더</string>
+    <string name="filter_no_results">결과 없음</string>
+    <string name="nearby_other_show">보기</string>
+    <string name="nearby_other_section">기타 장치 · %1$d</string>
+    <!-- Other devices: close and explanation (#142) -->
+    <string name="nearby_other_close">닫기</string>
+    <string name="nearby_other_close_section">기타 장치 닫기</string>
+    <string name="nearby_other_order">%1$s · 새 기기는 아래</string>
+    <string name="nearby_other_info">기타 장치 설명</string>
+    <string name="other_info_title">기타 장치</string>
+    <string name="other_info_what">이름이 없거나 종류를 구분하기 어려운 주변 블루투스 신호예요. 이웃의 기기, 가전, TV, 비콘 등이 포함될 수 있어요.</string>
+    <string name="other_info_why">보통 개수가 많고 대부분 내 것이 아니어서 처음에는 숨겨 둬요.</string>
+    <string name="other_info_mine">내 기기가 여기 있다면 눌러서 찾기를 시작해 보세요. 그쪽으로 걸어갈 때 거리가 줄어드는지 확인하면 돼요. 내 기기가 맞다면 이름을 붙여 내 기기에 저장해 두세요.</string>
+    <string name="other_info_ok">확인</string>
+    <string name="nearby_empty_personal">근처에 들고 다니는 기기가 없어요</string>
+    <plurals name="filter_show_results">
+        <item quantity="other">기기 %1$d개 보기</item>
+    </plurals>
+    <plurals name="nearby_other_hidden">
+        <item quantity="other">기타 장치 %1$d개 숨김 ·</item>
+    </plurals>
+    <!-- Empty states (#30, design screens-rest-v3 §5) -->
+    <string name="empty_bluetooth_off_title">블루투스가 꺼져 있어요</string>
+    <string name="empty_bluetooth_off_body">블루투스를 켜면 주변 기기를 찾을 수 있어요.</string>
+    <string name="empty_location_off_title">위치가 꺼져 있어요</string>
+    <!-- Home header v4 (#62) -->
+    <string name="scan_status_nearby">주변 %1$d개</string>
+    <string name="scan_status_paused">일시정지 · %1$d개</string>
+    <string name="scan_status_filtered">%1$d / %2$d개</string>
+    <string name="scan_status_paused_filtered">일시정지 · %1$d / %2$d개</string>
+    <string name="scan_searching">주변에서 찾는 중…</string>
+    <string name="action_pause_scan">스캔 일시정지</string>
+    <string name="action_resume_scan">스캔 다시 시작</string>
+    <string name="action_more">더보기</string>
+    <string name="action_clear_list">목록 지우기</string>
+    <string name="filter_title">필터</string>
+    <string name="filter_types">기기 종류</string>
+    <string name="filter_reset">초기화</string>
+    <string name="filter_active_description">필터, %1$d개 적용됨</string>
+    <string name="home_reorder_chip">↑ 새 순서 · 정렬</string>
+    <string name="home_reorder_chip_description">목록 순서가 바뀌었어요. 눌러서 정렬</string>
+    <!-- Device map (#86) -->
+    <string name="map_arranged_by_distance">거리순으로 배치</string>
+    <string name="map_direction_measured">방향 확인됨</string>
+    <string name="map_scanning">찾는 중</string>
+    <string name="map_empty_title">주변에 기기가 없어요</string>
+    <string name="map_empty_body">블루투스 기기를 켜고 가까이 가져오세요</string>
+    <string name="map_find">찾기</string>
+    <string name="map_pin_label">%1$s · %2$s</string>
+    <string name="map_step_near">1m</string>
+    <string name="map_step_mid">5m</string>
+    <string name="map_step_far">10m+</string>
+    <string name="map_step_near_ft">3ft</string>
+    <string name="map_step_mid_ft">15ft</string>
+    <string name="map_step_far_ft">30ft+</string>
+    <string name="map_unavailable">이 폰에서는 3D 맵을 그릴 수 없어요. 아래 목록에서 같은 기기를 볼 수 있어요.</string>
+    <string name="map_view_list">목록</string>
+    <string name="map_view_map">맵</string>
 </resources>

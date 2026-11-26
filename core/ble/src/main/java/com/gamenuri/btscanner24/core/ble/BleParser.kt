@@ -5,6 +5,8 @@ import com.gamenuri.btscanner24.core.model.DeviceCategory
 
 data class ParsedAdvertiseData(
     val name: String = Constants.UNKNOWN,
+    /** Product model decoded from vendor data, e.g. "AirPods Pro 2". */
+    val modelName: String? = null,
     /** Company name, or null when the packet does not identify one. */
     val manufacturer: String? = null,
     /** Raw Bluetooth SIG company ID from manufacturer-specific data, even if not in the table. */
@@ -24,6 +26,7 @@ object BleParser {
         var i = 0
         var name = Constants.UNKNOWN
         var companyId: Int? = null
+        var modelName: String? = null
         var serviceOwner: String? = null
         var appearanceCategory = DeviceCategory.UNKNOWN
         var vendorCategory = DeviceCategory.UNKNOWN
@@ -55,7 +58,9 @@ object BleParser {
                     if (data.size >= 2 && companyId == null) {
                         val id = ((data[1].toInt() and 0xFF) shl 8) or (data[0].toInt() and 0xFF)
                         companyId = id
-                        vendorCategory = DeviceCategoryResolver.fromManufacturerData(id, data.copyOfRange(2, data.size))
+                        val payload = data.copyOfRange(2, data.size)
+                        vendorCategory = DeviceCategoryResolver.fromManufacturerData(id, payload)
+                        modelName = VendorModels.fromManufacturerData(id, payload)
                     }
                 }
 
@@ -126,6 +131,7 @@ object BleParser {
 
         return ParsedAdvertiseData(
             name = name,
+            modelName = modelName,
             // Manufacturer data names the maker directly; a member service UUID is only a hint.
             manufacturer = companyId?.let(companies::companyName) ?: serviceOwner,
             companyId = companyId,

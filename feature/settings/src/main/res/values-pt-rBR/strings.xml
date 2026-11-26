@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_title">Configurações</string>
+    <string name="settings_back">Voltar</string>
+    <string name="settings_premium_title">Nearo Premium</string>
+    <string name="settings_premium_body">Sem anúncios · mais rastreadores · compra única</string>
+    <string name="settings_premium_buy">Obter Premium · %1$s</string>
+    <string name="settings_premium_buy_no_price">Obter Premium</string>
+    <string name="settings_premium_active">Premium ativo</string>
+    <string name="settings_premium_active_body">Obrigado! Os anúncios estão desativados.</string>
+    <string name="settings_day_pass_title">Premium por 24 horas</string>
+    <string name="settings_day_pass_until">Até %1$s</string>
+    <string name="settings_day_pass_on">Premium ativado por 24 horas · até %1$s</string>
+    <string name="settings_restore">Restaurar compra</string>
+    <string name="settings_restore_ok">Premium restaurado</string>
+    <string name="settings_restore_none">Nenhuma compra para restaurar</string>
+    <string name="settings_restore_failed">Não foi possível conectar ao Google Play. Tente mais tarde.</string>
+    <string name="settings_section_display">Exibição</string>
+    <string name="settings_distance_unit">Unidade de distância</string>
+    <string name="settings_distance_unit_meters">Metros</string>
+    <string name="settings_distance_unit_feet">Pés</string>
+    <string name="settings_section_privacy">Privacidade</string>
+    <string name="settings_place_recording">Registrar o último local</string>
+    <string name="settings_place_recording_body">Salva o local aproximado onde um dispositivo foi detectado pela última vez, só neste celular</string>
+    <string name="settings_place_off_title">Apagar também os locais salvos?</string>
+    <string name="settings_place_off_body">O registro é desativado nos dois casos. O horário da última detecção é mantido.</string>
+    <string name="settings_place_off_delete">Apagar locais</string>
+    <string name="settings_place_off_keep">Manter locais</string>
+    <string name="settings_privacy_options">Opções de privacidade</string>
+    <string name="settings_privacy_options_body">Consentimento de anúncios</string>
+    <string name="settings_privacy_policy">Política de privacidade</string>
+    <string name="settings_section_about">Sobre</string>
+    <string name="settings_contact">Fale conosco</string>
+    <string name="settings_licenses">Licenças de código aberto</string>
+    <string name="settings_version">Versão</string>
+    <string name="settings_opens_outside">Abre fora do app</string>
+    <!-- 2.0 sells nothing (#205): the rewarded ad gives 24 hours without ads. -->
+    <string name="settings_ad_free_title">24 horas sem anúncios</string>
+    <string name="settings_ad_free_body">Assista a um anúncio (cerca de 30 s) até o fim e fique 24 horas sem anúncios.</string>
+    <string name="settings_ad_free_watch">Assistir a um anúncio</string>
+    <string name="settings_ad_free_on_title">24 horas sem anúncios</string>
+    <string name="settings_ad_free_on">Sem anúncios até %1$s</string>
+    <string name="settings_ad_free_used">Já usado hoje. Amanhã você pode assistir a outro.</string>
+</resources>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Onboarding and permission (#30, design screens-rest-v3 §4). Must match the Play data safety form:
+         no location use (neverForLocation), nothing leaves the phone. -->
+    <string name="onboarding_intro_title">Find lost earbuds, watches and trackers</string>
+    <string name="onboarding_intro_body">Walk where the arrow points. Nearo tells you when you\'re getting closer.</string>
+    <string name="onboarding_get_started">Get started</string>
+    <string name="onboarding_permission_title">Allow Nearby devices</string>
+    <string name="onboarding_permission_body">Needed to see Bluetooth devices around you.</string>
+    <string name="onboarding_permission_title_legacy">Allow location access</string>
+    <string name="onboarding_permission_body_legacy">Android 11 and earlier ask for location to show Bluetooth devices. Nearo doesn\'t use your location.</string>
+    <string name="onboarding_check_location">We never track your location</string>
+    <string name="onboarding_check_local">Scan results stay on your phone</string>
+    <string name="onboarding_check_stops">Scanning stops when you leave the app</string>
+    <string name="onboarding_continue">Continue</string>
+    <string name="onboarding_denied_title">Permission needed</string>
+    <string name="onboarding_denied_body">Without \"Nearby devices\" Nearo can\'t see any Bluetooth devices. You can turn it on in Settings.</string>
+    <string name="onboarding_denied_body_legacy">Without location permission Nearo can\'t see Bluetooth devices on this Android version. You can turn it on in Settings.</string>
+    <string name="onboarding_open_settings">Open Settings</string>
+    <string name="onboarding_try_again">Try again</string>
+    <string name="onboarding_check_mark" translatable="false">✓</string>
+    <string name="onboarding_hero_device">My Earbuds</string>
+    <string name="onboarding_hero_distance_label">Close · approximate</string>
+</resources>

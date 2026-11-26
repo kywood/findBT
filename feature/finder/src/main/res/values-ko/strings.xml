@@ -23,10 +23,23 @@
     <string name="finder_right_here_body">손 닿는 거리에 있어요. 주변을 살펴보세요.</string>
     <string name="finder_signal_lost_title">신호 끊김</string>
     <string name="finder_signal_lost_body">%1$d초 전에 마지막으로 잡힘 · 신호가 강했던 곳으로 돌아가세요</string>
+    <string name="finder_not_found_title">신호를 못 찾았어요</string>
+    <string name="finder_not_found_body">더 가까이 가거나 기기가 켜져 있는지 확인해 주세요</string>
+    <string name="finder_connected_title">이 휴대폰에 연결돼 있어요</string>
+    <string name="finder_connected_body">블루투스가 닿는 약 10m 안에 있어요. 연결 중인 기기는 거리를 잴 신호를 잘 내보내지 않아요.</string>
+    <string name="finder_bluetooth_off_title">블루투스가 꺼져 있어요</string>
+    <string name="finder_bluetooth_off_body">블루투스를 켠 뒤 다시 시도해 주세요</string>
+    <string name="finder_location_off_title">위치가 꺼져 있어요</string>
+    <string name="finder_location_off_body">이 Android 버전에서는 위치를 켜야 블루투스 검색이 돼요</string>
+    <string name="finder_permission_title">권한이 필요해요</string>
+    <string name="finder_permission_body">설정에서 근처 기기 권한을 허용한 뒤 다시 시도해 주세요</string>
+    <string name="finder_scan_failed_title">검색을 시작하지 못했어요</string>
+    <string name="finder_scan_failed_body">몇 초 뒤에 다시 시도해 주세요</string>
+    <string name="finder_retry">다시 시도</string>
+    <string name="finder_back_to_list">목록으로</string>
     <string name="finder_no_compass_title">가까워짐·멀어짐을 따라가세요</string>
     <string name="finder_no_compass_body">이 폰에는 방향 센서가 없어서 화살표를 보여줄 수 없어요</string>
 
-    <string name="finder_distance_value">약 %1$sm</string>
     <string name="finder_distance_label">대략적인 거리</string>
     <string name="finder_band_right_here">바로 여기</string>
     <string name="finder_band_very_close">아주 가까움</string>
@@ -34,7 +47,33 @@
     <string name="finder_band_far">멀리</string>
     <string name="finder_trend_closer">▲ 가까워지는 중</string>
     <string name="finder_trend_farther">▼ 멀어지는 중</string>
-    <string name="finder_trend_steady">그대로</string>
+    <string name="finder_trend_steady">계속 가세요</string>
 
     <string name="finder_advanced_values">MAC %1$s · RSSI %2$s dBm (평활 %3$s) · 방위 %4$s° · 추정 방향 %5$s° · MAC 변경 %6$d회 · %7$d초</string>
+    <string name="finder_advanced_apple_find_my">Apple의 나의 찾기 신호예요. AirPods, AirTag, iPhone 같은 Apple 기기일 수 있어요.</string>
+    <string name="finder_confirm_hint">이 기기가 맞는지 모르겠다면 폰을 기기 바로 옆에 대 보세요. \"바로 여기\"가 나오면 찾은 거예요.</string>
+    <!-- Found it screen (#53) -->
+    <string name="found_title">찾았어요!</string>
+    <string name="found_summary">%1$s · %2$s 만에 찾음</string>
+    <string name="found_minutes_seconds">%1$d분 %2$d초</string>
+    <string name="found_done">완료</string>
+    <plurals name="found_seconds">
+        <item quantity="other">%d초</item>
+    </plurals>
+    <string name="finder_very_close_title">아주 가까워요</string>
+    <string name="finder_very_close_body">천천히 주변을 살펴보세요</string>
+    <!-- Play sound (#28) -->
+    <string name="finder_sound_play">소리 울리기</string>
+    <string name="finder_sound_stop">소리 끄기</string>
+    <string name="finder_sound_connecting">연결 중…</string>
+    <string name="finder_sound_retry">다시 시도</string>
+    <string name="finder_sound_failed">소리를 울리지 못했어요. 더 가까이 가서 다시 시도해 보세요.</string>
+    <string name="finder_sound_not_supported">이 기기는 소리를 울릴 수 없어요.</string>
+    <string name="finder_sound_ear_title">지금 귀에 끼고 있나요?</string>
+    <string name="finder_sound_ear_body">이 기기에서 소리가 작게 시작해 점점 커집니다. 본인이나 다른 사람이 끼고 있다면 반드시 먼저 빼고 시작하세요.</string>
+    <string name="finder_sound_ear_confirm">소리 울리기</string>
+    <string name="finder_sound_ear_cancel">취소</string>
+    <string name="finder_sound_louder">더 크게</string>
+    <string name="finder_sound_output_note">연결돼 있지만 소리가 다른 곳으로 나가고 있어요. 소리 출력을 이 기기로 바꾸면 소리를 울릴 수 있어요.</string>
+    <string name="finder_sound_output_button">소리 출력 바꾸기</string>
 </resources>

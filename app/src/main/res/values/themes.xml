@@ -2,4 +2,11 @@
 <resources>
 
     <style name="Theme.FindBT" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <!-- System splash until the first Compose frame (#34); then Theme.FindBT. -->
+    <style name="Theme.FindBT.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_icon</item>
+        <item name="postSplashScreenTheme">@style/Theme.FindBT</item>
+    </style>
 </resources>
