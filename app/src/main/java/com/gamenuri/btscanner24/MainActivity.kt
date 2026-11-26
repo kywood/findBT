@@ -95,10 +95,16 @@ class MainActivity : ComponentActivity() {
         // Debug demo launch (#47); always null in release builds.
         val demo = DemoMode.request(intent)
         val app = application as BtScannerApp
-        if (demo != null) app.demo = demo
+        if (demo != null) {
+            app.demo = demo
+            DemoMode.onLaunch(app, demo)
+        }
         if (demo == null) {
             // Protection the user left on, whose service Android stopped, runs again from here (#163).
             Protection.resumeIfOn(this)
+        }
+        // The demo "left behind" video (#207) taps its notification too.
+        if (demo == null || demo.leftBehindAfterSeconds != null) {
             readProtectionRequest(intent)
             addOnNewIntentListener { readProtectionRequest(it) }
         }
@@ -115,7 +121,7 @@ class MainActivity : ComponentActivity() {
                     CompositionLocalProvider(
                         LocalDistanceUnit provides (pickedUnit ?: DistanceUnit.forRegion(region)),
                         LocalArFindScene provides (demo?.arScene != false),
-                        LocalProtectionNudge provides (demo == null),
+                        LocalProtectionNudge provides (demo == null || demo.leftBehindAfterSeconds != null),
                         LocalFindScenePose provides (demo?.findState == null || demo.followPose),
                         // `--es demo map` opens the Nearby tab on its 3D map, with the design's fixed view.
                         LocalNearbyMap provides NearbyMapOptions(

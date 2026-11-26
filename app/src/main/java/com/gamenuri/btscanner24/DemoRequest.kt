@@ -19,6 +19,11 @@ internal data class DemoRequest(
     val showAds: Boolean = false,
     /** Lets the 3D find camera follow the phone's real tilt in a demo launch (`--ez demo_pose true`). */
     val followPose: Boolean = false,
+    /**
+     * Seconds after protection mode starts until a demo "left behind" alert shows, for the Play
+     * foreground-service video (`--ei demo_left_behind 8`, #207). Null otherwise.
+     */
+    val leftBehindAfterSeconds: Int? = null,
 ) {
     val startOnMyDevices: Boolean get() = screen == "devices"
 
