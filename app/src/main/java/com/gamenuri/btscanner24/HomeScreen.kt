@@ -177,7 +177,7 @@ fun HomeScreen(
                     onEditSaved = { item ->
                         saved.firstOrNull { it.address == item.paired.address }?.let { saveTarget = SaveTarget.of(it) }
                     },
-                    freeSaveLimit = SaveLimit.FREE_DEVICES.takeUnless { premium.isPremium },
+                    freeSaveLimit = SaveLimit.FREE_DEVICES.takeUnless { premium.unlocked },
                     onOpenProtection = onOpenProtection,
                     lastSeenRequest = lastSeenRequest,
                     onLastSeenRequestHandled = onLastSeenRequestHandled,

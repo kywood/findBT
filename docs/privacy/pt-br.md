@@ -27,7 +27,7 @@ Nearo: Localizador Bluetooth ("Nearo", "o app") é feito por [DEVELOPER NAME] ("
 - **Horário e local da última detecção (o local é opcional).** Para os seus próprios dispositivos pareados ou salvos, o Nearo lembra quando este celular os detectou pela última vez. O local só é registrado depois que você ativa "Registrar o último local", no cartão de última detecção de um dispositivo ou em Configurações › Privacidade. É a posição aproximada do seu celular naquele momento, arredondada para cerca de 100 m, e não é onde o dispositivo está agora. Você pode desativar o registro a qualquer momento e apagar os locais salvos. "Abrir no Maps" entrega apenas as coordenadas ao app de mapas que você escolher.
 - **Modo de proteção (opcional).** Enquanto ele está ativado, o Nearo continua em execução com uma notificação visível e escuta os sinais Bluetooth dos dispositivos que você escolheu, para avisar quando um deles pode ter ficado para trás. A lista de dispositivos monitorados, os silenciamentos e os alertas atuais ficam neste celular. Ele não inicia sozinho depois que o celular reinicia e não usa a permissão de localização em segundo plano.
 - **Detecção de rastreadores estranhos (opcional, parte do modo de proteção).** O Nearo escuta sinais Bluetooth do tipo rastreador e usa o sensor de movimento apenas para saber se o celular está se movendo. Quando um rastreador que não é seu parece se mover com você, o endereço Bluetooth dele e os horários da primeira e da última detecção ficam neste celular por no máximo 48 horas. Se você marcar um rastreador como conhecido, o endereço dele fica neste celular para que você não seja avisado de novo. Não usamos localização nem contagem de passos.
-- **Status da compra Premium e passe de 24 horas.** Ficam no dispositivo. O Google Play processa o pagamento. Um passe de 24 horas obtido ao assistir a um anúncio é registrado apenas como um horário de início no dispositivo.
+- **Suas 24 horas sem anúncios.** Quando você assiste a um anúncio premiado opcional, só o horário de início é registrado no dispositivo. O Nearo 2.0 não vende nada e não tem compras no app.
 
 Nada disso é enviado para lugar nenhum. Dispositivos salvos e ocultos, registros de última detecção, dados do modo de proteção e registros de rastreadores também ficam fora do backup do Android e da transferência entre dispositivos. Desinstalar o app ou limpar os dados dele apaga tudo.
 
@@ -36,7 +36,6 @@ Nada disso é enviado para lugar nenhum. Dispositivos salvos e ocultos, registro
 | Serviço | O que recebe | Por quê |
 |---|---|---|
 | Google AdMob | ID de publicidade, ID do conjunto de apps, endereço IP (localização aproximada), informações do dispositivo e do app e interações com anúncios, inclusive se um anúncio premiado opcional foi assistido até o fim | Mostrar e medir anúncios (banner, tela cheia e premiados opcionais) e evitar fraudes |
-| Faturamento do Google Play | Informações de compra, tratadas pelo Google | Processar a compra única do Premium |
 
 Nenhum desses serviços recebe os resultados da busca Bluetooth, seus dispositivos salvos, os nomes que você dá a eles, os locais registrados, os dados do modo de proteção ou os registros de rastreadores. As solicitações de anúncios não levam informações sobre os dispositivos ao seu redor. Aplicam-se as políticas de privacidade deles: https://policies.google.com/privacy
 
@@ -52,9 +51,9 @@ Nenhum desses serviços recebe os resultados da busca Bluetooth, seus dispositiv
 ## Anúncios e suas escolhas
 
 - No EEE, no Reino Unido e na Suíça, pedimos seu consentimento antes de mostrar anúncios personalizados ou de guardar algo no seu dispositivo para anúncios. Você pode mudar sua escolha a qualquer momento nas configurações do app (**Configurações › Opções de privacidade**).
-- Anúncios premiados são opcionais. Você escolhe assistir a um em troca de 24 horas de Premium, no máximo uma vez por dia. Anúncios em tela cheia aparecem só depois que você termina de encontrar um dispositivo, nunca durante a busca.
+- Anúncios premiados são opcionais. Você escolhe assistir a um em troca de 24 horas sem anúncios, no máximo uma vez por dia. Anúncios em tela cheia aparecem só depois que você termina de encontrar um dispositivo, nunca durante a busca.
 - Você pode redefinir ou excluir seu ID de publicidade, ou desativar os anúncios personalizados, em **Configurações › Google › Anúncios** do Android (o texto varia conforme o dispositivo).
-- Comprar o Nearo Premium remove os anúncios. Um passe de 24 horas ativo também.
+- Enquanto suas 24 horas sem anúncios estiverem ativas, nenhum anúncio é exibido.
 
 ## Crianças
 

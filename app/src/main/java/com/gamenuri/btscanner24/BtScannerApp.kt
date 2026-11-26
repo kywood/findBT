@@ -5,6 +5,7 @@ import com.gamenuri.btscanner24.core.ads.AdUnits
 import com.gamenuri.btscanner24.core.ads.InterstitialPolicy
 import com.gamenuri.btscanner24.core.ads.NearoAds
 import com.gamenuri.btscanner24.core.billing.DayPassPremiumStore
+import com.gamenuri.btscanner24.core.billing.NoSalePremiumStore
 import com.gamenuri.btscanner24.core.billing.PlayPremiumStore
 import com.gamenuri.btscanner24.core.billing.PremiumStore
 import com.gamenuri.btscanner24.core.ble.BleDependencies
@@ -120,6 +121,8 @@ class BtScannerApp :
     override val premium: PremiumStore by lazy {
         val demoStore = DemoMode.premium()
         when {
+            // 2.0 sells nothing (#205): only the rewarded ad's 24 h without ads, demo shots included.
+            !BuildConfig.PREMIUM_PURCHASE -> DayPassPremiumStore(this, NoSalePremiumStore())
             demoStore == null -> DayPassPremiumStore(this, PlayPremiumStore(this))
             // Demo with test ads: the rewarded ad's day pass works there too.
             demo?.showAds == true -> DayPassPremiumStore(this, demoStore)

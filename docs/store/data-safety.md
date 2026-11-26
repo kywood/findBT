@@ -5,7 +5,8 @@ Rule #19: no scan data leaves the phone. Play counts data as "collected" only wh
 so everything Nearo keeps on the phone (scan results, saved devices, last seen place, tracker records)
 is **not** declared as collected.
 
-SDKs in the 2.0 build: Google Mobile Ads (AdMob) with the UMP consent form, Google Play Billing.
+SDKs in the 2.0 build: Google Mobile Ads (AdMob) with the UMP consent form. 2.0 sells nothing (#205): the
+Google Play Billing library is in the code for later but never connects, so no purchase data exists.
 No Firebase in 2.0 (PM decision 2026-11-26): no analytics and no crash-reporting service.
 
 > Before submitting: re-check Google's current Data safety disclosure page for the AdMob SDK version we
@@ -40,8 +41,8 @@ conservative answer.
   an approximate place, kept on the phone only, and can be switched off and erased in Settings. On
   Android 11 and lower the system requires the location permission for Bluetooth scanning.
 - **Personal info, Financial info, Messages, Photos and videos, Audio, Files, Calendar, Contacts,
-  Health and fitness, Web browsing.** Google Play handles the purchase; the app only keeps the premium
-  entitlement on the device.
+  Health and fitness, Web browsing.** No in-app purchases in 2.0; the rewarded ad's
+  24 hours without ads is only a start time kept on the device.
 - **Nearby Bluetooth scan results** (device names, addresses, signal strength, maker, service UUIDs,
   paired devices), **protection mode state** and **tracker records** (kept 48 hours). All stay on the
   phone. The form has no category for them; the privacy policy and the listing say so.

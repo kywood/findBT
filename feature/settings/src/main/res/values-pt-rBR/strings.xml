@@ -34,4 +34,11 @@
     <string name="settings_licenses">Licenças de código aberto</string>
     <string name="settings_version">Versão</string>
     <string name="settings_opens_outside">Abre fora do app</string>
+    <!-- 2.0 sells nothing (#205): the rewarded ad gives 24 hours without ads. -->
+    <string name="settings_ad_free_title">24 horas sem anúncios</string>
+    <string name="settings_ad_free_body">Assista a um anúncio (cerca de 30 s) até o fim e fique 24 horas sem anúncios.</string>
+    <string name="settings_ad_free_watch">Assistir a um anúncio</string>
+    <string name="settings_ad_free_on_title">24 horas sem anúncios</string>
+    <string name="settings_ad_free_on">Sem anúncios até %1$s</string>
+    <string name="settings_ad_free_used">Já usado hoje. Amanhã você pode assistir a outro.</string>
 </resources>

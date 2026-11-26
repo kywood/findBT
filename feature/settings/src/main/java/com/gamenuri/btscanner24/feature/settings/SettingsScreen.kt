@@ -127,6 +127,8 @@ data class SettingsActions(
     val onLicenses: () -> Unit = {},
     val onDistanceUnit: (DistanceUnit) -> Unit = {},
     val onPlaceRecording: (Boolean) -> Unit = {},
+    /** Plays the rewarded ad for 24 hours without ads (#205); null while none is loaded or today's is used. */
+    val onWatchAd: (() -> Unit)? = null,
 )
 
 /** ⋮ → Settings (#56, design settings-v3). No ads on this screen. */
@@ -156,6 +158,7 @@ fun SettingsScreen(
     val failed = stringResource(R.string.settings_restore_failed)
     val scope = rememberCoroutineScope()
     val dayPassOn = stringResource(R.string.settings_day_pass_on)
+    val adFreeOn = stringResource(R.string.settings_ad_free_on)
     LaunchedEffect(viewModel) {
         viewModel.messages.collect { result ->
             snackbar.showSnackbar(
@@ -202,6 +205,13 @@ fun SettingsScreen(
             },
             onLicenses = onLicenses,
             onDistanceUnit = onDistanceUnit,
+            onWatchAd = rewarded?.takeIf { it.isReady && state.premium.dayPassAvailable }?.let { offer ->
+                {
+                    offer.show { until ->
+                        scope.launch { snackbar.showSnackbar(adFreeOn.format(context.formatUntil(until))) }
+                    }
+                }
+            },
             onPlaceRecording = { on ->
                 when {
                     !on -> askDeletePlaces = true
@@ -313,9 +323,14 @@ fun SettingsContent(
                 .verticalScroll(rememberScrollState())
                 .padding(bottom = 16.dp),
         ) {
-            PremiumCard(premium, actions.onGetPremium)
-            // Still offered during a 24 h day pass: it is not a purchase (#92).
-            if (!premium.isPurchased) {
+            if (premium.canBuy) {
+                PremiumCard(premium, actions.onGetPremium)
+            } else {
+                AdFreeCard(premium, actions.onWatchAd)
+            }
+            // Still offered during a 24 h day pass: it is not a purchase (#92). Nothing to restore when
+            // nothing is sold (#205).
+            if (premium.canBuy && !premium.isPurchased) {
                 SettingsRow(Icons.Outlined.Restore, R.string.settings_restore, onClick = actions.onRestore)
             }
             SectionHeader(R.string.settings_section_display)
@@ -357,6 +372,74 @@ fun SettingsContent(
                 title = R.string.settings_version,
                 supporting = stringResource(R.string.settings_version_value, appInfo.versionName, appInfo.versionCode),
             )
+        }
+    }
+}
+
+/**
+ * 2.0 sells nothing (#205): the card offers 24 hours without ads for one rewarded ad, or says until
+ * when ads are off. The same look as [PremiumCard], without any price or "Premium".
+ */
+@Composable
+private fun AdFreeCard(premium: PremiumState, onWatchAd: (() -> Unit)?) {
+    val shape = RoundedCornerShape(18.dp)
+    val cardModifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).fillMaxWidth()
+    val until = premium.dayPassUntil
+    if (until != null) {
+        Row(
+            modifier = cardModifier
+                .background(MaterialTheme.colorScheme.surfaceContainerHigh, shape)
+                .padding(18.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(Icons.Filled.CheckCircle, null, tint = NearoTheme.colors.signalStrong, modifier = Modifier.size(28.dp))
+            Spacer(Modifier.width(14.dp))
+            Column {
+                Text(
+                    stringResource(R.string.settings_ad_free_on_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Text(
+                    stringResource(R.string.settings_day_pass_until, LocalContext.current.formatUntil(until)),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        return
+    }
+    Column(
+        modifier = cardModifier
+            .background(Brush.linearGradient(listOf(BrandIconGradientTop, BrandIconGradientBottom)), shape)
+            .padding(18.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Text(
+            stringResource(R.string.settings_ad_free_title),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = Color.White,
+        )
+        Text(
+            stringResource(
+                if (premium.dayPassAvailable) R.string.settings_ad_free_body else R.string.settings_ad_free_used,
+            ),
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.White.copy(alpha = 0.85f),
+        )
+        if (onWatchAd != null) {
+            Spacer(Modifier.size(8.dp))
+            Button(
+                onClick = onWatchAd,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 44.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.White,
+                    contentColor = BrandIconGradientBottom,
+                ),
+            ) {
+                Text(stringResource(R.string.settings_ad_free_watch), fontWeight = FontWeight.SemiBold)
+            }
         }
     }
 }

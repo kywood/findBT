@@ -44,6 +44,8 @@ class SettingsViewModel(private val store: PremiumStore) : ViewModel() {
     }
 
     fun openPaywall() {
+        // Nothing is sold in this build (#205): there is no paywall to open.
+        if (!store.state.value.canBuy) return
         store.refresh()
         showPaywall.value = true
     }

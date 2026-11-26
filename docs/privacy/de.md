@@ -27,7 +27,7 @@ Nearo: Bluetooth Finder („Nearo“, „die App“) wird von [DEVELOPER NAME] (
 - **Zeit und Ort der letzten Erkennung (der Ort ist freiwillig).** Für deine eigenen gekoppelten oder gespeicherten Geräte merkt sich Nearo, wann dieses Handy sie zuletzt erkannt hat. Der Ort wird erst aufgezeichnet, nachdem du „Letzten Ort aufzeichnen“ eingeschaltet hast, in der Karte zur letzten Erkennung eines Geräts oder unter Einstellungen › Datenschutz. Es ist der ungefähre Standort deines Handys in diesem Moment, auf etwa 100 m gerundet, und nicht der Ort, an dem das Gerät jetzt ist. Du kannst die Aufzeichnung jederzeit ausschalten und gespeicherte Orte löschen. „In Maps öffnen“ gibt nur die Koordinaten an die Karten-App weiter, die du auswählst.
 - **Schutzmodus (freiwillig).** Solange er eingeschaltet ist, läuft Nearo mit einer sichtbaren Benachrichtigung weiter und achtet auf die Bluetooth-Signale der Geräte, die du ausgewählt hast, um dir Bescheid zu sagen, wenn du eines vielleicht zurückgelassen hast. Die Liste der beobachteten Geräte, Stummschaltungen und aktuelle Hinweise werden auf diesem Handy gespeichert. Der Schutzmodus startet nach einem Neustart des Handys nicht von selbst und nutzt keine Berechtigung für den Standort im Hintergrund.
 - **Erkennung fremder Tracker (freiwillig, Teil des Schutzmodus).** Nearo achtet auf Bluetooth-Signale von Trackern und nutzt den Bewegungssensor nur, um zu erkennen, ob sich das Handy bewegt. Wenn sich ein Tracker, der dir nicht gehört, offenbar mit dir bewegt, werden seine Bluetooth-Adresse und die Zeiten der ersten und letzten Erkennung höchstens 48 Stunden auf diesem Handy gespeichert. Markierst du einen Tracker als bekannt, bleibt seine Adresse auf diesem Handy, damit du keinen Hinweis mehr bekommst. Standort und Schrittzahl werden nicht verwendet.
-- **Status des Premium-Kaufs und 24-Stunden-Pass.** Sie werden auf dem Gerät gespeichert. Die Zahlung wickelt Google Play ab. Ein 24-Stunden-Pass, den du durch das Ansehen einer Anzeige erhältst, wird nur als Startzeit auf dem Gerät festgehalten.
+- **24 Stunden ohne Werbung.** Wenn du eine freiwillige Anzeige mit Prämie ansiehst, wird nur ihre Startzeit auf dem Gerät festgehalten. Nearo 2.0 verkauft nichts und hat keine In-App-Käufe.
 
 Nichts davon wird hochgeladen. Gespeicherte und ausgeblendete Geräte, Angaben zur letzten Erkennung, Daten des Schutzmodus und Tracker-Einträge sind außerdem von der Android-Sicherung und der Übertragung auf ein anderes Gerät ausgenommen. Wenn du die App deinstallierst oder ihre Daten löschst, wird alles gelöscht.
 
@@ -36,7 +36,6 @@ Nichts davon wird hochgeladen. Gespeicherte und ausgeblendete Geräte, Angaben z
 | Dienst | Was er erhält | Wozu |
 |---|---|---|
 | Google AdMob | Werbe-ID, App-Set-ID, IP-Adresse (ungefährer Standort), Geräte- und App-Informationen sowie Interaktionen mit Anzeigen, einschließlich der Angabe, ob eine freiwillige Anzeige mit Prämie bis zum Ende angesehen wurde | Anzeigen (Banner, Vollbild und freiwillige Anzeigen mit Prämie) ausliefern und messen sowie Betrug verhindern |
-| Google Play Billing | Kaufinformationen, die Google verarbeitet | Den einmaligen Premium-Kauf abwickeln |
 
 Keiner dieser Dienste erhält deine Bluetooth-Scan-Ergebnisse, deine gespeicherten Geräte, die Namen, die du ihnen gibst, aufgezeichnete Orte, Daten des Schutzmodus oder Tracker-Einträge. Anzeigenanfragen enthalten keine Informationen über die Geräte um dich herum. Es gelten die Datenschutzerklärungen der Dienste: https://policies.google.com/privacy
 
@@ -52,9 +51,9 @@ Keiner dieser Dienste erhält deine Bluetooth-Scan-Ergebnisse, deine gespeichert
 ## Werbung und deine Wahlmöglichkeiten
 
 - Im EWR, im Vereinigten Königreich und in der Schweiz bitten wir um deine Einwilligung, bevor wir personalisierte Werbung zeigen oder für Werbung etwas auf deinem Gerät speichern. Du kannst deine Wahl jederzeit in den Einstellungen der App ändern (**Einstellungen › Datenschutzoptionen**).
-- Anzeigen mit Prämie sind freiwillig. Du entscheidest dich, eine anzusehen, und erhältst dafür 24 Stunden Premium, höchstens einmal am Tag. Vollbildanzeigen erscheinen nur, nachdem du ein Gerät gefunden hast, nie während der Suche.
+- Anzeigen mit Prämie sind freiwillig. Du entscheidest dich, eine anzusehen, und erhältst dafür 24 Stunden ohne Werbung, höchstens einmal am Tag. Vollbildanzeigen erscheinen nur, nachdem du ein Gerät gefunden hast, nie während der Suche.
 - Du kannst deine Werbe-ID zurücksetzen oder löschen oder personalisierte Werbung deaktivieren, und zwar in den Android-**Einstellungen › Google › Werbung** (die Bezeichnung variiert je nach Gerät).
-- Mit dem Kauf von Nearo Premium verschwindet die Werbung. Das gilt auch, solange ein 24-Stunden-Pass aktiv ist.
+- Solange deine 24 Stunden ohne Werbung laufen, wird keine Werbung gezeigt.
 
 ## Kinder
 

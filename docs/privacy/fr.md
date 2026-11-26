@@ -27,7 +27,7 @@ Nearo: Bluetooth Finder (« Nearo », « l'application ») est proposée par [DE
 - **Heure et lieu de la dernière détection (le lieu est facultatif).** Pour vos propres appareils associés ou enregistrés, Nearo retient le moment où ce téléphone les a détectés pour la dernière fois. Le lieu n'est enregistré qu'après l'activation de « Record last location », dans la fiche de dernière détection d'un appareil ou dans Settings › Privacy. Il s'agit de la position approximative de votre téléphone à ce moment-là, arrondie à environ 100 m, et non de l'endroit où se trouve l'appareil maintenant. Vous pouvez désactiver l'enregistrement à tout moment et supprimer les lieux conservés. « Open in Maps » ne transmet que les coordonnées à l'application de cartes que vous choisissez.
 - **Mode protection (facultatif).** Tant qu'il est activé, Nearo continue de fonctionner avec une notification visible et écoute les signaux Bluetooth des appareils que vous avez choisis, pour vous prévenir si l'un d'eux a peut-être été oublié. La liste des appareils surveillés, les mises en sourdine et les alertes en cours sont conservées sur ce téléphone. Il ne démarre pas tout seul après un redémarrage du téléphone et n'utilise pas l'autorisation de localisation en arrière-plan.
 - **Détection de traceurs inconnus (facultative, partie du mode protection).** Nearo écoute les signaux Bluetooth de type traceur et n'utilise le capteur de mouvement que pour savoir si le téléphone se déplace. Lorsqu'un traceur qui n'est pas le vôtre semble se déplacer avec vous, son adresse Bluetooth et les heures de première et de dernière détection sont conservées sur ce téléphone pendant 48 heures au maximum. Si vous indiquez qu'un traceur vous est connu, son adresse est conservée sur ce téléphone pour ne plus vous alerter. Ni la localisation ni le nombre de pas ne sont utilisés.
-- **État de l'achat Premium et pass de 24 heures.** Ils sont conservés sur l'appareil. Google Play traite le paiement. Un pass de 24 heures obtenu en regardant une publicité n'est enregistré que sous la forme d'une heure de début sur l'appareil.
+- **Vos 24 heures sans publicité.** Quand vous regardez une publicité avec récompense facultative, seule son heure de début est enregistrée sur l'appareil. Nearo 2.0 ne vend rien et n'a pas d'achats intégrés.
 
 Rien de ce qui précède n'est envoyé où que ce soit. Les appareils enregistrés et masqués, les relevés de dernière détection, les données du mode protection et les relevés de traceurs sont en outre exclus de la sauvegarde Android et du transfert d'un appareil à un autre. Désinstaller l'application ou effacer ses données supprime tout.
 
@@ -36,7 +36,6 @@ Rien de ce qui précède n'est envoyé où que ce soit. Les appareils enregistr�
 | Service | Ce qu'il reçoit | Pourquoi |
 |---|---|---|
 | Google AdMob | Identifiant publicitaire, identifiant d'ensemble d'applications, adresse IP (localisation approximative), informations sur l'appareil et l'application, et interactions avec les publicités, y compris le fait qu'une publicité avec récompense facultative ait été regardée jusqu'au bout | Afficher et mesurer les publicités (bannière, plein écran et publicités avec récompense facultatives) et prévenir la fraude |
-| Google Play Billing | Informations d'achat, traitées par Google | Traiter l'achat unique de Premium |
 
 Aucun de ces services ne reçoit vos résultats de recherche Bluetooth, vos appareils enregistrés, les noms que vous leur donnez, les lieux enregistrés, les données du mode protection ni les relevés de traceurs. Les demandes de publicité ne contiennent aucune information sur les appareils qui vous entourent. Leurs propres politiques de confidentialité s'appliquent : https://policies.google.com/privacy
 
@@ -52,9 +51,9 @@ Aucun de ces services ne reçoit vos résultats de recherche Bluetooth, vos appa
 ## Publicités et vos choix
 
 - Dans l'EEE, au Royaume-Uni et en Suisse, nous demandons votre consentement avant d'afficher des publicités personnalisées ou d'enregistrer quoi que ce soit sur votre appareil pour la publicité. Vous pouvez modifier votre choix à tout moment dans les réglages de l'application (**Settings › Privacy options**).
-- Les publicités avec récompense sont facultatives. Vous choisissez d'en regarder une en échange de 24 heures de Premium, une fois par jour au maximum. Les publicités en plein écran n'apparaissent qu'après avoir trouvé un appareil, jamais pendant la recherche.
+- Les publicités avec récompense sont facultatives. Vous choisissez d'en regarder une en échange de 24 heures sans publicité, une fois par jour au maximum. Les publicités en plein écran n'apparaissent qu'après avoir trouvé un appareil, jamais pendant la recherche.
 - Vous pouvez réinitialiser ou supprimer votre identifiant publicitaire, ou refuser les publicités personnalisées, dans **Paramètres › Google › Annonces** d'Android (l'intitulé varie selon l'appareil).
-- L'achat de Nearo Premium supprime les publicités. Un pass de 24 heures actif aussi.
+- Pendant vos 24 heures sans publicité, aucune publicité n'est affichée.
 
 ## Enfants
 

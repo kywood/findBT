@@ -94,6 +94,13 @@ android {
         // The find tone through connected earbuds (#153). Off in release until the user has tested it
         // on real earbuds (#189); `nearo.feature.earbudTone=true` in local.properties turns it on.
         buildConfigField("boolean", "EARBUD_TONE", (earbudTone ?: "false").toBoolean().toString())
+        // In-app purchase of Premium (#205): off in 2.0, no merchant account yet. Only the rewarded ad's
+        // 24 h without ads stays. `nearo.feature.premiumPurchase=true` in local.properties turns it on.
+        buildConfigField(
+            "boolean",
+            "PREMIUM_PURCHASE",
+            localProperties.getProperty("nearo.feature.premiumPurchase", "false").toBoolean().toString(),
+        )
         buildConfigField("String", "SUPPORT_EMAIL", "\"${localProperties.getProperty("nearo.supportEmail", "")}\"")
         // GitHub Pages copy of docs/privacy (#57).
         buildConfigField("String", "PRIVACY_POLICY_URL", "\"https://kywood.github.io/findBT/privacy/\"")

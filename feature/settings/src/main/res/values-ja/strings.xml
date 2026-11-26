@@ -34,4 +34,11 @@
     <string name="settings_licenses">オープンソースライセンス</string>
     <string name="settings_version">バージョン</string>
     <string name="settings_opens_outside">アプリの外で開きます</string>
+    <!-- 2.0 sells nothing (#205): the rewarded ad gives 24 hours without ads. -->
+    <string name="settings_ad_free_title">24時間広告なし</string>
+    <string name="settings_ad_free_body">広告を1本（約30秒）最後まで見ると、24時間広告が表示されません。</string>
+    <string name="settings_ad_free_watch">広告を見る</string>
+    <string name="settings_ad_free_on_title">24時間広告なし</string>
+    <string name="settings_ad_free_on">%1$sまで広告なし</string>
+    <string name="settings_ad_free_used">今日はもう使いました。明日また見られます。</string>
 </resources>

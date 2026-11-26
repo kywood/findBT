@@ -89,7 +89,7 @@ fun SaveDeviceHost(
     val activity = LocalActivity.current
     val scope = rememberCoroutineScope()
     val isNew = target.savedAt == null
-    val locked = isNew && !SaveLimit.canSaveAnother(savedCount, premium.isPremium)
+    val locked = isNew && !SaveLimit.canSaveAnother(savedCount, premium.unlocked)
     when {
         locked && paywallOpen -> PaywallSheet(
             price = premium.formattedPrice,

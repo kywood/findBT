@@ -37,4 +37,11 @@
     <string name="settings_opens_outside">Opens outside the app</string>
     <!-- Mail subject for support: app version and phone only, never scan data (#19). -->
     <string name="settings_contact_subject" translatable="false">Nearo %1$s (%2$d) · Android %3$s · %4$s</string>
+    <!-- 2.0 sells nothing (#205): the rewarded ad gives 24 hours without ads. -->
+    <string name="settings_ad_free_title">No ads for 24 hours</string>
+    <string name="settings_ad_free_body">Watch one ad (about 30 s) to the end, and ads are off for 24 hours.</string>
+    <string name="settings_ad_free_watch">Watch an ad</string>
+    <string name="settings_ad_free_on_title">Ad-free for 24 hours</string>
+    <string name="settings_ad_free_on">No ads until %1$s</string>
+    <string name="settings_ad_free_used">Used today. You can watch another one tomorrow.</string>
 </resources>

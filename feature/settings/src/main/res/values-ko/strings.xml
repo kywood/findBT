@@ -34,4 +34,11 @@
     <string name="settings_licenses">오픈소스 라이선스</string>
     <string name="settings_version">버전</string>
     <string name="settings_opens_outside">앱 밖에서 열려요</string>
+    <!-- 2.0 sells nothing (#205): the rewarded ad gives 24 hours without ads. -->
+    <string name="settings_ad_free_title">24시간 광고 없이</string>
+    <string name="settings_ad_free_body">광고 하나(약 30초)를 끝까지 보면 24시간 동안 광고가 나오지 않아요.</string>
+    <string name="settings_ad_free_watch">광고 보기</string>
+    <string name="settings_ad_free_on_title">24시간 광고 없음</string>
+    <string name="settings_ad_free_on">%1$s까지 광고 없음</string>
+    <string name="settings_ad_free_used">오늘은 이미 사용했어요. 내일 다시 볼 수 있어요.</string>
 </resources>
