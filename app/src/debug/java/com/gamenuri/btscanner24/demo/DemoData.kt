@@ -4,8 +4,8 @@ import com.gamenuri.btscanner24.core.ble.proximity.ProximityBand
 import com.gamenuri.btscanner24.core.ble.proximity.ProximityTrend
 import com.gamenuri.btscanner24.core.model.BleDevice
 import com.gamenuri.btscanner24.core.model.DeviceCategory
-import com.gamenuri.btscanner24.core.model.LastSeen
 import com.gamenuri.btscanner24.core.model.DeviceLabel
+import com.gamenuri.btscanner24.core.model.LastSeen
 import com.gamenuri.btscanner24.core.model.NameSource
 import com.gamenuri.btscanner24.core.model.PairedDevice
 import com.gamenuri.btscanner24.core.model.SavedDevice
