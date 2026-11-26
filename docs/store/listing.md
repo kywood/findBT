@@ -1,5 +1,6 @@
 # Nearo 2.0 Play listing text (#36)
 
+Ads-only release (user, 2026-11-26 20:07 KST): no in-app purchase, so the purchase line became the optional 24 h ad-free reward.
 Source: the PM's listing v1 (2026-11-26 KST) plus lines for the 3D map, last seen place, left-behind heads-up and tracker heads-up.
 
 Limits: title 30, short description 80, full description 4000 characters.
@@ -41,7 +42,7 @@ WHAT MAKES NEARO DIFFERENT
 FAIR BY DESIGN
 • No subscription. Finding never needs a payment.
 • No ads on the find screen. Ads appear only as a small banner at the bottom of other screens and at most twice a day after a find is done.
-• One optional purchase removes ads.
+• Need a break from ads? Watch one optional ad to the end and get 24 hours without ads.
 
 PRIVACY
 • Scan results stay on your phone. Nearo does not upload the devices around you.
@@ -80,7 +81,7 @@ Nearo가 다른 점
 정직한 방식
 • 구독이 없어요. 찾기에는 결제가 필요 없어요.
 • 찾기 화면에는 광고가 없어요. 광고는 다른 화면 하단의 작은 배너와, 찾기를 마친 뒤 하루 최대 두 번만 나와요.
-• 한 번 구매로 광고를 없앨 수 있어요.
+• 원할 때 광고 하나를 끝까지 보면 24시간 동안 광고 없이 쓸 수 있어요.
 
 개인정보
 • 스캔 결과는 휴대폰 안에만 있어요. 주변 기기 정보를 서버로 보내지 않아요.
@@ -119,7 +120,7 @@ Nearoの特長
 フェアな設計
 • サブスクはありません。探す機能に支払いは不要です。
 • 探索画面に広告はありません。広告は他の画面の下部バナーと、探し終えた後の1日最大2回だけです。
-• 一度の購入で広告を消せます。
+• 任意の広告を1本最後まで見ると、24時間広告なしで使えます。
 
 プライバシー
 • スキャン結果はスマホの中だけに保存されます。周囲の機器情報を送信しません。
@@ -158,7 +159,7 @@ WAS NEARO ANDERS MACHT
 FAIR GEMACHT
 • Kein Abo. Für die Suche musst du nie bezahlen.
 • Keine Werbung im Suchbildschirm. Werbung gibt es nur als kleines Banner unten auf anderen Seiten und höchstens zweimal am Tag nach einer abgeschlossenen Suche.
-• Ein einmaliger Kauf entfernt die Werbung.
+• Lust auf eine Pause? Schau freiwillig eine Werbung bis zum Ende und nutze Nearo 24 Stunden ohne Werbung.
 
 DATENSCHUTZ
 • Scan-Ergebnisse bleiben auf deinem Handy. Nearo lädt die Geräte in deiner Umgebung nicht hoch.
@@ -197,7 +198,7 @@ CE QUI REND NEARO DIFFÉRENT
 UNE APP HONNÊTE
 • Sans abonnement. La recherche ne demande jamais de paiement.
 • Aucune pub sur l'écran de recherche. La pub se limite à une petite bannière en bas des autres écrans et à deux fois par jour au maximum après une recherche terminée.
-• Un achat unique supprime les pubs.
+• Envie d'une pause ? Regardez une pub facultative jusqu'au bout et profitez de 24 heures sans pub.
 
 CONFIDENTIALITÉ
 • Les résultats restent sur votre téléphone. Nearo n'envoie pas la liste des appareils autour de vous.
@@ -236,7 +237,7 @@ LO QUE HACE DIFERENTE A NEARO
 JUSTO POR DISEÑO
 • Sin suscripción. Buscar nunca requiere pagar.
 • Sin anuncios en la pantalla de búsqueda. Solo hay un pequeño banner abajo en otras pantallas y, como máximo, dos anuncios al día después de terminar una búsqueda.
-• Una compra única elimina los anuncios.
+• ¿Quieres un descanso? Mira un anuncio opcional hasta el final y disfruta de 24 horas sin anuncios.
 
 PRIVACIDAD
 • Los resultados se quedan en tu teléfono. Nearo no sube los dispositivos que te rodean.
@@ -275,7 +276,7 @@ O QUE O NEARO TEM DE DIFERENTE
 JUSTO DESDE O INÍCIO
 • Sem assinatura. Procurar nunca exige pagamento.
 • Sem anúncios na tela de busca. Só há um pequeno banner na parte de baixo de outras telas e, no máximo, dois anúncios por dia depois de concluir uma busca.
-• Uma compra única remove os anúncios.
+• Quer uma pausa? Assista a um anúncio opcional até o fim e use 24 horas sem anúncios.
 
 PRIVACIDADE
 • Os resultados ficam no seu celular. O Nearo não envia os dispositivos ao seu redor.
