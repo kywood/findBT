@@ -16,6 +16,9 @@ internal object DemoMode {
 
     fun premium(): PremiumStore? = null
 
+    @Suppress("UNUSED_PARAMETER")
+    fun onLaunch(app: Application, request: DemoRequest) = Unit
+
     @Composable
     fun FindScreen(state: String, onClose: () -> Unit): Unit = error("Demo mode is debug-only")
 }

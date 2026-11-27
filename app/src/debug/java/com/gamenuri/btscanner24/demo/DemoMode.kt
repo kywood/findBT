@@ -26,9 +26,12 @@ import com.gamenuri.btscanner24.feature.finder.FinderActions
 import com.gamenuri.btscanner24.feature.finder.FinderContent
 import com.gamenuri.btscanner24.feature.finder.FinderSave
 import com.gamenuri.btscanner24.feature.finder.FoundContent
+import com.gamenuri.btscanner24.feature.protection.ProtectionDemo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -63,8 +66,30 @@ internal object DemoMode {
             arScene = intent.getBooleanExtra(EXTRA_AR, true),
             showAds = intent.getBooleanExtra(EXTRA_ADS, false),
             followPose = intent.getBooleanExtra(EXTRA_POSE, false),
+            leftBehindAfterSeconds = intent.getIntExtra(EXTRA_LEFT_BEHIND, -1).takeIf { it >= 0 },
         )
     }
+
+    /**
+     * With `--ei demo_left_behind <seconds>` (#207): once the user turns protection mode on, the demo's
+     * away device ("Wallet Tag") raises the real "left behind" alert after that many seconds, heard last
+     * four minutes before. Only the demo's own last-seen file is written.
+     */
+    fun onLaunch(app: Application, request: DemoRequest) {
+        val seconds = request.leftBehindAfterSeconds ?: return
+        leftBehindJob?.cancel()
+        leftBehindJob = CoroutineScope(Dispatchers.Main).launch {
+            while (!ProtectionDemo.isRunning) delay(POLL_MS)
+            delay(seconds * 1_000L)
+            val now = System.currentTimeMillis()
+            val away = DemoData.savedAway(now)
+            val heardAt = now - LEFT_BEHIND_HEARD_AGO_MS
+            LastSeenRepository(app, demo = true).record(listOf(DemoData.savedAwaySeen(now).copy(seenAt = heardAt)))
+            ProtectionDemo.leftBehind(app, away.address, away.name, heardAt)
+        }
+    }
+
+    private var leftBehindJob: Job? = null
 
     fun dependencies(app: Application): BleDependencies {
         val repository = DeviceRepository(CompanyDirectory(app))
@@ -144,6 +169,9 @@ internal object DemoMode {
     private const val EXTRA_AR = "demo_ar"
     private const val EXTRA_ADS = "demo_ads"
     private const val EXTRA_POSE = "demo_pose"
+    private const val EXTRA_LEFT_BEHIND = "demo_left_behind"
+    private const val POLL_MS = 500L
+    private const val LEFT_BEHIND_HEARD_AGO_MS = 4 * 60_000L
 }
 
 /** Looks like a running scan but never reports a real device. */
