@@ -7,12 +7,12 @@
 
 | 무엇 | 예전 위치 | 왜 |
 |---|---|---|
-| 업로드 키스토어 `gamenuri.jks` (PKCS12, 별칭 `gamenuri`) | `F:\project\keys\gamenuri.jks` | **없으면 Play에 업데이트를 올릴 수 없습니다.** USB와 클라우드에도 복사해 두세요 |
+| 업로드 키스토어 `gamenuri.jks` (PKCS12, 별칭 `gamenuri`) | `F:\project\keys\gamenuri.jks` (2026-11 기준) | **없으면 Play에 업데이트를 올릴 수 없습니다.** USB와 클라우드에도 복사해 두세요 |
 | 키스토어 비밀번호, 키 비밀번호 | 사용자만 앎 | 비밀번호 관리자에 보관 |
-| `local.properties`의 값 (아래 2번의 키) | `E:\project_rel\wood\android\findBT-build\local.properties` | AdMob ID 4개, 지원 이메일 |
-| 출시본 `app-release.aab`, `mapping.txt` (2.0.0) | `E:\project_rel\wood\android\findBT-release\2.0.0\` | 크래시 분석(mapping), 같은 빌드 다시 올리기 |
+| `local.properties`의 값 (아래 2번의 키) | `E:\project\wood\apps\android\findBT\findBT\local.properties` | AdMob ID 4개, 지원 이메일 |
+| 출시본 `app-release.aab`, `mapping.txt` (2.0.0) | `E:\project\wood\apps\android\findBT\findBT-release\2.0.0\` | 크래시 분석(mapping), 같은 빌드 다시 올리기 |
 | 스토어 캡처 원본 | `findBT\.design-tools\store-raw`, `store-final` | 다시 찍지 않아도 됨 |
-| 검토용 캡처와 영상 | `findBT\.design-review\`, `findBT-shots\` | 선택. 공유 폴더에 올린 것은 다시 받을 수 있음 |
+| 검토용 캡처와 영상 | `findBT\.design-review\`, `findBT-release\shots\` | 선택. 공유 폴더에 올린 것은 다시 받을 수 있음 |
 
 키스토어 인증서 확인값: SHA-256 `1A:9C:49:12:1B:63 … :1B:8F`, `O=gamenuri, OU=lab, C=KR`, 유효기간 2222-04-09까지.
 
@@ -31,12 +31,21 @@
 ## 2. 저장소 받기
 
 ```
-git clone https://github.com/kywood/findBT.git E:\project_rel\wood\android\findBT
-cd E:\project_rel\wood\android\findBT
+git clone https://github.com/kywood/findBT.git E:\project\wood\apps\android\findBT\findBT
+cd E:\project\wood\apps\android\findBT\findBT
 git checkout develop
 ```
 
-빌드 전용 worktree를 따로 두려면: `git worktree add ..\findBT-build develop`. 일이 끝나고 푸시하면 worktree는 바로 지웁니다.
+폴더는 두 개만 둡니다(2026-11-28 이사 뒤):
+
+```
+E:\project\wood\apps\android\findBT\
+  findBT\          소스 (git). 빌드도 여기서 합니다. local.properties도 여기
+  findBT-release\  출시본(<버전>\app-release.aab, mapping.txt)과 shots\(확인 캡처, 영상)
+```
+
+빌드 전용 worktree는 만들지 않습니다. 잠깐 필요하면 `git worktree add`로 만들고, 푸시하면 바로 `git worktree remove`로 지웁니다.
+폴더를 옮긴 뒤 worktree가 옛 경로를 가리키면 `git worktree prune`으로 정리합니다.
 
 `local.properties` (git에서 제외, 저장소 루트에 만들기). 키 이름만 적습니다. 값은 백업에서 넣으세요:
 
